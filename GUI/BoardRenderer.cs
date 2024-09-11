@@ -8,11 +8,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using System.Reflection.Metadata;
 using System.Text.Json.Serialization;
+using ChessBot.Core;
 
 namespace ChessBot.GUI
 {
     internal class BoardRenderer
     {
+        BotCore _core;
+
         #region Constants
         private Vector2 _topLeftOfBoard;
         private readonly Color _lightSquareColor = new Color(214, 198, 182);
@@ -44,6 +47,7 @@ namespace ChessBot.GUI
             LoadContent(content);
             _topLeftOfBoard = new Vector2(screenSize.X / 2 - 4 * _tileSize, screenSize.Y / 2 - 4 * _tileSize);
             CreateBoardTiles();
+            _core = new BotCore();
         }
         public void Draw(SpriteBatch spriteBatch)
         {
