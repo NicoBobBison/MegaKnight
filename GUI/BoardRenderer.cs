@@ -14,7 +14,7 @@ namespace ChessBot.GUI
     internal class BoardRenderer
     {
         #region Constants
-        private readonly Vector2 _topLeftOfBoard = new Vector2(0, 0);
+        private Vector2 _topLeftOfBoard;
         private readonly Color _lightSquareColor = new Color(214, 198, 182);
         private readonly Color _darkSquareColor = new Color(173, 145, 116);
         private const int _tileSize = 100;
@@ -39,9 +39,10 @@ namespace ChessBot.GUI
         #endregion
 
         List<BoardTile> _boardTiles = new List<BoardTile>();
-        public BoardRenderer(ContentManager content)
+        public BoardRenderer(ContentManager content, Vector2 screenSize)
         {
             LoadContent(content);
+            _topLeftOfBoard = new Vector2(screenSize.X / 2 - 4 * _tileSize, screenSize.Y / 2 - 4 * _tileSize);
             CreateBoardTiles();
         }
         public void Draw(SpriteBatch spriteBatch)

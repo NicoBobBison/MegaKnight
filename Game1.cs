@@ -34,7 +34,7 @@ namespace ChessBot
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            _boardRenderer = new BoardRenderer(Content);
+            _boardRenderer = new BoardRenderer(Content, ScreenSize);
         }
 
         protected override void Update(GameTime gameTime)
