@@ -29,5 +29,20 @@ namespace ChessBot.Core
             if (square < 0 || square > 63) Debug.WriteLine("Cannot print " + square + ": out of bounds");
             PrintBitboard(1ul << square);
         }
+        public static List<int> BitboardToListOfSquareIndeces(ulong bitboard)
+        {
+            List<int> indeces = new List<int>();
+            int indexCount = 0;
+            while(bitboard > 0)
+            {
+                if((bitboard & 1) > 0)
+                {
+                    indeces.Add(indexCount);
+                }
+                bitboard >>= 1;
+                indexCount++;
+            }
+            return indeces;
+        }
     }
 }

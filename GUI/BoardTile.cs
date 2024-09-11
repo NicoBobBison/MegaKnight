@@ -11,17 +11,19 @@ namespace ChessBot.GUI
     internal class BoardTile
     {
         Texture2D _texture;
-        Rectangle _position;
+        public Vector2 Position;
+        int _size;
         Color _color;
         public BoardTile(Texture2D texture, Vector2 position, int size, Color color)
         {
             _texture = texture;
-            _position = new Rectangle((int)position.X, (int)position.Y, size, size);
+            Position = position;
+            _size = size;
             _color = color;
         }
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(_texture, _position, _color);
+            spriteBatch.Draw(_texture, new Rectangle((int)Position.X, (int)Position.Y, _size, _size), _color);
         }
     }
 }
