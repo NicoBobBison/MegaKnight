@@ -23,5 +23,10 @@ namespace ChessBot.Core
         public ulong BlackRooks;
         public ulong BlackQueens;
         public ulong BlackKing;
+
+        // Other helpful bitboards
+        public ulong WhitePieces => WhitePawns | WhiteKnights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKing;
+        public ulong BlackPieces => BlackPawns | BlackKnights | BlackBishops | BlackRooks | BlackQueens | BlackKing;
+        public ulong AllPieces => WhitePieces | BlackPieces;
     }
 }

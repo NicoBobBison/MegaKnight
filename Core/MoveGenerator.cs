@@ -29,7 +29,7 @@ namespace ChessBot.Core
             _rays = PrecomputeAttackRays();
             BoardHelper.PrintBitboard(_rays[39, (int)Direction.SouthWest]);
         }
-        ulong GenerateRookMoves(ulong rookBitboard, ulong blockers)
+        ulong GenerateRookMoves(ulong rookBitboard, Position position)
         {
             return 0;
         }
