@@ -27,7 +27,6 @@ namespace ChessBot.Core
         public MoveGenerator()
         {
             _rays = PrecomputeAttackRays();
-            BoardHelper.PrintBitboard(_rays[39, (int)Direction.SouthWest]);
         }
         ulong GenerateRookMoves(ulong rookBitboard, Position position)
         {
