@@ -16,7 +16,7 @@ namespace ChessBot.GUI
         private Vector2 _bottomRightOfBoard;
         private readonly Color _lightSquareColor = new Color(214, 198, 182);
         private readonly Color _darkSquareColor = new Color(173, 145, 116);
-        private const int _tileSize = 115;
+        public const int TileSize = 115;
         #endregion
 
         private Texture2D _tileTexture;
@@ -37,22 +37,29 @@ namespace ChessBot.GUI
         private Texture2D _blackKing;
         #endregion
 
-        BoardTile[] _boardTiles = new BoardTile[64];
+        public BoardTile[] BoardTiles = new BoardTile[64];
         List<BoardPiece> _boardPieces = new List<BoardPiece>();
         public BoardRenderer(ContentManager content, Vector2 screenSize)
         {
             LoadContent(content);
-            _bottomRightOfBoard = new Vector2(screenSize.X / 2 - 4 * _tileSize, screenSize.Y / 2 + 3 * _tileSize);
+            _bottomRightOfBoard = new Vector2(screenSize.X / 2 - 4 * TileSize, screenSize.Y / 2 + 3 * TileSize);
             CreateBoardTiles();
             _core = new BotCore();
 
             Position test = new Position();
-            test.WhiteRooks = 128ul;
+            test.WhiteRooks = 129ul;
             RenderPosition(test);
+        }
+        public void Update(GameTime gameTime)
+        {
+            foreach(BoardPiece piece in _boardPieces)
+            {
+                piece.Update(gameTime);
+            }
         }
         public void Draw(SpriteBatch spriteBatch)
         {
-            foreach(BoardTile tile in _boardTiles)
+            foreach(BoardTile tile in BoardTiles)
             {
                 tile.Draw(spriteBatch);
             }
@@ -86,12 +93,12 @@ namespace ChessBot.GUI
                 for(int c = 0; c < 8; c++)
                 {
                     Color color = (r + c) % 2 == 1 ? _lightSquareColor : _darkSquareColor;
-                    BoardTile tile = new BoardTile(_tileTexture, new Vector2(pos.X, pos.Y), _tileSize, color);
-                    _boardTiles[r * 8 + c] = tile;
-                    pos.X += _tileSize;
+                    BoardTile tile = new BoardTile(_tileTexture, new Vector2(pos.X, pos.Y), TileSize, color, r * 8 + c);
+                    BoardTiles[r * 8 + c] = tile;
+                    pos.X += TileSize;
                 }
                 pos.X = _bottomRightOfBoard.X;
-                pos.Y -= _tileSize;
+                pos.Y -= TileSize;
             }
         }
         void RenderPosition(Position position)
@@ -115,8 +122,8 @@ namespace ChessBot.GUI
             List<int> boardPositions = BoardHelper.BitboardToListOfSquareIndeces(bitboard);
             foreach(int i in boardPositions)
             {
-                BoardPiece piece = new BoardPiece(pieceTexture);
-                piece.ScreenPosition = _boardTiles[i].Position + new Vector2(_tileSize / 2);
+                BoardPiece piece = new BoardPiece(pieceTexture, this);
+                piece.ScreenPosition = BoardTiles[i].Position + new Vector2(TileSize / 2);
                 _boardPieces.Add(piece);
             }
         }

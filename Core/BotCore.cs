@@ -13,5 +13,10 @@ namespace ChessBot.Core
         {
             _moveGenerator = new MoveGenerator();
         }
+        // TODO: Make a move class, pass in move to check
+        public bool CanMakeMove()
+        {
+            return true;
+        }
     }
 }
