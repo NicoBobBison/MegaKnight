@@ -6,12 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using ChessBot.Core;
 
 namespace ChessBot.GUI
 {
     internal class BoardPiece : IEquatable<BoardPiece>
     {
-        public Vector2 BoardPosition;
+        public readonly Piece Piece;
+        public Square BoardPosition;
         public Vector2 ScreenPosition;
 
         static BoardPiece _selectedPiece = null;
@@ -19,29 +21,49 @@ namespace ChessBot.GUI
         Texture2D _texture;
         BoardRenderer _renderer;
         const float _pieceScale = 0.06f;
-        public BoardPiece(Texture2D texture, BoardRenderer renderer)
+        public BoardPiece(Texture2D texture, BoardRenderer renderer, Square boardPosition, Piece piece)
         {
             _texture = texture;
             _renderer = renderer;
+            BoardPosition = boardPosition;
+            Piece = piece;
         }
         public void Update(GameTime gameTime)
         {
+            // On click
             if (InputManager.GetMouseDown())
             {
+                // If holding this piece
                 if(_selectedPiece == this)
                 {
+                    // Get hovered tile
+                    BoardTile hoveredTile = GetHoveredBoardTile(_renderer.BoardTiles);
+                    // If hovering a position on the board
+                    if(hoveredTile != null)
+                    {
+                        // Generate move based on hovered tile
+                        Square desiredSquare = (Square)hoveredTile.Index;
+                        Move move = new Move(true, Piece, BoardPosition, desiredSquare); // For now, player always plays white
+                        // If move is valid
+                        if (_renderer.Core.CanMakeMove(move, _renderer.Core.CurrentPosition))
+                        {
+                            ScreenPosition = hoveredTile.Position + new Vector2(BoardRenderer.TileSize / 2);
+                            BoardPosition = desiredSquare;
+                            _renderer.Core.CurrentPosition = _renderer.Core.UpdatePositionWithLegalMove(move, _renderer.Core.CurrentPosition);
+                        }
+                    }
+                    // TODO: Since this is run on all pieces, the last pieces to be updated trigger the else-if condition below 
+                    _selectedPiece = null;
+                    BoardTile.HoveredTile = null;
+                }
+                else if(_selectedPiece == null && InputManager.IsHovering(GetCollisionBox()))
+                {
+                    _selectedPiece = this;
                     BoardTile hoveredTile = GetHoveredBoardTile(_renderer.BoardTiles);
                     if(hoveredTile != null)
                     {
-                        ulong desiredTarget = 1ul << hoveredTile.Index;
-
-                        ScreenPosition = hoveredTile.Position + new Vector2(BoardRenderer.TileSize / 2);
+                        BoardTile.HoveredTile = hoveredTile;
                     }
-                    _selectedPiece = null;
-                }
-                else if(InputManager.IsHovering(GetCollisionBox()))
-                {
-                    _selectedPiece = this;
                 }
             }
         }

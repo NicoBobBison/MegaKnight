@@ -10,12 +10,14 @@ namespace ChessBot.GUI
 {
     internal class BoardRenderer
     {
-        BotCore _core;
+        public readonly BotCore Core;
 
         #region Constants
         private Vector2 _bottomRightOfBoard;
         private readonly Color _lightSquareColor = new Color(214, 198, 182);
         private readonly Color _darkSquareColor = new Color(173, 145, 116);
+        private readonly Color _lightSquareHoveredColor = new Color(214, 198, 182) * 0.8f;
+        private readonly Color _darkSquareHoveredColor = new Color(173, 145, 116) * 0.8f;
         public const int TileSize = 115;
         #endregion
 
@@ -44,11 +46,12 @@ namespace ChessBot.GUI
             LoadContent(content);
             _bottomRightOfBoard = new Vector2(screenSize.X / 2 - 4 * TileSize, screenSize.Y / 2 + 3 * TileSize);
             CreateBoardTiles();
-            _core = new BotCore();
+            Core = new BotCore();
 
             Position test = new Position();
             test.WhiteRooks = 129ul;
             RenderPosition(test);
+            Core.CurrentPosition = test;
         }
         public void Update(GameTime gameTime)
         {
@@ -93,7 +96,8 @@ namespace ChessBot.GUI
                 for(int c = 0; c < 8; c++)
                 {
                     Color color = (r + c) % 2 == 1 ? _lightSquareColor : _darkSquareColor;
-                    BoardTile tile = new BoardTile(_tileTexture, new Vector2(pos.X, pos.Y), TileSize, color, r * 8 + c);
+                    Color hoverColor = (r + c) % 2 == 1 ? _lightSquareHoveredColor : _darkSquareHoveredColor;
+                    BoardTile tile = new BoardTile(_tileTexture, new Vector2(pos.X, pos.Y), TileSize, color, hoverColor, r * 8 + c);
                     BoardTiles[r * 8 + c] = tile;
                     pos.X += TileSize;
                 }
@@ -103,26 +107,26 @@ namespace ChessBot.GUI
         }
         void RenderPosition(Position position)
         {
-            RenderBitboard(position.WhitePawns, _whitePawn);
-            RenderBitboard(position.WhiteKnights, _whiteKnight);
-            RenderBitboard(position.WhiteBishops, _whiteBishop);
-            RenderBitboard(position.WhiteRooks, _whiteRook);
-            RenderBitboard(position.WhiteQueens, _whiteQueen);
-            RenderBitboard(position.WhiteKing, _whiteKing);
+            RenderBitboard(position.WhitePawns, _whitePawn, Piece.Pawn);
+            RenderBitboard(position.WhiteKnights, _whiteKnight, Piece.Knight);
+            RenderBitboard(position.WhiteBishops, _whiteBishop, Piece.Bishop);
+            RenderBitboard(position.WhiteRooks, _whiteRook, Piece.Rook);
+            RenderBitboard(position.WhiteQueens, _whiteQueen, Piece.Queen);
+            RenderBitboard(position.WhiteKing, _whiteKing, Piece.King);
 
-            RenderBitboard(position.BlackPawns, _blackPawn);
-            RenderBitboard(position.BlackKnights, _blackKnight);
-            RenderBitboard(position.BlackBishops, _blackBishop);
-            RenderBitboard(position.BlackRooks, _blackRook);
-            RenderBitboard(position.BlackQueens, _blackQueen);
-            RenderBitboard(position.BlackKing, _blackKing);
+            RenderBitboard(position.BlackPawns, _blackPawn, Piece.Pawn);
+            RenderBitboard(position.BlackKnights, _blackKnight, Piece.Knight);
+            RenderBitboard(position.BlackBishops, _blackBishop, Piece.Bishop);
+            RenderBitboard(position.BlackRooks, _blackRook, Piece.Rook);
+            RenderBitboard(position.BlackQueens, _blackQueen, Piece.Queen);
+            RenderBitboard(position.BlackKing, _blackKing, Piece.King);
         }
-        void RenderBitboard(ulong bitboard, Texture2D pieceTexture)
+        void RenderBitboard(ulong bitboard, Texture2D pieceTexture, Piece pieceType)
         {
             List<int> boardPositions = BoardHelper.BitboardToListOfSquareIndeces(bitboard);
             foreach(int i in boardPositions)
             {
-                BoardPiece piece = new BoardPiece(pieceTexture, this);
+                BoardPiece piece = new BoardPiece(pieceTexture, this, (Square)i, pieceType);
                 piece.ScreenPosition = BoardTiles[i].Position + new Vector2(TileSize / 2);
                 _boardPieces.Add(piece);
             }
