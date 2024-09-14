@@ -52,11 +52,10 @@ namespace ChessBot.GUI
                             _renderer.Core.CurrentPosition = _renderer.Core.UpdatePositionWithLegalMove(move, _renderer.Core.CurrentPosition);
                         }
                     }
-                    // TODO: Since this is run on all pieces, the last pieces to be updated trigger the else-if condition below 
                     _selectedPiece = null;
                     BoardTile.HoveredTile = null;
                 }
-                else if(_selectedPiece == null && InputManager.IsHovering(GetCollisionBox()))
+                else if(InputManager.IsHovering(GetCollisionBox()))
                 {
                     _selectedPiece = this;
                     BoardTile hoveredTile = GetHoveredBoardTile(_renderer.BoardTiles);
