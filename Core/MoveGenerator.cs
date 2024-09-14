@@ -32,8 +32,12 @@ namespace ChessBot.Core
         {
             switch (move.Piece)
             {
+                case Piece.Bishop:
+                    return GenerateBishopMoves(move.StartSquare, position);
                 case Piece.Rook:
                     return GenerateRookMoves(move.StartSquare, position);
+                case Piece.Queen:
+                    return GenerateQueenMoves(move.StartSquare, position);
             }
             throw new NotImplementedException("Need to add more pieces to move generator");
         }
@@ -45,37 +49,78 @@ namespace ChessBot.Core
 
             ulong attackRay = _rays[indexOfPosition, (int)Direction.North];
             possibleMoves |= attackRay;
-            if((attackRay & position.AllPieces) > 0)
+            if((attackRay & position.AllPieces & ~rookPosition) > 0)
             {
-                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces & ~rookPosition);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.North];
             }
 
             attackRay = _rays[indexOfPosition, (int)Direction.East];
             possibleMoves |= attackRay;
-            if ((attackRay & position.AllPieces) > 0)
+            if ((attackRay & position.AllPieces & ~rookPosition) > 0)
             {
-                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces & ~rookPosition);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.East];
             }
 
             attackRay = _rays[indexOfPosition, (int)Direction.South];
             possibleMoves |= attackRay;
-            if ((attackRay & position.AllPieces) > 0)
+            if ((attackRay & position.AllPieces & ~rookPosition) > 0)
             {
-                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces & ~rookPosition);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.South];
             }
 
             attackRay = _rays[indexOfPosition, (int)Direction.West];
             possibleMoves |= attackRay;
-            if ((attackRay & position.AllPieces) > 0)
+            if ((attackRay & position.AllPieces & ~rookPosition) > 0)
             {
-                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces & ~rookPosition);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.West];
             }
-            // Something doesn't work :(((
             return possibleMoves;
+        }
+        public ulong GenerateBishopMoves(ulong bishopPosition, Position position)
+        {
+            ulong possibleMoves = 0ul;
+            int indexOfPosition = BitOperations.TrailingZeroCount(bishopPosition);
+
+            ulong attackRay = _rays[indexOfPosition, (int)Direction.NorthEast];
+            possibleMoves |= attackRay;
+            if ((attackRay & position.AllPieces & ~bishopPosition) > 0)
+            {
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces & ~bishopPosition);
+                possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.NorthEast];
+            }
+
+            attackRay = _rays[indexOfPosition, (int)Direction.NorthWest];
+            possibleMoves |= attackRay;
+            if ((attackRay & position.AllPieces & ~bishopPosition) > 0)
+            {
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces & ~bishopPosition);
+                possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.NorthWest];
+            }
+
+            attackRay = _rays[indexOfPosition, (int)Direction.SouthEast];
+            possibleMoves |= attackRay;
+            if ((attackRay & position.AllPieces & ~bishopPosition) > 0)
+            {
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces & ~bishopPosition);
+                possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.SouthEast];
+            }
+
+            attackRay = _rays[indexOfPosition, (int)Direction.SouthWest];
+            possibleMoves |= attackRay;
+            if ((attackRay & position.AllPieces & ~bishopPosition) > 0)
+            {
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces & ~bishopPosition);
+                possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.SouthWest];
+            }
+            return possibleMoves;
+        }
+        public ulong GenerateQueenMoves(ulong queenPosition, Position position)
+        {
+            return GenerateBishopMoves(queenPosition, position) | GenerateRookMoves(queenPosition, position);
         }
         ulong[,] PrecomputeAttackRays()
         {
