@@ -43,7 +43,7 @@ namespace ChessBot.GUI
                     {
                         // Generate move based on hovered tile
                         Square desiredSquare = (Square)hoveredTile.Index;
-                        Move move = new Move(true, Piece, BoardPosition, desiredSquare); // For now, player always plays white
+                        Move move = new Move(Piece, BoardPosition, desiredSquare);
                         // If move is valid
                         if (_renderer.Core.CanMakeMove(move, _renderer.Core.CurrentPosition))
                         {

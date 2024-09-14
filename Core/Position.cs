@@ -28,5 +28,6 @@ namespace ChessBot.Core
         public ulong WhitePieces => WhitePawns | WhiteKnights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKing;
         public ulong BlackPieces => BlackPawns | BlackKnights | BlackBishops | BlackRooks | BlackQueens | BlackKing;
         public ulong AllPieces => WhitePieces | BlackPieces;
+        public bool WhiteToMove;
     }
 }

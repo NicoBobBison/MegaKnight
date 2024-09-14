@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ChessBot.Core
+﻿namespace ChessBot.Core
 {
     internal class BotCore
     {
@@ -16,17 +10,13 @@ namespace ChessBot.Core
         }
         public bool CanMakeMove(Move move, Position position)
         {
-            if (move.IsWhite)
-            {
-                bool isBlocked = (move.EndSquare & position.WhitePieces) > 0;
-                return !isBlocked;
-            }
-            return true;
+            ulong possibleMoves = _moveGenerator.GenerateMoves(move, position);
+            return (possibleMoves & move.EndSquare) > 0;
         }
         // Precondition: Move must be legal (check with CanMakeMove())
         public Position UpdatePositionWithLegalMove(Move move, Position position)
         {
-            if (move.IsWhite)
+            if (position.WhiteToMove)
             {
                 switch (move.Piece)
                 {
@@ -86,6 +76,8 @@ namespace ChessBot.Core
                         break;
                 }
             }
+            // Add this back once we add black pieces
+            // position.WhiteToMove = !position.WhiteToMove;
             return position;
         }
     }

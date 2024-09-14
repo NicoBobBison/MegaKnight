@@ -49,6 +49,7 @@ namespace ChessBot.GUI
             Core = new BotCore();
 
             Position test = new Position();
+            test.WhiteToMove = true;
             test.WhiteRooks = 129ul;
             RenderPosition(test);
             Core.CurrentPosition = test;

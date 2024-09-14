@@ -28,9 +28,54 @@ namespace ChessBot.Core
         {
             _rays = PrecomputeAttackRays();
         }
-        ulong GenerateRookMoves(ulong rookBitboard, Position position)
+        public ulong GenerateMoves(Move move, Position position)
         {
-            return 0;
+            switch (move.Piece)
+            {
+                case Piece.Rook:
+                    return GenerateRookMoves(move.StartSquare, position);
+            }
+            throw new NotImplementedException("Need to add more pieces to move generator");
+        }
+        // Assumed that the color of the rook is based on who's turn it is in the position
+        public ulong GenerateRookMoves(ulong rookPosition, Position position)
+        {
+            ulong possibleMoves = 0ul;
+            int indexOfPosition = BitOperations.TrailingZeroCount(rookPosition);
+
+            ulong attackRay = _rays[indexOfPosition, (int)Direction.North];
+            possibleMoves |= attackRay;
+            if((attackRay & position.AllPieces) > 0)
+            {
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
+                possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.North];
+            }
+
+            attackRay = _rays[indexOfPosition, (int)Direction.East];
+            possibleMoves |= attackRay;
+            if ((attackRay & position.AllPieces) > 0)
+            {
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
+                possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.East];
+            }
+
+            attackRay = _rays[indexOfPosition, (int)Direction.South];
+            possibleMoves |= attackRay;
+            if ((attackRay & position.AllPieces) > 0)
+            {
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
+                possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.South];
+            }
+
+            attackRay = _rays[indexOfPosition, (int)Direction.West];
+            possibleMoves |= attackRay;
+            if ((attackRay & position.AllPieces) > 0)
+            {
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
+                possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.West];
+            }
+            // Something doesn't work :(((
+            return possibleMoves;
         }
         ulong[,] PrecomputeAttackRays()
         {
@@ -43,7 +88,8 @@ namespace ChessBot.Core
                     for(int direction = 0; direction < 8; direction++)
                     {
                         ulong positionCount = 1ul << (r * 8 + c);
-                        ulong tempBoard = 0ul; // Use a temporary board because we don't want to include "not moving" as a valid move
+                        // TODO: Change this to include starting square as valid move, and just check it somewhere else
+                        ulong tempBoard = positionCount; // Use a temporary board because we don't want to include "not moving" as a valid move
                         int rowCount = r;
                         int colCount = c;
                         Vector2 dirVector = DirectionToVector(_directionBitShifts[direction]);
@@ -62,7 +108,7 @@ namespace ChessBot.Core
             return rays;
         }
         /// <summary>
-        /// Converts a bit shift operation to a vector representing the shift direction
+        /// Converts a bit shift operation to a vector representing the shift direction relative to the starting square
         /// </summary>
         /// <param name="direction">Bit shift direction</param>
         /// <returns>Vector2 version of direction</returns>

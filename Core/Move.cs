@@ -29,13 +29,11 @@ namespace ChessBot.Core
 
     internal class Move
     {
-        public readonly bool IsWhite;
         public readonly Piece Piece;
         public readonly ulong StartSquare;
         public readonly ulong EndSquare;
-        public Move(bool isWhite, Piece piece, Square startSquare, Square endSquare)
+        public Move(Piece piece, Square startSquare, Square endSquare)
         {
-            IsWhite = isWhite;
             Piece = piece;
             StartSquare = SquareToBitboard(startSquare);
             EndSquare = SquareToBitboard(endSquare);
