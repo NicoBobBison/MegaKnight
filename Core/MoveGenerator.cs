@@ -49,36 +49,38 @@ namespace ChessBot.Core
 
             ulong attackRay = _rays[indexOfPosition, (int)Direction.North];
             possibleMoves |= attackRay;
-            if((attackRay & position.AllPieces & ~rookPosition) > 0)
+            if((attackRay & position.AllPieces) > 0)
             {
-                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces & ~rookPosition);
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.North];
             }
 
             attackRay = _rays[indexOfPosition, (int)Direction.East];
             possibleMoves |= attackRay;
-            if ((attackRay & position.AllPieces & ~rookPosition) > 0)
+            if ((attackRay & position.AllPieces) > 0)
             {
-                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces & ~rookPosition);
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.East];
             }
 
             attackRay = _rays[indexOfPosition, (int)Direction.South];
             possibleMoves |= attackRay;
-            if ((attackRay & position.AllPieces & ~rookPosition) > 0)
+            if ((attackRay & position.AllPieces) > 0)
             {
-                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces & ~rookPosition);
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.South];
             }
 
             attackRay = _rays[indexOfPosition, (int)Direction.West];
             possibleMoves |= attackRay;
-            if ((attackRay & position.AllPieces & ~rookPosition) > 0)
+            if ((attackRay & position.AllPieces) > 0)
             {
-                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces & ~rookPosition);
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.West];
             }
-            return possibleMoves;
+
+            ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
+            return possibleMoves & ~friendlyPieces;
         }
         public ulong GenerateBishopMoves(ulong bishopPosition, Position position)
         {
@@ -87,36 +89,38 @@ namespace ChessBot.Core
 
             ulong attackRay = _rays[indexOfPosition, (int)Direction.NorthEast];
             possibleMoves |= attackRay;
-            if ((attackRay & position.AllPieces & ~bishopPosition) > 0)
+            if ((attackRay & position.AllPieces) > 0)
             {
-                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces & ~bishopPosition);
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.NorthEast];
             }
 
             attackRay = _rays[indexOfPosition, (int)Direction.NorthWest];
             possibleMoves |= attackRay;
-            if ((attackRay & position.AllPieces & ~bishopPosition) > 0)
+            if ((attackRay & position.AllPieces) > 0)
             {
-                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces & ~bishopPosition);
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.NorthWest];
             }
 
             attackRay = _rays[indexOfPosition, (int)Direction.SouthEast];
             possibleMoves |= attackRay;
-            if ((attackRay & position.AllPieces & ~bishopPosition) > 0)
+            if ((attackRay & position.AllPieces) > 0)
             {
-                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces & ~bishopPosition);
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.SouthEast];
             }
 
             attackRay = _rays[indexOfPosition, (int)Direction.SouthWest];
             possibleMoves |= attackRay;
-            if ((attackRay & position.AllPieces & ~bishopPosition) > 0)
+            if ((attackRay & position.AllPieces) > 0)
             {
-                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces & ~bishopPosition);
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
                 possibleMoves &= ~_rays[firstMaskedBlocker, (int)Direction.SouthWest];
             }
-            return possibleMoves;
+
+            ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
+            return possibleMoves & ~friendlyPieces;
         }
         public ulong GenerateQueenMoves(ulong queenPosition, Position position)
         {
@@ -133,8 +137,7 @@ namespace ChessBot.Core
                     for(int direction = 0; direction < 8; direction++)
                     {
                         ulong positionCount = 1ul << (r * 8 + c);
-                        // TODO: Change this to include starting square as valid move, and just check it somewhere else
-                        ulong tempBoard = positionCount; // Use a temporary board because we don't want to include "not moving" as a valid move
+                        ulong tempBoard = 0ul; // Use a temporary board because we don't want to include "not moving" as a valid move. Also easier for capture detection this way.
                         int rowCount = r;
                         int colCount = c;
                         Vector2 dirVector = DirectionToVector(_directionBitShifts[direction]);
