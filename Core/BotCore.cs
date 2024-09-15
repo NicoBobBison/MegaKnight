@@ -13,6 +13,14 @@
             ulong possibleMoves = _moveGenerator.GenerateMoves(move, position);
             return (possibleMoves & move.EndSquare) > 0;
         }
+        public ulong GetLegalMoves(Move move, Position position)
+        {
+            return _moveGenerator.GenerateMoves(move, position);
+        }
+        public ulong GetLegalMoves(ulong startSquare, Piece piece, Position position)
+        {
+            return _moveGenerator.GenerateMoves(startSquare, piece, position);
+        }
         // Precondition: Move must be legal (check with CanMakeMove())
         public Position UpdatePositionWithLegalMove(Move move, Position position)
         {

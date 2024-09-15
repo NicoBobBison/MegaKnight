@@ -22,6 +22,7 @@ namespace ChessBot.GUI
         #endregion
 
         private Texture2D _tileTexture;
+        private Texture2D _movePreviewTexture;
 
         #region Piece textures
         private Texture2D _whitePawn;
@@ -40,12 +41,14 @@ namespace ChessBot.GUI
         #endregion
 
         public BoardTile[] BoardTiles = new BoardTile[64];
+        MovePreview[] _movePreviews = new MovePreview[64];
         List<BoardPiece> _boardPieces = new List<BoardPiece>();
         public BoardRenderer(ContentManager content, Vector2 screenSize)
         {
             LoadContent(content);
             _bottomRightOfBoard = new Vector2(screenSize.X / 2 - 4 * TileSize, screenSize.Y / 2 + 3 * TileSize);
             CreateBoardTiles();
+            CreateMovePreviewCircles();
             Core = new BotCore();
 
             Position test = new Position();
@@ -73,10 +76,15 @@ namespace ChessBot.GUI
             {
                 piece.Draw(spriteBatch);
             }
+            foreach(MovePreview preview in _movePreviews)
+            {
+                preview.Draw(spriteBatch);
+            }
         }
         void LoadContent(ContentManager content)
         {
             _tileTexture = content.Load<Texture2D>("BoardTile");
+            _movePreviewTexture = content.Load<Texture2D>("MovePreview");
 
             _whitePawn = content.Load<Texture2D>("Pieces/WhitePawn");
             _whiteKnight = content.Load<Texture2D>("Pieces/WhiteKnight");
@@ -108,6 +116,21 @@ namespace ChessBot.GUI
                 pos.Y -= TileSize;
             }
         }
+        void CreateMovePreviewCircles()
+        {
+            Vector2 pos = _bottomRightOfBoard + new Vector2(TileSize / 2);
+            for (int r = 0; r < 8; r++)
+            {
+                for (int c = 0; c < 8; c++)
+                {
+                    MovePreview preview = new MovePreview(_movePreviewTexture, new Vector2(pos.X, pos.Y));
+                    _movePreviews[r * 8 + c] = preview;
+                    pos.X += TileSize;
+                }
+                pos.X = _bottomRightOfBoard.X + TileSize / 2;
+                pos.Y -= TileSize;
+            }
+        }
         void RenderPosition(Position position)
         {
             RenderBitboard(position.WhitePawns, _whitePawn, Piece.Pawn);
@@ -132,6 +155,22 @@ namespace ChessBot.GUI
                 BoardPiece piece = new BoardPiece(pieceTexture, this, (Square)i, pieceType);
                 piece.ScreenPosition = BoardTiles[i].Position + new Vector2(TileSize / 2);
                 _boardPieces.Add(piece);
+            }
+        }
+        public void ClearMovePreview()
+        {
+            foreach(MovePreview preview in _movePreviews)
+            {
+                preview.IsShown = false;
+            }
+        }
+        public void RenderMovePreview(ulong startSquare, Piece piece, Position position)
+        {
+            ulong possibleMoves = Core.GetLegalMoves(startSquare, piece, position);
+            List<int> moveIndeces = BoardHelper.BitboardToListOfSquareIndeces(possibleMoves);
+            for(int i = 0; i < 64; i++)
+            {
+                _movePreviews[i].IsShown = moveIndeces.Contains(i);
             }
         }
     }

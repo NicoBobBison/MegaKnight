@@ -41,6 +41,20 @@ namespace ChessBot.Core
             }
             throw new NotImplementedException("Need to add more pieces to move generator");
         }
+        public ulong GenerateMoves(ulong startSquare, Piece piece, Position position)
+        {
+            switch (piece)
+            {
+                case Piece.Bishop:
+                    return GenerateBishopMoves(startSquare, position);
+                case Piece.Rook:
+                    return GenerateRookMoves(startSquare, position);
+                case Piece.Queen:
+                    return GenerateQueenMoves(startSquare, position);
+            }
+            throw new NotImplementedException("Need to add more pieces to move generator");
+        }
+
         // Assumed that the color of the rook is based on who's turn it is in the position
         public ulong GenerateRookMoves(ulong rookPosition, Position position)
         {
@@ -125,6 +139,10 @@ namespace ChessBot.Core
         public ulong GenerateQueenMoves(ulong queenPosition, Position position)
         {
             return GenerateBishopMoves(queenPosition, position) | GenerateRookMoves(queenPosition, position);
+        }
+        public ulong GenerateKnightMoves(ulong knightPosition, Position position)
+        {
+            return 0ul;
         }
         ulong[,] PrecomputeAttackRays()
         {

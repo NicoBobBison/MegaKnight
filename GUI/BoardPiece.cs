@@ -54,6 +54,7 @@ namespace ChessBot.GUI
                     }
                     _selectedPiece = null;
                     BoardTile.HoveredTile = null;
+                    _renderer.ClearMovePreview();
                 }
                 else if(InputManager.IsHovering(GetCollisionBox()))
                 {
@@ -62,6 +63,8 @@ namespace ChessBot.GUI
                     if(hoveredTile != null)
                     {
                         BoardTile.HoveredTile = hoveredTile;
+                        ulong square = 1ul << (int)BoardPosition;
+                        _renderer.RenderMovePreview(square, Piece, _renderer.Core.CurrentPosition);
                     }
                 }
             }
