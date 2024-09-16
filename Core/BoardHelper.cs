@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -43,6 +44,11 @@ namespace ChessBot.Core
                 indexCount++;
             }
             return indeces;
+        }
+        // Precondition: Bitboard represents a ulong with exactly one bit
+        public static int BitboardToIndex(ulong bitboard)
+        {
+            return BitOperations.TrailingZeroCount(bitboard);
         }
     }
 }

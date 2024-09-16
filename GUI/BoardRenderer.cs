@@ -53,8 +53,9 @@ namespace ChessBot.GUI
 
             Position test = new Position();
             test.WhiteToMove = true;
-            test.WhiteRooks = 129ul;
+            test.WhiteKnights = 66ul;
             test.WhiteBishops = 36ul;
+            test.WhiteRooks = 129ul;
             test.WhiteQueens = 8ul;
             RenderPosition(test);
             Core.CurrentPosition = test;

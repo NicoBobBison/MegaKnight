@@ -34,7 +34,7 @@
                         break;
                     case Piece.Knight:
                         position.WhiteKnights |= move.EndSquare;
-                        position.WhiteBishops &= ~move.StartSquare;
+                        position.WhiteKnights &= ~move.StartSquare;
                         break;
                     case Piece.Bishop:
                         position.WhiteBishops |= move.EndSquare;
