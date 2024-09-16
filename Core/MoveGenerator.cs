@@ -11,8 +11,17 @@ namespace ChessBot.Core
 {
     internal class MoveGenerator
     {
+        enum PieceColor
+        {
+            White,
+            Black
+        }
+        #region Precomputed board masks
         ulong[,] _rayAttacks;
         ulong[] _knightAttacks;
+        ulong[,] _pawnAttacks;
+        #endregion
+
         readonly int[] _directionBitShifts = new int[] { 8, 9, 1, -7, -8, -9, -1, 7 };
         enum Direction
         {
@@ -29,11 +38,14 @@ namespace ChessBot.Core
         {
             _rayAttacks = PrecomputeAttackRays();
             _knightAttacks = PrecomputeKnightMoves();
+            _pawnAttacks = PrecomputePawnAttacks();
         }
         public ulong GenerateMoves(Move move, Position position)
         {
             switch (move.Piece)
             {
+                case Piece.Pawn:
+                    return GeneratePawnMoves(move.StartSquare, position);
                 case Piece.Knight:
                     return GenerateKnightMoves(move.StartSquare, position);
                 case Piece.Bishop:
@@ -49,6 +61,8 @@ namespace ChessBot.Core
         {
             switch (piece)
             {
+                case Piece.Pawn:
+                    return GeneratePawnMoves(startSquare, position);
                 case Piece.Knight:
                     return GenerateKnightMoves(startSquare, position);
                 case Piece.Bishop:
@@ -62,6 +76,31 @@ namespace ChessBot.Core
         }
 
         // Assumed that the color of the piece moving is based on who's turn it is in the position
+        public ulong GeneratePawnMoves(ulong pawnPosition, Position position)
+        {
+            ulong moves = 0ul;
+            if (position.WhiteToMove)
+            {
+                ulong oneForward = (pawnPosition << 8) & ~position.AllPieces;
+                moves |= oneForward;
+                if(BoardHelper.BitboardToIndex(pawnPosition) / 8 == 1 && oneForward > 0)
+                {
+                    moves |= (pawnPosition << 16) & ~position.AllPieces;
+                }
+                moves |= _pawnAttacks[(int)PieceColor.White, BoardHelper.BitboardToIndex(pawnPosition)] & position.BlackPieces;
+            }
+            else
+            {
+                ulong oneForward = (pawnPosition >> 8) & ~position.AllPieces;
+                moves |= oneForward;
+                if (BoardHelper.BitboardToIndex(pawnPosition) / 8 == 6 && oneForward > 0)
+                {
+                    moves |= (pawnPosition >> 16) & ~position.AllPieces;
+                }
+                moves |= _pawnAttacks[(int)PieceColor.Black, BoardHelper.BitboardToIndex(pawnPosition)] & position.WhitePieces;
+            }
+            return moves;
+        }
         public ulong GenerateKnightMoves(ulong knightPosition, Position position)
         {
             int index = BoardHelper.BitboardToIndex(knightPosition);
@@ -218,6 +257,35 @@ namespace ChessBot.Core
             }
             return moves;
         }
+        ulong[,] PrecomputePawnAttacks()
+        {
+            ulong[,] attacks = new ulong[2, 64];
+            for (int r = 0; r < 8; r++)
+            {
+                for (int c = 0; c < 8; c++)
+                {
+                    ulong position = 1ul << (r * 8 + c);
+                    ulong whiteBoard = 0ul;
+                    ulong blackBoard = 0ul;
+
+                    if(c != 0)
+                    {
+                        whiteBoard |= position << 7;
+                        blackBoard |= position >> 9;
+                    }
+                    if(c != 7)
+                    {
+                        whiteBoard |= position << 9;
+                        blackBoard |= position >> 7;
+                    }
+
+                    attacks[(int)PieceColor.White, r * 8 + c] = whiteBoard;
+                    attacks[(int)PieceColor.Black, r * 8 + c] = blackBoard;
+                }
+            }
+            return attacks;
+        }
+
         /// <summary>
         /// Converts a bit shift operation to a vector representing the shift direction relative to the starting square
         /// </summary>

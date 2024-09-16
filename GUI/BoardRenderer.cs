@@ -53,6 +53,8 @@ namespace ChessBot.GUI
 
             Position test = new Position();
             test.WhiteToMove = true;
+            // This way of setting up the position is temporary and only for testing moves for now
+            test.WhitePawns = 256ul;
             test.WhiteKnights = 66ul;
             test.WhiteBishops = 36ul;
             test.WhiteRooks = 129ul;
