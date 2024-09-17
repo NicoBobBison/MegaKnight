@@ -20,6 +20,7 @@ namespace ChessBot.Core
         ulong[,] _rayAttacks;
         ulong[] _knightAttacks;
         ulong[,] _pawnAttacks;
+        ulong[] _kingAttacks;
         #endregion
 
         readonly int[] _directionBitShifts = new int[] { 8, 9, 1, -7, -8, -9, -1, 7 };
@@ -39,6 +40,7 @@ namespace ChessBot.Core
             _rayAttacks = PrecomputeAttackRays();
             _knightAttacks = PrecomputeKnightMoves();
             _pawnAttacks = PrecomputePawnAttacks();
+            _kingAttacks = PrecomputeKingMoves();
         }
         public ulong GenerateMoves(Move move, Position position)
         {
@@ -54,6 +56,8 @@ namespace ChessBot.Core
                     return GenerateRookMoves(move.StartSquare, position);
                 case Piece.Queen:
                     return GenerateQueenMoves(move.StartSquare, position);
+                case Piece.King:
+                    return GenerateKingMoves(move.StartSquare, position);
             }
             throw new NotImplementedException("Need to add more pieces to move generator");
         }
@@ -71,6 +75,8 @@ namespace ChessBot.Core
                     return GenerateRookMoves(startSquare, position);
                 case Piece.Queen:
                     return GenerateQueenMoves(startSquare, position);
+                case Piece.King:
+                    return GenerateKingMoves(startSquare, position);
             }
             throw new NotImplementedException("Need to add more pieces to move generator");
         }
@@ -107,85 +113,91 @@ namespace ChessBot.Core
             ulong friendlyBlockers = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
             return _knightAttacks[index] & ~friendlyBlockers;
         }
+        public ulong GenerateKingMoves(ulong kingPosition, Position position)
+        {
+            int index = BoardHelper.BitboardToIndex(kingPosition);
+            ulong friendlyBlockers = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
+            return _kingAttacks[index] & ~friendlyBlockers;
+        }
         public ulong GenerateRookMoves(ulong rookPosition, Position position)
         {
-            ulong possibleMoves = 0ul;
+            ulong moves = 0ul;
             int indexOfPosition = BitOperations.TrailingZeroCount(rookPosition);
 
             ulong attackRay = _rayAttacks[indexOfPosition, (int)Direction.North];
-            possibleMoves |= attackRay;
+            moves |= attackRay;
             if((attackRay & position.AllPieces) > 0)
             {
                 int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
-                possibleMoves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.North];
+                moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.North];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.East];
-            possibleMoves |= attackRay;
+            moves |= attackRay;
             if ((attackRay & position.AllPieces) > 0)
             {
                 int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
-                possibleMoves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.East];
+                moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.East];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.South];
-            possibleMoves |= attackRay;
+            moves |= attackRay;
             if ((attackRay & position.AllPieces) > 0)
             {
                 int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
-                possibleMoves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.South];
+                moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.South];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.West];
-            possibleMoves |= attackRay;
+            moves |= attackRay;
             if ((attackRay & position.AllPieces) > 0)
             {
                 int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
-                possibleMoves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.West];
+                moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.West];
             }
 
             ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
-            return possibleMoves & ~friendlyPieces;
+            return moves & ~friendlyPieces;
         }
         public ulong GenerateBishopMoves(ulong bishopPosition, Position position)
         {
-            ulong possibleMoves = 0ul;
+            ulong moves = 0ul;
             int indexOfPosition = BitOperations.TrailingZeroCount(bishopPosition);
 
             ulong attackRay = _rayAttacks[indexOfPosition, (int)Direction.NorthEast];
-            possibleMoves |= attackRay;
+            moves |= attackRay;
             if ((attackRay & position.AllPieces) > 0)
             {
                 int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
-                possibleMoves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.NorthEast];
+                moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.NorthEast];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.NorthWest];
-            possibleMoves |= attackRay;
+            moves |= attackRay;
             if ((attackRay & position.AllPieces) > 0)
             {
                 int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
-                possibleMoves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.NorthWest];
+                moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.NorthWest];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.SouthEast];
-            possibleMoves |= attackRay;
+            moves |= attackRay;
             if ((attackRay & position.AllPieces) > 0)
             {
                 int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
-                possibleMoves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.SouthEast];
+                moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.SouthEast];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.SouthWest];
-            possibleMoves |= attackRay;
+            moves |= attackRay;
             if ((attackRay & position.AllPieces) > 0)
             {
                 int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
-                possibleMoves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.SouthWest];
+                moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.SouthWest];
             }
 
             ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
-            return possibleMoves & ~friendlyPieces;
+            return moves & ~friendlyPieces;
         }
         public ulong GenerateQueenMoves(ulong queenPosition, Position position)
         {
@@ -284,6 +296,36 @@ namespace ChessBot.Core
                 }
             }
             return attacks;
+        }
+        public ulong[] PrecomputeKingMoves()
+        {
+            ulong[] moves = new ulong[64];
+            for (int r = 0; r < 8; r++)
+            {
+                for (int c = 0; c < 8; c++)
+                {
+                    ulong position = 1ul << (r * 8 + c);
+                    ulong board = 0ul;
+
+                    // We don't need to check if the bitshift results in a ulong > 0 because then the bitwise-or would not affect the board (could probably change this with ray attacks)
+                    board |= position << 8;
+                    board |= position >> 8;
+                    if (c != 7)
+                    {
+                        board |= position << 9;
+                        board |= position << 1;
+                        board |= position >> 7;
+                    }
+                    if (c != 0)
+                    {
+                        board |= position << 7;
+                        board |= position >> 1;
+                        board |= position >> 9;
+                    }
+                    moves[r * 8 + c] = board;
+                }
+            }
+            return moves;
         }
 
         /// <summary>

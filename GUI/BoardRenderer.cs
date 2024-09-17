@@ -59,6 +59,7 @@ namespace ChessBot.GUI
             test.WhiteBishops = 36ul;
             test.WhiteRooks = 129ul;
             test.WhiteQueens = 8ul;
+            test.WhiteKing = 16ul;
             RenderPosition(test);
             Core.CurrentPosition = test;
         }
