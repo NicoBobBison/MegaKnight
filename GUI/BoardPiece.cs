@@ -7,31 +7,37 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using ChessBot.Core;
+using System.Diagnostics;
 
 namespace ChessBot.GUI
 {
     internal class BoardPiece : IEquatable<BoardPiece>
     {
+        readonly bool _isWhite;
         public readonly Piece Piece;
         public Square BoardPosition;
         public Vector2 ScreenPosition;
+        public bool MarkDeleted = false;
 
         static BoardPiece _selectedPiece = null;
 
         Texture2D _texture;
         BoardRenderer _renderer;
         const float _pieceScale = 0.06f;
-        public BoardPiece(Texture2D texture, BoardRenderer renderer, Square boardPosition, Piece piece)
+        public BoardPiece(Texture2D texture, BoardRenderer renderer, Square boardPosition, Piece piece, bool isWhite)
         {
             _texture = texture;
             _renderer = renderer;
             BoardPosition = boardPosition;
             Piece = piece;
+            _isWhite = isWhite;
         }
         public void Update(GameTime gameTime)
         {
-            // On click
-            if (InputManager.GetMouseDown())
+            // TODO: This code is really bad, fix all of this
+            bool playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
+            // bool playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite)
+            if (InputManager.GetMouseDown() && playerInteractionCondition)// _renderer.Core.PlayerIsPlayingWhite == _isWhite)
             {
                 // If holding this piece
                 if(_selectedPiece == this)
@@ -47,16 +53,24 @@ namespace ChessBot.GUI
                         // If move is valid
                         if (_renderer.Core.CanMakeMove(move, _renderer.Core.CurrentPosition))
                         {
+                            _renderer.BoardTiles[(int)BoardPosition].Piece = null;
+
                             ScreenPosition = hoveredTile.Position + new Vector2(BoardRenderer.TileSize / 2);
                             BoardPosition = desiredSquare;
                             _renderer.Core.CurrentPosition = _renderer.Core.UpdatePositionWithLegalMove(move, _renderer.Core.CurrentPosition);
+
+                            if(hoveredTile.Piece != null)
+                            {
+                                hoveredTile.Piece.MarkDeleted = true;
+                            }
+                            hoveredTile.Piece = this;
                         }
                     }
                     _selectedPiece = null;
                     BoardTile.HoveredTile = null;
                     _renderer.ClearMovePreview();
                 }
-                else if(InputManager.IsHovering(GetCollisionBox()))
+                else if(InputManager.IsHovering(GetCollisionBox()) && !MarkDeleted)
                 {
                     _selectedPiece = this;
                     BoardTile hoveredTile = GetHoveredBoardTile(_renderer.BoardTiles);
@@ -76,7 +90,7 @@ namespace ChessBot.GUI
 
         public bool Equals(BoardPiece other)
         {
-            return BoardPosition == other.BoardPosition && ScreenPosition == other.ScreenPosition;
+            return BoardPosition == other.BoardPosition && ScreenPosition == other.ScreenPosition && Piece == other.Piece;
         }
         Rectangle GetCollisionBox()
         {

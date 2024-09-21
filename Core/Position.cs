@@ -24,10 +24,14 @@ namespace ChessBot.Core
         public ulong BlackQueens;
         public ulong BlackKing;
 
+        // Other information
+        public bool WhiteToMove;
+        public int WhiteEnPassantIndex = -1;
+        public int BlackEnPassantIndex = -1;
+
         // Other helpful bitboards
         public ulong WhitePieces => WhitePawns | WhiteKnights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKing;
         public ulong BlackPieces => BlackPawns | BlackKnights | BlackBishops | BlackRooks | BlackQueens | BlackKing;
         public ulong AllPieces => WhitePieces | BlackPieces;
-        public bool WhiteToMove;
     }
 }

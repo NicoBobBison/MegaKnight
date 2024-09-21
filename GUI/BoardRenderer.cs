@@ -58,16 +58,22 @@ namespace ChessBot.GUI
             test.WhiteKnights = 66ul;
             test.WhiteBishops = 36ul;
             test.WhiteRooks = 129ul;
-            test.WhiteQueens = 8ul;
+            test.WhiteQueens = 1ul << 63;
             test.WhiteKing = 16ul;
+
+            test.BlackPawns = 255ul << 40;
             RenderPosition(test);
             Core.CurrentPosition = test;
         }
         public void Update(GameTime gameTime)
         {
-            foreach(BoardPiece piece in _boardPieces)
+            foreach(BoardPiece piece in _boardPieces.ToArray())
             {
                 piece.Update(gameTime);
+                if (piece.MarkDeleted)
+                {
+                    _boardPieces.Remove(piece);
+                }
             }
         }
         public void Draw(SpriteBatch spriteBatch)
@@ -137,26 +143,27 @@ namespace ChessBot.GUI
         }
         void RenderPosition(Position position)
         {
-            RenderBitboard(position.WhitePawns, _whitePawn, Piece.Pawn);
-            RenderBitboard(position.WhiteKnights, _whiteKnight, Piece.Knight);
-            RenderBitboard(position.WhiteBishops, _whiteBishop, Piece.Bishop);
-            RenderBitboard(position.WhiteRooks, _whiteRook, Piece.Rook);
-            RenderBitboard(position.WhiteQueens, _whiteQueen, Piece.Queen);
-            RenderBitboard(position.WhiteKing, _whiteKing, Piece.King);
+            RenderBitboard(position.WhitePawns, _whitePawn, Piece.Pawn, true);
+            RenderBitboard(position.WhiteKnights, _whiteKnight, Piece.Knight, true);
+            RenderBitboard(position.WhiteBishops, _whiteBishop, Piece.Bishop, true);
+            RenderBitboard(position.WhiteRooks, _whiteRook, Piece.Rook, true);
+            RenderBitboard(position.WhiteQueens, _whiteQueen, Piece.Queen, true);
+            RenderBitboard(position.WhiteKing, _whiteKing, Piece.King, true);
 
-            RenderBitboard(position.BlackPawns, _blackPawn, Piece.Pawn);
-            RenderBitboard(position.BlackKnights, _blackKnight, Piece.Knight);
-            RenderBitboard(position.BlackBishops, _blackBishop, Piece.Bishop);
-            RenderBitboard(position.BlackRooks, _blackRook, Piece.Rook);
-            RenderBitboard(position.BlackQueens, _blackQueen, Piece.Queen);
-            RenderBitboard(position.BlackKing, _blackKing, Piece.King);
+            RenderBitboard(position.BlackPawns, _blackPawn, Piece.Pawn, false);
+            RenderBitboard(position.BlackKnights, _blackKnight, Piece.Knight, false);
+            RenderBitboard(position.BlackBishops, _blackBishop, Piece.Bishop, false);
+            RenderBitboard(position.BlackRooks, _blackRook, Piece.Rook, false);
+            RenderBitboard(position.BlackQueens, _blackQueen, Piece.Queen, false);
+            RenderBitboard(position.BlackKing, _blackKing, Piece.King, false);
         }
-        void RenderBitboard(ulong bitboard, Texture2D pieceTexture, Piece pieceType)
+        void RenderBitboard(ulong bitboard, Texture2D pieceTexture, Piece pieceType, bool isWhite)
         {
             List<int> boardPositions = BoardHelper.BitboardToListOfSquareIndeces(bitboard);
             foreach(int i in boardPositions)
             {
-                BoardPiece piece = new BoardPiece(pieceTexture, this, (Square)i, pieceType);
+                BoardPiece piece = new BoardPiece(pieceTexture, this, (Square)i, pieceType, isWhite);
+                BoardTiles[i].Piece = piece;
                 piece.ScreenPosition = BoardTiles[i].Position + new Vector2(TileSize / 2);
                 _boardPieces.Add(piece);
             }

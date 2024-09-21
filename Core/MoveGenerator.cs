@@ -93,7 +93,7 @@ namespace ChessBot.Core
                 {
                     moves |= (pawnPosition << 16) & ~position.AllPieces;
                 }
-                moves |= _pawnAttacks[(int)PieceColor.White, BoardHelper.BitboardToIndex(pawnPosition)] & position.BlackPieces;
+                moves |= _pawnAttacks[(int)PieceColor.White, BoardHelper.BitboardToIndex(pawnPosition)] & (position.BlackPieces | 1ul << position.BlackEnPassantIndex);
             }
             else
             {
@@ -103,7 +103,7 @@ namespace ChessBot.Core
                 {
                     moves |= (pawnPosition >> 16) & ~position.AllPieces;
                 }
-                moves |= _pawnAttacks[(int)PieceColor.Black, BoardHelper.BitboardToIndex(pawnPosition)] & position.WhitePieces;
+                moves |= _pawnAttacks[(int)PieceColor.Black, BoardHelper.BitboardToIndex(pawnPosition)] & (position.WhitePieces | 1ul << position.WhiteEnPassantIndex);
             }
             return moves;
         }

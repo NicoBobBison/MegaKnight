@@ -13,6 +13,7 @@ namespace ChessBot.GUI
         // The index of the board. a1 = 0, h8 = 63
         public readonly int Index;
         public static BoardTile HoveredTile = null;
+        public BoardPiece Piece;
 
         Texture2D _texture;
         public Vector2 Position;

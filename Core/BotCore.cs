@@ -3,6 +3,7 @@
     internal class BotCore
     {
         public Position CurrentPosition;
+        public bool PlayerIsPlayingWhite = true;
         MoveGenerator _moveGenerator;
         public BotCore()
         {
@@ -24,6 +25,9 @@
         // Precondition: Move must be legal (check with CanMakeMove())
         public Position UpdatePositionWithLegalMove(Move move, Position position)
         {
+            position = UpdatePositionWithCaptures(move, position);
+            position.WhiteEnPassantIndex = -1;
+            position.BlackEnPassantIndex = -1;
             if (position.WhiteToMove)
             {
                 switch (move.Piece)
@@ -31,6 +35,11 @@
                     case Piece.Pawn:
                         position.WhitePawns |= move.EndSquare;
                         position.WhitePawns &= ~move.StartSquare;
+                        if(move.EndSquare == move.StartSquare << 16)
+                        {
+                            // Update en passant
+                            position.WhiteEnPassantIndex = BoardHelper.BitboardToIndex(move.StartSquare) + 8;
+                        }
                         break;
                     case Piece.Knight:
                         position.WhiteKnights |= move.EndSquare;
@@ -61,6 +70,11 @@
                     case Piece.Pawn:
                         position.BlackPawns |= move.EndSquare;
                         position.BlackPawns &= ~move.StartSquare;
+                        if (move.EndSquare == move.StartSquare >> 16)
+                        {
+                            // Update en passant
+                            position.WhiteEnPassantIndex = BoardHelper.BitboardToIndex(move.StartSquare) - 8;
+                        }
                         break;
                     case Piece.Knight:
                         position.BlackKnights |= move.EndSquare;
@@ -84,8 +98,83 @@
                         break;
                 }
             }
-            // Add this back once we add black pieces
-            // position.WhiteToMove = !position.WhiteToMove;
+            position.WhiteToMove = !position.WhiteToMove;
+            return position;
+        }
+        Position UpdatePositionWithCaptures(Move move, Position position)
+        {
+            ulong endSquare = move.EndSquare;
+            if (position.WhiteToMove)
+            {
+                if(move.Piece == Piece.Pawn && (move.EndSquare & (1ul << position.BlackEnPassantIndex)) > 0)
+                {
+                    // En passant capture
+                    position.BlackPawns &= ~(1ul << position.BlackEnPassantIndex - 8);
+                }
+                else if((position.BlackPieces & endSquare) > 0)
+                {
+                    if((position.BlackPawns & endSquare) > 0)
+                    {
+                        position.BlackPawns &= ~endSquare;
+                    }
+                    else if((position.BlackKnights & endSquare) > 0)
+                    {
+                        position.BlackKnights &= ~endSquare;
+                    }
+                    else if((position.BlackBishops & endSquare) > 0)
+                    {
+                        position.BlackBishops &= ~endSquare;
+                    }
+                    else if((position.BlackRooks & endSquare) > 0)
+                    {
+                        position.BlackRooks &= ~endSquare;
+                    }
+                    else if((position.BlackQueens & endSquare) > 0)
+                    {
+                        position.BlackQueens &= ~endSquare;
+                    }
+                    else
+                    {
+                        position.BlackKing = 0ul;
+                    }
+                }
+            }
+            else
+            {
+                if (move.Piece == Piece.Pawn && (move.EndSquare & (1ul << position.WhiteEnPassantIndex)) > 0)
+                {
+                    // En passant capture
+                    position.WhitePawns &= ~(1ul << position.WhiteEnPassantIndex + 8);
+                }
+                else if ((position.WhitePieces & endSquare) > 0)
+                {
+                    if ((position.WhitePawns & endSquare) > 0)
+                    {
+                        position.WhitePawns &= ~endSquare;
+                    }
+                    else if ((position.WhiteKnights & endSquare) > 0)
+                    {
+                        position.WhiteKnights &= ~endSquare;
+                    }
+                    else if ((position.WhiteBishops & endSquare) > 0)
+                    {
+                        position.WhiteBishops &= ~endSquare;
+                    }
+                    else if ((position.WhiteRooks & endSquare) > 0)
+                    {
+                        position.WhiteRooks &= ~endSquare;
+                    }
+                    else if ((position.WhiteQueens & endSquare) > 0)
+                    {
+                        position.WhiteQueens &= ~endSquare;
+                    }
+                    else
+                    {
+                        position.WhiteKing = 0ul;
+                    }
+                }
+            }
+
             return position;
         }
     }
