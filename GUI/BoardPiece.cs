@@ -17,6 +17,7 @@ namespace ChessBot.GUI
         public readonly Piece Piece;
         public Square BoardPosition;
         public Vector2 ScreenPosition;
+        Vector2 _tempScreenPosition;
         public bool MarkDeleted = false;
 
         static BoardPiece _selectedPiece = null;
@@ -34,7 +35,52 @@ namespace ChessBot.GUI
         }
         public void Update(GameTime gameTime)
         {
+            bool playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
+            // bool playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite)
+
+            BoardTile hoveredTile = GetHoveredBoardTile(_renderer.BoardTiles);
+
+            // On click, start dragging a piece (if it's the color to move). Mark the piece as selected.
+            if (InputManager.GetMouseDown() && playerInteractionCondition)
+            {
+                if(_selectedPiece == this)
+                {
+                    if (hoveredTile != _renderer.BoardTiles[(int)BoardPosition])
+                    {
+                        TryMakeMove(hoveredTile);
+                    }
+                    else
+                    {
+                        ScreenPosition = _tempScreenPosition;
+                    }
+                }
+                if (GetCollisionBox().Contains(InputManager.GetMousePosition()))
+                {
+                    _selectedPiece = this;
+                    ulong square = 1ul << (int)BoardPosition;
+                    _renderer.RenderMovePreview(square, Piece, _renderer.Core.CurrentPosition);
+                    _tempScreenPosition = ScreenPosition;
+                }
+            }
+            else if (InputManager.GetMousePressed() && _selectedPiece == this)
+            {
+                ScreenPosition = InputManager.GetMousePosition();
+            }
+            // On mouse up, test if the marked piece can move to that square.
+            if (InputManager.GetMouseUp() && _selectedPiece == this)
+            {
+                if(hoveredTile != _renderer.BoardTiles[(int)BoardPosition])
+                {
+                    TryMakeMove(hoveredTile);
+                }
+                else
+                {
+                    ScreenPosition = _tempScreenPosition;
+                }
+            }
+
             // TODO: This code is really bad, fix all of this
+            /*
             bool playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
             // bool playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite)
             if (InputManager.GetMouseDown() && playerInteractionCondition)// _renderer.Core.PlayerIsPlayingWhite == _isWhite)
@@ -81,6 +127,34 @@ namespace ChessBot.GUI
                         _renderer.RenderMovePreview(square, Piece, _renderer.Core.CurrentPosition);
                     }
                 }
+            }
+            */
+        }
+        void TryMakeMove(BoardTile hoveredTile)
+        {
+            if(hoveredTile == null)
+            {
+                ScreenPosition = _tempScreenPosition;
+                _selectedPiece = null;
+                _renderer.ClearMovePreview();
+                return;
+            }
+            // Generate move based on hovered tile
+            Square desiredSquare = (Square)hoveredTile.Index;
+            Move move = new Move(Piece, BoardPosition, desiredSquare);
+
+            if (_renderer.Core.CanMakeMove(move, _renderer.Core.CurrentPosition))
+            {
+                // If we can move, redraw the board based on the current position
+                _renderer.Core.CurrentPosition = _renderer.Core.UpdatePositionWithLegalMove(move, _renderer.Core.CurrentPosition);
+                _renderer.ClearMovePreview();
+                _renderer.RenderPosition(_renderer.Core.CurrentPosition);
+            }
+            else
+            {
+                ScreenPosition = _tempScreenPosition;
+                _selectedPiece = null;
+                _renderer.ClearMovePreview();
             }
         }
         public void Draw(SpriteBatch spriteBatch)

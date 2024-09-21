@@ -16,6 +16,14 @@ namespace ChessBot.GUI
         {
             return _currentMouse.LeftButton == ButtonState.Pressed && _prevMouse.LeftButton == ButtonState.Released;
         }
+        public static bool GetMousePressed()
+        {
+            return _currentMouse.LeftButton == ButtonState.Pressed;
+        }
+        public static bool GetMouseUp()
+        {
+            return _currentMouse.LeftButton == ButtonState.Released && _prevMouse.LeftButton == ButtonState.Pressed;
+        }
         public static Vector2 GetMousePosition()
         {
             return new Vector2(_currentMouse.X, _currentMouse.Y);

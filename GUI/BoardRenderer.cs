@@ -141,8 +141,10 @@ namespace ChessBot.GUI
                 pos.Y -= TileSize;
             }
         }
-        void RenderPosition(Position position)
+        public void RenderPosition(Position position)
         {
+            _boardPieces.Clear();
+
             RenderBitboard(position.WhitePawns, _whitePawn, Piece.Pawn, true);
             RenderBitboard(position.WhiteKnights, _whiteKnight, Piece.Knight, true);
             RenderBitboard(position.WhiteBishops, _whiteBishop, Piece.Bishop, true);
