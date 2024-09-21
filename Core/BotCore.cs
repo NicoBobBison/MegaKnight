@@ -73,7 +73,7 @@
                         if (move.EndSquare == move.StartSquare >> 16)
                         {
                             // Update en passant
-                            position.WhiteEnPassantIndex = BoardHelper.BitboardToIndex(move.StartSquare) - 8;
+                            position.BlackEnPassantIndex = BoardHelper.BitboardToIndex(move.StartSquare) - 8;
                         }
                         break;
                     case Piece.Knight:
