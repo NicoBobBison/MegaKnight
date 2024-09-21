@@ -61,19 +61,17 @@ namespace ChessBot.GUI
             test.WhiteQueens = 1ul << 63;
             test.WhiteKing = 16ul;
 
-            test.BlackPawns = 255ul << 40;
+            test.BlackPawns = 255ul << 48;
+            test.BlackRooks = 1ul << 61;
             RenderPosition(test);
             Core.CurrentPosition = test;
         }
         public void Update(GameTime gameTime)
         {
+            BoardPiece.DeletedBoardThisFrame = false;
             foreach(BoardPiece piece in _boardPieces.ToArray())
             {
                 piece.Update(gameTime);
-                if (piece.MarkDeleted)
-                {
-                    _boardPieces.Remove(piece);
-                }
             }
         }
         public void Draw(SpriteBatch spriteBatch)
@@ -82,13 +80,13 @@ namespace ChessBot.GUI
             {
                 tile.Draw(spriteBatch);
             }
-            foreach(BoardPiece piece in _boardPieces)
-            {
-                piece.Draw(spriteBatch);
-            }
-            foreach(MovePreview preview in _movePreviews)
+            foreach (MovePreview preview in _movePreviews)
             {
                 preview.Draw(spriteBatch);
+            }
+            foreach (BoardPiece piece in _boardPieces)
+            {
+                piece.Draw(spriteBatch);
             }
         }
         void LoadContent(ContentManager content)

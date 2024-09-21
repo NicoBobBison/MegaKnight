@@ -17,10 +17,10 @@ namespace ChessBot.GUI
         public readonly Piece Piece;
         public Square BoardPosition;
         public Vector2 ScreenPosition;
-        Vector2 _tempScreenPosition;
-        public bool MarkDeleted = false;
+        public static bool DeletedBoardThisFrame = false;
 
         static BoardPiece _selectedPiece = null;
+        Vector2 _tempScreenPosition;
 
         Texture2D _texture;
         BoardRenderer _renderer;
@@ -35,6 +35,8 @@ namespace ChessBot.GUI
         }
         public void Update(GameTime gameTime)
         {
+            if(DeletedBoardThisFrame) return;
+
             bool playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
             // bool playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite)
 
@@ -54,7 +56,7 @@ namespace ChessBot.GUI
                         ScreenPosition = _tempScreenPosition;
                     }
                 }
-                if (GetCollisionBox().Contains(InputManager.GetMousePosition()))
+                else if (GetCollisionBox().Contains(InputManager.GetMousePosition()))
                 {
                     _selectedPiece = this;
                     ulong square = 1ul << (int)BoardPosition;
@@ -130,9 +132,13 @@ namespace ChessBot.GUI
             }
             */
         }
+        public void Draw(SpriteBatch spriteBatch)
+        {
+            spriteBatch.Draw(_texture, ScreenPosition, null, Color.White, 0, new Vector2(_texture.Width / 2, _texture.Height / 2), _pieceScale, SpriteEffects.None, 0);
+        }
         void TryMakeMove(BoardTile hoveredTile)
         {
-            if(hoveredTile == null)
+            if (hoveredTile == null)
             {
                 ScreenPosition = _tempScreenPosition;
                 _selectedPiece = null;
@@ -149,6 +155,7 @@ namespace ChessBot.GUI
                 _renderer.Core.CurrentPosition = _renderer.Core.UpdatePositionWithLegalMove(move, _renderer.Core.CurrentPosition);
                 _renderer.ClearMovePreview();
                 _renderer.RenderPosition(_renderer.Core.CurrentPosition);
+                DeletedBoardThisFrame = true;
             }
             else
             {
@@ -157,11 +164,6 @@ namespace ChessBot.GUI
                 _renderer.ClearMovePreview();
             }
         }
-        public void Draw(SpriteBatch spriteBatch)
-        {
-            spriteBatch.Draw(_texture, ScreenPosition, null, Color.White, 0, new Vector2(_texture.Width / 2, _texture.Height / 2), _pieceScale, SpriteEffects.None, 0);
-        }
-
         public bool Equals(BoardPiece other)
         {
             return BoardPosition == other.BoardPosition && ScreenPosition == other.ScreenPosition && Piece == other.Piece;
