@@ -63,7 +63,7 @@ namespace ChessBot.Core
         }
 
         // Assumed that the color of the piece moving is based on who's turn it is in the position
-        public ulong GeneratePawnMoves(ulong pawnPosition, Position position)
+        ulong GeneratePawnMoves(ulong pawnPosition, Position position)
         {
             ulong moves = 0ul;
             if (position.WhiteToMove)
@@ -88,19 +88,13 @@ namespace ChessBot.Core
             }
             return moves;
         }
-        public ulong GenerateKnightMoves(ulong knightPosition, Position position)
+        ulong GenerateKnightMoves(ulong knightPosition, Position position)
         {
             int index = BoardHelper.BitboardToIndex(knightPosition);
             ulong friendlyBlockers = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
             return _knightAttacks[index] & ~friendlyBlockers;
         }
-        public ulong GenerateKingMoves(ulong kingPosition, Position position)
-        {
-            int index = BoardHelper.BitboardToIndex(kingPosition);
-            ulong friendlyBlockers = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
-            return _kingAttacks[index] & ~friendlyBlockers;
-        }
-        public ulong GenerateRookMoves(ulong rookPosition, Position position)
+        ulong GenerateRookMoves(ulong rookPosition, Position position)
         {
             ulong moves = 0ul;
             int indexOfPosition = BitOperations.TrailingZeroCount(rookPosition);
@@ -140,7 +134,7 @@ namespace ChessBot.Core
             ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
             return moves & ~friendlyPieces;
         }
-        public ulong GenerateBishopMoves(ulong bishopPosition, Position position)
+        ulong GenerateBishopMoves(ulong bishopPosition, Position position)
         {
             ulong moves = 0ul;
             int indexOfPosition = BitOperations.TrailingZeroCount(bishopPosition);
@@ -180,7 +174,19 @@ namespace ChessBot.Core
             ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
             return moves & ~friendlyPieces;
         }
-        public ulong GenerateQueenMoves(ulong queenPosition, Position position)
+        ulong GenerateKingMoves(ulong kingPosition, Position position)
+        {
+            int index = BoardHelper.BitboardToIndex(kingPosition);
+            ulong friendlyBlockers = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
+            return _kingAttacks[index] & ~friendlyBlockers;
+        }
+        ulong GetEnemyAttacks(Position position)
+        {
+            ulong attacks = 0ul;
+
+            return attacks;
+        }
+        ulong GenerateQueenMoves(ulong queenPosition, Position position)
         {
             return GenerateBishopMoves(queenPosition, position) | GenerateRookMoves(queenPosition, position);
         }
