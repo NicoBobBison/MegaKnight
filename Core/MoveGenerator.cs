@@ -42,25 +42,6 @@ namespace ChessBot.Core
             _pawnAttacks = PrecomputePawnAttacks();
             _kingAttacks = PrecomputeKingMoves();
         }
-        public ulong GenerateMoves(Move move, Position position)
-        {
-            switch (move.Piece)
-            {
-                case Piece.Pawn:
-                    return GeneratePawnMoves(move.StartSquare, position);
-                case Piece.Knight:
-                    return GenerateKnightMoves(move.StartSquare, position);
-                case Piece.Bishop:
-                    return GenerateBishopMoves(move.StartSquare, position);
-                case Piece.Rook:
-                    return GenerateRookMoves(move.StartSquare, position);
-                case Piece.Queen:
-                    return GenerateQueenMoves(move.StartSquare, position);
-                case Piece.King:
-                    return GenerateKingMoves(move.StartSquare, position);
-            }
-            throw new NotImplementedException("Need to add more pieces to move generator");
-        }
         public ulong GenerateMoves(ulong startSquare, Piece piece, Position position)
         {
             switch (piece)
@@ -78,7 +59,7 @@ namespace ChessBot.Core
                 case Piece.King:
                     return GenerateKingMoves(startSquare, position);
             }
-            throw new NotImplementedException("Need to add more pieces to move generator");
+            throw new NotImplementedException("Piece is not accounted for in GenerateMoves");
         }
 
         // Assumed that the color of the piece moving is based on who's turn it is in the position

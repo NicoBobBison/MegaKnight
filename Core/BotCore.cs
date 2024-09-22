@@ -11,12 +11,8 @@
         }
         public bool CanMakeMove(Move move, Position position)
         {
-            ulong possibleMoves = _moveGenerator.GenerateMoves(move, position);
+            ulong possibleMoves = _moveGenerator.GenerateMoves(move.StartSquare, move.Piece, position);
             return (possibleMoves & move.EndSquare) > 0;
-        }
-        public ulong GetLegalMoves(Move move, Position position)
-        {
-            return _moveGenerator.GenerateMoves(move, position);
         }
         public ulong GetLegalMoves(ulong startSquare, Piece piece, Position position)
         {
@@ -33,13 +29,34 @@
                 switch (move.Piece)
                 {
                     case Piece.Pawn:
-                        position.WhitePawns |= move.EndSquare;
                         position.WhitePawns &= ~move.StartSquare;
-                        if(move.EndSquare == move.StartSquare << 16)
+                        // Check promotion
+                        if (move.MoveType == MoveType.QueenPromotion || move.MoveType == MoveType.QueenPromoCapture)
+                        {
+                            position.WhiteQueens |= move.EndSquare;
+                        }
+                        else if(move.MoveType == MoveType.RookPromotion || move.MoveType == MoveType.RookPromoCapture)
+                        {
+                            position.WhiteRooks |= move.EndSquare;
+                        }
+                        else if(move.MoveType == MoveType.BishopPromotion || move.MoveType == MoveType.BishopPromoCapture)
+                        {
+                            position.WhiteBishops |= move.EndSquare;
+                        }
+                        else if(move.MoveType == MoveType.KnightPromotion || move.MoveType == MoveType.KnightPromoCapture)
+                        {
+                            position.WhiteKnights |= move.EndSquare;
+                        }
+                        else 
+                        {
+                            position.WhitePawns |= move.EndSquare;
+                        }
+                        if (move.EndSquare == move.StartSquare << 16)
                         {
                             // Update en passant
                             position.WhiteEnPassantIndex = BoardHelper.BitboardToIndex(move.StartSquare) + 8;
                         }
+
                         break;
                     case Piece.Knight:
                         position.WhiteKnights |= move.EndSquare;
@@ -68,8 +85,28 @@
                 switch (move.Piece)
                 {
                     case Piece.Pawn:
-                        position.BlackPawns |= move.EndSquare;
                         position.BlackPawns &= ~move.StartSquare;
+                        // Check promotion
+                        if (move.MoveType == MoveType.QueenPromotion || move.MoveType == MoveType.QueenPromoCapture)
+                        {
+                            position.BlackQueens |= move.EndSquare;
+                        }
+                        else if (move.MoveType == MoveType.RookPromotion || move.MoveType == MoveType.RookPromoCapture)
+                        {
+                            position.BlackRooks |= move.EndSquare;
+                        }
+                        else if (move.MoveType == MoveType.BishopPromotion || move.MoveType == MoveType.BishopPromoCapture)
+                        {
+                            position.BlackBishops |= move.EndSquare;
+                        }
+                        else if (move.MoveType == MoveType.KnightPromotion || move.MoveType == MoveType.KnightPromoCapture)
+                        {
+                            position.BlackKnights |= move.EndSquare;
+                        }
+                        else
+                        {
+                            position.BlackPawns |= move.EndSquare;
+                        }
                         if (move.EndSquare == move.StartSquare >> 16)
                         {
                             // Update en passant

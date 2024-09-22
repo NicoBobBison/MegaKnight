@@ -5,12 +5,18 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using ChessBot.Core;
 using System.Diagnostics;
+using Microsoft.Xna.Framework.Input;
 
 namespace ChessBot.GUI
 {
     internal class BoardRenderer
     {
         public readonly BotCore Core;
+
+        // Allow user to change what they want to promote to (defaulted to queens)
+        // Press Q for queen, R for rook, B for bishop, K for knight
+        // TODO: Display this information with text
+        public Piece AutoPromotionPiece = Piece.Queen;
 
         #region Constants
         private Vector2 _bottomRightOfBoard;
@@ -54,7 +60,7 @@ namespace ChessBot.GUI
             Position test = new Position();
             test.WhiteToMove = true;
             // This way of setting up the position is temporary and only for testing moves for now
-            test.WhitePawns = 256ul;
+            test.WhitePawns = 255ul << 8;
             test.WhiteKnights = 66ul;
             test.WhiteBishops = 36ul;
             test.WhiteRooks = 129ul;
@@ -68,6 +74,23 @@ namespace ChessBot.GUI
         }
         public void Update(GameTime gameTime)
         {
+            if (InputManager.GetKeyDown(Keys.Q))
+            {
+                AutoPromotionPiece = Piece.Queen;
+            }
+            else if (InputManager.GetKeyDown(Keys.R))
+            {
+                AutoPromotionPiece = Piece.Rook;
+            }
+            else if (InputManager.GetKeyDown(Keys.B))
+            {
+                AutoPromotionPiece = Piece.Bishop;
+            }
+            else if (InputManager.GetKeyDown(Keys.K))
+            {
+                AutoPromotionPiece = Piece.Knight;
+            }
+
             BoardPiece.DeletedBoardThisFrame = false;
             foreach(BoardPiece piece in _boardPieces.ToArray())
             {
@@ -80,13 +103,13 @@ namespace ChessBot.GUI
             {
                 tile.Draw(spriteBatch);
             }
-            foreach (MovePreview preview in _movePreviews)
-            {
-                preview.Draw(spriteBatch);
-            }
             foreach (BoardPiece piece in _boardPieces)
             {
                 piece.Draw(spriteBatch);
+            }
+            foreach (MovePreview preview in _movePreviews)
+            {
+                preview.Draw(spriteBatch);
             }
         }
         void LoadContent(ContentManager content)

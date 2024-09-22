@@ -148,7 +148,13 @@ namespace ChessBot.GUI
             // Generate move based on hovered tile
             Square desiredSquare = (Square)hoveredTile.Index;
             Move move = new Move(Piece, BoardPosition, desiredSquare);
+            int squareIndex = BoardHelper.BitboardToIndex(move.EndSquare);
 
+            if (Piece == Piece.Pawn && ((_isWhite && squareIndex > 55) || (!_isWhite && squareIndex < 8)))
+            {
+                // Don't need to flag promotion for player's UI moves (I think) because flags are only used for analysis
+                move.FlagPromotion(_renderer.AutoPromotionPiece);
+            }
             if (_renderer.Core.CanMakeMove(move, _renderer.Core.CurrentPosition))
             {
                 // If we can move, redraw the board based on the current position

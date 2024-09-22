@@ -25,22 +25,87 @@ namespace ChessBot.Core
         a6, b6, c6, d6, e6, f6, g6, h6,
         a7, b7, c7, d7, e7, f7, g7, h7,
         a8, b8, c8, d8, e8, f8, g8, h8
-    };
+    }
+    public enum MoveType
+    {
+        QuietMove,
+        DoublePawnPush,
+        KingCastle,
+        QueenCastle,
+        Capture,
+        EnPassant,
+        KnightPromotion,
+        BishopPromotion,
+        RookPromotion,
+        QueenPromotion,
+        KnightPromoCapture,
+        BishopPromoCapture,
+        RookPromoCapture,
+        QueenPromoCapture
+    }
 
     internal class Move
     {
         public readonly Piece Piece;
         public readonly ulong StartSquare;
         public readonly ulong EndSquare;
+        public MoveType MoveType = MoveType.QuietMove; // TODO: store as ushort
         public Move(Piece piece, Square startSquare, Square endSquare)
         {
             Piece = piece;
             StartSquare = SquareToBitboard(startSquare);
             EndSquare = SquareToBitboard(endSquare);
         }
+        public Move(Piece piece, Square startSquare, Square endSquare, MoveType moveType)
+        {
+            Piece = piece;
+            StartSquare = SquareToBitboard(startSquare);
+            EndSquare = SquareToBitboard(endSquare);
+            MoveType = moveType;
+        }
         ulong SquareToBitboard(Square square)
         {
             return 1ul << (int)square;
+        }
+        public void FlagPromotion(Piece promotionPiece)
+        {
+            switch (promotionPiece)
+            {
+                case Piece.Queen:
+                    MoveType = MoveType.QueenPromotion;
+                    break;
+                case Piece.Rook:
+                    MoveType = MoveType.RookPromotion;
+                    break;
+                case Piece.Bishop:
+                    MoveType = MoveType.BishopPromotion;
+                    break;
+                case Piece.Knight:
+                    MoveType = MoveType.KnightPromotion;
+                    break;
+                default:
+                    throw new Exception("Cannot promote to piece types king or pawn");
+            }
+        }
+        public void FlagCapturePromotion(Piece promotionPiece)
+        {
+            switch (promotionPiece)
+            {
+                case Piece.Queen:
+                    MoveType = MoveType.QueenPromoCapture;
+                    break;
+                case Piece.Rook:
+                    MoveType = MoveType.RookPromoCapture;
+                    break;
+                case Piece.Bishop:
+                    MoveType = MoveType.BishopPromoCapture;
+                    break;
+                case Piece.Knight:
+                    MoveType = MoveType.KnightPromoCapture;
+                    break;
+                default:
+                    throw new Exception("Cannot promote to piece types king or pawn");
+            }
         }
     }
 }

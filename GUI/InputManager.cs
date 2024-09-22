@@ -7,10 +7,15 @@ namespace ChessBot.GUI
     {
         static MouseState _currentMouse;
         static MouseState _prevMouse;
+
+        static KeyboardState _currentKeys;
+        static KeyboardState _prevKeys;
         public static void Update(GameTime gameTime)
         {
             _prevMouse = _currentMouse;
             _currentMouse = Mouse.GetState();
+            _prevKeys = _currentKeys;
+            _currentKeys = Keyboard.GetState();
         }
         public static bool GetMouseDown()
         {
@@ -23,6 +28,10 @@ namespace ChessBot.GUI
         public static bool GetMouseUp()
         {
             return _currentMouse.LeftButton == ButtonState.Released && _prevMouse.LeftButton == ButtonState.Pressed;
+        }
+        public static bool GetKeyDown(Keys key)
+        {
+            return _currentKeys.IsKeyDown(key) && !_prevKeys.IsKeyDown(key);
         }
         public static Vector2 GetMousePosition()
         {
