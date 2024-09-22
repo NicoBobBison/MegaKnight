@@ -182,6 +182,7 @@ namespace ChessBot.Core
         }
         ulong GetEnemyAttacks(Position position)
         {
+            // TODO: Get all squares enemy pieces can attack (determine enemy pieces based on player to move in position)
             ulong attacks = 0ul;
 
             return attacks;
