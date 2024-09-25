@@ -74,7 +74,6 @@ namespace ChessBot.Core
                 {
                     moves |= (pawnPosition << 16) & ~position.AllPieces;
                 }
-                moves |= _pawnAttacks[(int)PieceColor.White, BoardHelper.BitboardToIndex(pawnPosition)] & (position.BlackPieces | 1ul << position.BlackEnPassantIndex);
             }
             else
             {
@@ -84,9 +83,17 @@ namespace ChessBot.Core
                 {
                     moves |= (pawnPosition >> 16) & ~position.AllPieces;
                 }
-                moves |= _pawnAttacks[(int)PieceColor.Black, BoardHelper.BitboardToIndex(pawnPosition)] & (position.WhitePieces | 1ul << position.WhiteEnPassantIndex);
             }
+            moves |= GeneratePawnAttacks(pawnPosition, position);
             return moves;
+        }
+        ulong GeneratePawnAttacks(ulong pawnPosition, Position position)
+        {
+            if (position.WhiteToMove)
+            {
+                return _pawnAttacks[(int)PieceColor.White, BoardHelper.BitboardToIndex(pawnPosition)] & (position.BlackPieces | 1ul << position.BlackEnPassantIndex);
+            }
+            return _pawnAttacks[(int)PieceColor.Black, BoardHelper.BitboardToIndex(pawnPosition)] & (position.WhitePieces | 1ul << position.WhiteEnPassantIndex);
         }
         ulong GenerateKnightMoves(ulong knightPosition, Position position)
         {
@@ -176,15 +183,74 @@ namespace ChessBot.Core
         }
         ulong GenerateKingMoves(ulong kingPosition, Position position)
         {
+            return GenerateKingMovesNoChecks(kingPosition, position) & ~GetKingCheckSquares(position);
+        }
+        ulong GenerateKingMovesNoChecks(ulong kingPosition, Position position)
+        {
             int index = BoardHelper.BitboardToIndex(kingPosition);
             ulong friendlyBlockers = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
             return _kingAttacks[index] & ~friendlyBlockers;
         }
-        ulong GetEnemyAttacks(Position position)
+        ulong GetKingCheckSquares(Position position)
         {
-            // TODO: Get all squares enemy pieces can attack (determine enemy pieces based on player to move in position)
             ulong attacks = 0ul;
+            if (position.WhiteToMove)
+            {
+                position.WhiteKing = 0ul;
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.BlackPawns))
+                {
+                    attacks |= GeneratePawnAttacks(1ul << i, position);
+                }
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.BlackKnights))
+                {
+                    attacks |= GenerateKnightMoves(1ul << i, position);
+                }
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.BlackBishops))
+                {
+                    attacks |= GenerateBishopMoves(1ul << i, position);
+                }
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.BlackRooks))
+                {
+                    attacks |= GenerateRookMoves(1ul << i, position);
+                }
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.BlackQueens))
+                {
+                    attacks |= GenerateQueenMoves(1ul << i, position);
+                }
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.BlackKing))
+                {
+                    attacks |= GenerateKingMovesNoChecks(1ul << i, position);
+                }
+            }
+            else
+            {
+                position.BlackKing = 0ul;
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.WhitePawns))
+                {
+                    attacks |= GeneratePawnAttacks(1ul << i, position);
+                }
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.WhiteKnights))
+                {
+                    attacks |= GenerateKnightMoves(1ul << i, position);
+                }
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.WhiteBishops))
+                {
+                    attacks |= GenerateBishopMoves(1ul << i, position);
+                }
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.WhiteRooks))
+                {
+                    attacks |= GenerateRookMoves(1ul << i, position);
+                }
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.WhiteQueens))
+                {
+                    attacks |= GenerateQueenMoves(1ul << i, position);
+                }
+                foreach (int i in BoardHelper.BitboardToListOfSquareIndeces(position.WhiteKing))
+                {
+                    attacks |= GenerateKingMovesNoChecks(1ul << i, position);
+                }
 
+            }
             return attacks;
         }
         ulong GenerateQueenMoves(ulong queenPosition, Position position)
