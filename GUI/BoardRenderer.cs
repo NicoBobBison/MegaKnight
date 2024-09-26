@@ -60,15 +60,13 @@ namespace ChessBot.GUI
             Position test = new Position();
             test.WhiteToMove = true;
             // This way of setting up the position is temporary and only for testing moves for now
-            test.WhitePawns = 255ul << 8;
-            test.WhiteKnights = 66ul;
-            test.WhiteBishops = 36ul;
-            test.WhiteRooks = 129ul;
+            test.WhitePawns = 4ul << 8;
             test.WhiteQueens = 1ul << 63;
             test.WhiteKing = 16ul;
 
-            test.BlackPawns = 255ul << 48;
+            test.BlackPawns = 4ul << 48;
             test.BlackRooks = 1ul << 61;
+            test.BlackKing = 1ul << 59;
             RenderPosition(test);
             Core.CurrentPosition = test;
         }
@@ -182,7 +180,7 @@ namespace ChessBot.GUI
         }
         void RenderBitboard(ulong bitboard, Texture2D pieceTexture, Piece pieceType, bool isWhite)
         {
-            List<int> boardPositions = BoardHelper.BitboardToListOfSquareIndeces(bitboard);
+            List<int> boardPositions = BitboardHelper.BitboardToListOfSquareIndeces(bitboard);
             foreach(int i in boardPositions)
             {
                 BoardPiece piece = new BoardPiece(pieceTexture, this, (Square)i, pieceType, isWhite);
@@ -201,7 +199,7 @@ namespace ChessBot.GUI
         public void RenderMovePreview(ulong startSquare, Piece piece, Position position)
         {
             ulong possibleMoves = Core.GetLegalMoves(startSquare, piece, position);
-            List<int> moveIndeces = BoardHelper.BitboardToListOfSquareIndeces(possibleMoves);
+            List<int> moveIndeces = BitboardHelper.BitboardToListOfSquareIndeces(possibleMoves);
             for(int i = 0; i < 64; i++)
             {
                 _movePreviews[i].IsShown = moveIndeces.Contains(i);

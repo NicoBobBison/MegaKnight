@@ -148,7 +148,7 @@ namespace ChessBot.GUI
             // Generate move based on hovered tile
             Square desiredSquare = (Square)hoveredTile.Index;
             Move move = new Move(Piece, BoardPosition, desiredSquare);
-            int squareIndex = BoardHelper.BitboardToIndex(move.EndSquare);
+            int squareIndex = BitboardHelper.SinglePopBitboardToIndex(move.EndSquare);
 
             if (Piece == Piece.Pawn && ((_isWhite && squareIndex > 55) || (!_isWhite && squareIndex < 8)))
             {

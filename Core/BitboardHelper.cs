@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ChessBot.Core
 {
-    internal static class BoardHelper
+    internal static class BitboardHelper
     {
         public static void PrintBitboard(ulong board)
         {
@@ -46,9 +46,21 @@ namespace ChessBot.Core
             return indeces;
         }
         // Precondition: Bitboard represents a ulong with exactly one bit
-        public static int BitboardToIndex(ulong bitboard)
+        public static int SinglePopBitboardToIndex(ulong bitboard)
         {
+            if (bitboard == 0)
+                throw new Exception("Cannot get single index of empty bitboard");
+
+            if (GetBitboardPopCount(bitboard) != 1)
+            {
+                PrintBitboard(bitboard);
+                throw new Exception("Cannot get single index of bitboard with multiple 1's");
+            }
             return BitOperations.TrailingZeroCount(bitboard);
+        }
+        public static int GetBitboardPopCount(ulong bitboard)
+        {
+            return BitOperations.PopCount(bitboard);
         }
     }
 }

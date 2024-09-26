@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ChessBot.Core
 {
-    internal class Position
+    internal class Position : ICloneable
     {
         // Bitboard representation of pieces. 64 bit long integer, with each bit representing a square.
         // a1 = least significant bit (right most), h8 = most significant bit (left most)
@@ -33,5 +33,10 @@ namespace ChessBot.Core
         public ulong WhitePieces => WhitePawns | WhiteKnights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKing;
         public ulong BlackPieces => BlackPawns | BlackKnights | BlackBishops | BlackRooks | BlackQueens | BlackKing;
         public ulong AllPieces => WhitePieces | BlackPieces;
+
+        public object Clone()
+        {
+            return MemberwiseClone();
+        }
     }
 }
