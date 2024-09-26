@@ -33,7 +33,12 @@ namespace ChessBot.Core
         public ulong WhitePieces => WhitePawns | WhiteKnights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKing;
         public ulong BlackPieces => BlackPawns | BlackKnights | BlackBishops | BlackRooks | BlackQueens | BlackKing;
         public ulong AllPieces => WhitePieces | BlackPieces;
-
+        public bool IsSlidingPiece(ulong piecePosition)
+        {
+            if (BitboardHelper.GetBitboardPopCount(piecePosition) != 1)
+                throw new Exception("Can't check sliding piece if piece position ulong doesn't have exactly one piece");
+            return ((WhiteBishops | WhiteRooks | WhiteQueens | BlackBishops | BlackRooks | BlackQueens) & piecePosition) > 0;
+        }
         public object Clone()
         {
             return MemberwiseClone();
