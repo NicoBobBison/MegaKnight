@@ -59,13 +59,13 @@ namespace ChessBot.GUI
 
             Position test = new Position();
             test.WhiteToMove = true;
-            // This way of setting up the position is temporary and only for testing moves for now
-            test.WhitePawns = 1ul << 11;
-            test.WhiteQueens = 1ul << 5;
-            test.WhiteKing = 1ul << 4;
+            // This way of setting up the position is temporary and only for testing moves for now, will add FEN later
+            test.BlackPawns = 1ul << 27;
+            test.BlackKing = 1ul << 24;
 
-            test.BlackPawns = 1ul << 28;
-            test.BlackKing = 1ul << 33;
+            test.WhitePawns = 1ul << 12;
+            test.WhiteQueens = 1ul << 31;
+            test.WhiteKing = 1ul << 63;
             RenderPosition(test);
             Core.CurrentPosition = test;
         }

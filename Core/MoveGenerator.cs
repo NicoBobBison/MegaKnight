@@ -46,6 +46,7 @@ namespace ChessBot.Core
         {
             ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
             ulong enemyPieces = position.WhiteToMove ? position.BlackPieces : position.WhitePieces;
+            ulong friendlyKing = position.WhiteToMove ? position.WhiteKing : position.BlackKing;
 
             ulong piecesAttackingKing = GetPiecesAttackingKing(position);
             int numAttackers = BitboardHelper.GetBitboardPopCount(piecesAttackingKing);
@@ -54,7 +55,7 @@ namespace ChessBot.Core
             ulong moveMask = ulong.MaxValue;
             ulong captureMask = ulong.MaxValue;
 
-            if(piece != Piece.King)
+            if (piece != Piece.King)
             {
                 // If we are in double check, we can only move our king
                 if (numAttackers >= 2)
@@ -74,8 +75,29 @@ namespace ChessBot.Core
                         moveMask = 0ul;
                     }
                 }
-                // TODO: alter move mask for pinned pieces
-
+                ulong enemyBQ = position.WhiteToMove ? position.BlackBishops | position.BlackQueens : position.WhiteBishops | position.WhiteQueens;
+                ulong enemyRQ = position.WhiteToMove ? position.BlackRooks | position.BlackQueens : position.WhiteRooks | position.WhiteQueens;
+                ulong pinners = XRayBishopAttacks(friendlyKing, friendlyPieces, position) & enemyBQ;
+                // Remove this piece from the board temporarily
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(pinners))
+                {
+                    ulong overlap = GenerateBishopAttacks(1ul << i, (friendlyPieces ^ startSquare) | enemyPieces) & GenerateBishopAttacks(friendlyKing, (friendlyPieces ^ startSquare) | enemyPieces);
+                    if((overlap & startSquare) > 0)
+                    {
+                        moveMask &= overlap;
+                        captureMask &= overlap | 1ul << i;
+                    }
+                }
+                pinners = XRayRookAttacks(friendlyKing, friendlyPieces, position) & enemyRQ;
+                foreach(int i in BitboardHelper.BitboardToListOfSquareIndeces(pinners))
+                {
+                    ulong overlap = GenerateRookAttacks(1ul << i, (friendlyPieces ^ startSquare) | enemyPieces) & GenerateRookAttacks(friendlyKing, (friendlyPieces ^ startSquare) | enemyPieces);
+                    if ((overlap & startSquare) > 0)
+                    {
+                        moveMask &= overlap;
+                        captureMask &= overlap | 1ul << i;
+                    }
+                }
             }
 
             switch (piece)
@@ -108,8 +130,14 @@ namespace ChessBot.Core
                 {
                     moves |= (pawnPosition << 16) & ~position.AllPieces & moveMask;
                 }
+                ulong enPassant = moveMask & 1ul << position.BlackEnPassantIndex;
+                // We can't en passant if it would cause a discovered check
+                if(enPassant > 0 && (GenerateRookAttacks(position.WhiteKing, position.AllPieces ^ pawnPosition ^ 1ul << position.BlackEnPassantIndex - 8) & (position.BlackRooks | position.BlackQueens)) > 0)
+                {
+                    enPassant = 0ul;
+                }
                 // Each attacked square must either a) be in the capture mask or b) be in the move mask AND be an en passant capture
-                moves |= GeneratePawnAttacks(pawnPosition, position.WhiteToMove, position) & ((captureMask & position.BlackPieces) | (moveMask & 1ul << position.BlackEnPassantIndex));
+                moves |= GeneratePawnAttacks(pawnPosition, position.WhiteToMove, position) & ((captureMask & position.BlackPieces) | enPassant);
             }
             else
             {
@@ -119,7 +147,12 @@ namespace ChessBot.Core
                 {
                     moves |= (pawnPosition >> 16) & ~position.AllPieces & moveMask;
                 }
-                moves |= GeneratePawnAttacks(pawnPosition, position.WhiteToMove, position) & ((captureMask & position.WhitePieces) | (moveMask & 1ul << position.WhiteEnPassantIndex));
+                ulong enPassant = moveMask & 1ul << position.WhiteEnPassantIndex;
+                if (enPassant > 0 && (GenerateRookAttacks(position.BlackKing, position.AllPieces ^ pawnPosition ^ 1ul << position.WhiteEnPassantIndex + 8) & (position.WhiteRooks | position.WhiteQueens)) > 0)
+                {
+                    enPassant = 0ul;
+                }
+                moves |= GeneratePawnAttacks(pawnPosition, position.WhiteToMove, position) & ((captureMask & position.WhitePieces) | enPassant);
             }
             return moves;
         }
@@ -228,13 +261,13 @@ namespace ChessBot.Core
         }
         ulong GenerateKingMoves(ulong kingPosition, Position position)
         {
-            return GenerateKingMovesNoChecks(kingPosition, position) & ~GetKingCheckSquares(position);
+            return GenerateKingMovesRaw(kingPosition, position) & ~GetKingCheckSquares(position);
         }
-        ulong GenerateKingMovesNoChecks(ulong kingPosition, Position position)
+        ulong GenerateKingMovesRaw(ulong kingPosition, Position position)
         {
             int index = BitboardHelper.SinglePopBitboardToIndex(kingPosition);
             ulong friendlyBlockers = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
-            return _kingAttacks[index] ^ friendlyBlockers;
+            return _kingAttacks[index] & ~friendlyBlockers;
         }
         /// <summary>
         /// Calculates a bishop attack while going through the first blocker hit. Useful for pins.
@@ -333,7 +366,7 @@ namespace ChessBot.Core
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackKing))
                 {
-                    attacks |= GenerateKingMovesNoChecks(1ul << i, p);
+                    attacks |= GenerateKingMovesRaw(1ul << i, p);
                 }
             }
             else
@@ -361,7 +394,7 @@ namespace ChessBot.Core
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhiteKing))
                 {
-                    attacks |= GenerateKingMovesNoChecks(1ul << i, p);
+                    attacks |= GenerateKingMovesRaw(1ul << i, p);
                 }
 
             }
@@ -461,7 +494,7 @@ namespace ChessBot.Core
             }
             return attacks;
         }
-        public ulong[] PrecomputeKingMoves()
+        ulong[] PrecomputeKingMoves()
         {
             ulong[] moves = new ulong[64];
             for (int r = 0; r < 8; r++)
