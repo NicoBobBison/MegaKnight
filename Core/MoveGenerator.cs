@@ -44,6 +44,9 @@ namespace ChessBot.Core
         }
         public ulong GenerateMoves(ulong startSquare, Piece piece, Position position)
         {
+            ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
+            ulong enemyPieces = position.WhiteToMove ? position.BlackPieces : position.WhitePieces;
+
             ulong piecesAttackingKing = GetPiecesAttackingKing(position);
             int numAttackers = BitboardHelper.GetBitboardPopCount(piecesAttackingKing);
 
@@ -71,6 +74,8 @@ namespace ChessBot.Core
                         moveMask = 0ul;
                     }
                 }
+                // TODO: alter move mask for pinned pieces
+
             }
 
             switch (piece)
@@ -78,13 +83,13 @@ namespace ChessBot.Core
                 case Piece.Pawn:
                     return GeneratePawnMoves(startSquare, position, moveMask, captureMask);
                 case Piece.Knight:
-                    return GenerateKnightMoves(startSquare, position.WhiteToMove, position, moveMask, captureMask);
+                    return GenerateKnightMoves(startSquare, friendlyPieces, enemyPieces, moveMask, captureMask);
                 case Piece.Bishop:
-                    return GenerateBishopMoves(startSquare, position.WhiteToMove, position, moveMask, captureMask);
+                    return GenerateBishopMoves(startSquare, friendlyPieces, enemyPieces, moveMask, captureMask);
                 case Piece.Rook:
-                    return GenerateRookMoves(startSquare, position.WhiteToMove, position, moveMask, captureMask);
+                    return GenerateRookMoves(startSquare, friendlyPieces, enemyPieces, moveMask, captureMask);
                 case Piece.Queen:
-                    return GenerateQueenMoves(startSquare, position.WhiteToMove, position, moveMask, captureMask);
+                    return GenerateQueenMoves(startSquare, friendlyPieces, enemyPieces, moveMask, captureMask);
                 case Piece.King:
                     return GenerateKingMoves(startSquare, position);
             }
@@ -122,98 +127,104 @@ namespace ChessBot.Core
         {
             return _pawnAttacks[pawnIsWhite ? (int)PieceColor.White : (int)PieceColor.Black, BitboardHelper.SinglePopBitboardToIndex(pawnPosition)];
         }
-        ulong GenerateKnightMoves(ulong knightPosition, bool knightIsWhite, Position position, ulong moveMask = ulong.MaxValue, ulong captureMask = ulong.MaxValue)
+        ulong GenerateKnightMoves(ulong knightPosition, ulong friendlyPieces, ulong enemyPieces, ulong moveMask = ulong.MaxValue, ulong captureMask = ulong.MaxValue)
         {
             int index = BitboardHelper.SinglePopBitboardToIndex(knightPosition);
             ulong knightMoves = _knightAttacks[index] & (moveMask | captureMask);
-            ulong friendlyBlockers = knightIsWhite ? position.WhitePieces : position.BlackPieces;
-            return knightMoves & ~friendlyBlockers;
+            return knightMoves & ~friendlyPieces;
         }
-        ulong GenerateRookMoves(ulong rookPosition, bool rookIsWhite, Position position, ulong moveMask = ulong.MaxValue, ulong captureMask = ulong.MaxValue)
+        ulong GenerateRookMoves(ulong rookPosition, ulong friendlyPieces, ulong enemyPieces, ulong moveMask = ulong.MaxValue, ulong captureMask = ulong.MaxValue)
+        {
+            ulong moves = GenerateRookAttacks(rookPosition, friendlyPieces | enemyPieces);
+            moves &= moveMask | captureMask;
+            return moves & ~friendlyPieces;
+        }
+        ulong GenerateRookAttacks(ulong rookPosition, ulong occupancy)
         {
             ulong moves = 0ul;
             int indexOfPosition = BitOperations.TrailingZeroCount(rookPosition);
 
             ulong attackRay = _rayAttacks[indexOfPosition, (int)Direction.North];
             moves |= attackRay;
-            if((attackRay & position.AllPieces) > 0)
+            if ((attackRay & occupancy) > 0)
             {
-                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & occupancy);
                 moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.North];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.East];
             moves |= attackRay;
-            if ((attackRay & position.AllPieces) > 0)
+            if ((attackRay & occupancy) > 0)
             {
-                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & occupancy);
                 moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.East];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.South];
             moves |= attackRay;
-            if ((attackRay & position.AllPieces) > 0)
+            if ((attackRay & occupancy) > 0)
             {
-                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & occupancy);
                 moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.South];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.West];
             moves |= attackRay;
-            if ((attackRay & position.AllPieces) > 0)
+            if ((attackRay & occupancy) > 0)
             {
-                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & occupancy);
                 moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.West];
             }
+            return moves;
+        }
+        ulong GenerateBishopMoves(ulong bishopPosition, ulong friendlyPieces, ulong enemyPieces, ulong moveMask = ulong.MaxValue, ulong captureMask = ulong.MaxValue)
+        {
+            ulong moves = GenerateBishopAttacks(bishopPosition, friendlyPieces | enemyPieces);
             moves &= moveMask | captureMask;
-
-            ulong friendlyPieces = rookIsWhite ? position.WhitePieces : position.BlackPieces;
             return moves & ~friendlyPieces;
         }
-        ulong GenerateBishopMoves(ulong bishopPosition, bool bishopIsWhite, Position position, ulong moveMask = ulong.MaxValue, ulong captureMask = ulong.MaxValue)
+        ulong GenerateBishopAttacks(ulong bishopPosition, ulong occupancy)
         {
             ulong moves = 0ul;
             int indexOfPosition = BitOperations.TrailingZeroCount(bishopPosition);
 
             ulong attackRay = _rayAttacks[indexOfPosition, (int)Direction.NorthEast];
             moves |= attackRay;
-            if ((attackRay & position.AllPieces) > 0)
+            if ((attackRay & occupancy) > 0)
             {
-                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & occupancy);
                 moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.NorthEast];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.NorthWest];
             moves |= attackRay;
-            if ((attackRay & position.AllPieces) > 0)
+            if ((attackRay & occupancy) > 0)
             {
-                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & occupancy);
                 moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.NorthWest];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.SouthEast];
             moves |= attackRay;
-            if ((attackRay & position.AllPieces) > 0)
+            if ((attackRay & occupancy) > 0)
             {
-                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & occupancy);
                 moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.SouthEast];
             }
 
             attackRay = _rayAttacks[indexOfPosition, (int)Direction.SouthWest];
             moves |= attackRay;
-            if ((attackRay & position.AllPieces) > 0)
+            if ((attackRay & occupancy) > 0)
             {
-                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & position.AllPieces);
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & occupancy);
                 moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.SouthWest];
             }
-            moves &= moveMask | captureMask;
-
-            ulong friendlyPieces = bishopIsWhite ? position.WhitePieces : position.BlackPieces;
-            return moves & ~friendlyPieces;
+            return moves;
         }
-        ulong GenerateQueenMoves(ulong queenPosition, bool queenIsWhite, Position position, ulong moveMask = ulong.MaxValue, ulong captureMask = ulong.MaxValue)
+
+        ulong GenerateQueenMoves(ulong queenPosition, ulong friendlyPieces, ulong enemyPieces, ulong moveMask = ulong.MaxValue, ulong captureMask = ulong.MaxValue)
         {
-            return GenerateBishopMoves(queenPosition, queenIsWhite, position, moveMask, captureMask) | GenerateRookMoves(queenPosition, queenIsWhite, position, moveMask, captureMask);
+            return GenerateBishopMoves(queenPosition, friendlyPieces, enemyPieces, moveMask, captureMask) | GenerateRookMoves(queenPosition, friendlyPieces, enemyPieces, moveMask, captureMask);
         }
         ulong GenerateKingMoves(ulong kingPosition, Position position)
         {
@@ -223,7 +234,33 @@ namespace ChessBot.Core
         {
             int index = BitboardHelper.SinglePopBitboardToIndex(kingPosition);
             ulong friendlyBlockers = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
-            return _kingAttacks[index] & ~friendlyBlockers;
+            return _kingAttacks[index] ^ friendlyBlockers;
+        }
+        /// <summary>
+        /// Calculates a bishop attack while going through the first blocker hit. Useful for pins.
+        /// </summary>
+        /// <param name="bishopPosition"></param>
+        /// <param name="blockers">Pieces that can block the bishop ray</param>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        ulong XRayBishopAttacks(ulong bishopPosition, ulong blockers, Position position)
+        {
+            ulong bishopAttacks = GenerateBishopAttacks(bishopPosition, position.AllPieces);
+            blockers &= bishopAttacks;
+            return bishopAttacks ^ GenerateBishopAttacks(bishopPosition, position.AllPieces ^ blockers);
+        }
+        /// <summary>
+        /// Calculates a rook attack while going through the first blocker hit. Useful for pins.
+        /// </summary>
+        /// <param name="rookPosition"></param>
+        /// <param name="blockers">Pieces that can block the rook ray</param>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        ulong XRayRookAttacks(ulong rookPosition, ulong blockers, Position position)
+        {
+            ulong rookAttacks = GenerateRookAttacks(rookPosition, position.AllPieces);
+            blockers &= rookAttacks;
+            return rookAttacks ^ GenerateRookAttacks(rookPosition, position.AllPieces ^ blockers);
         }
         ulong GetPiecesAttackingKing(Position position)
         {
@@ -231,18 +268,18 @@ namespace ChessBot.Core
             if (position.WhiteToMove)
             {
                 attackers |= GeneratePawnAttacks(position.WhiteKing, true, position) & position.BlackPawns;
-                attackers |= GenerateKnightMoves(position.WhiteKing, true, position) & position.BlackKnights;
-                attackers |= GenerateBishopMoves(position.WhiteKing, true, position) & position.BlackBishops;
-                attackers |= GenerateRookMoves(position.WhiteKing, true, position) & position.BlackRooks;
-                attackers |= GenerateQueenMoves(position.WhiteKing, true, position) & position.BlackQueens;
+                attackers |= GenerateKnightMoves(position.WhiteKing, position.WhitePieces, position.BlackPieces) & position.BlackKnights;
+                attackers |= GenerateBishopMoves(position.WhiteKing, position.WhitePieces, position.BlackPieces) & position.BlackBishops;
+                attackers |= GenerateRookMoves(position.WhiteKing, position.WhitePieces, position.BlackPieces) & position.BlackRooks;
+                attackers |= GenerateQueenMoves(position.WhiteKing, position.WhitePieces, position.BlackPieces) & position.BlackQueens;
             }
             else
             {
                 attackers |= GeneratePawnAttacks(position.BlackKing, false, position) & position.WhitePawns;
-                attackers |= GenerateKnightMoves(position.BlackKing, false, position) & position.WhiteKnights;
-                attackers |= GenerateBishopMoves(position.BlackKing, false, position) & position.WhiteBishops;
-                attackers |= GenerateRookMoves(position.BlackKing, false, position) & position.WhiteRooks;
-                attackers |= GenerateQueenMoves(position.BlackKing, false, position) & position.WhiteQueens;
+                attackers |= GenerateKnightMoves(position.BlackKing, position.BlackPieces, position.WhitePieces) & position.WhiteKnights;
+                attackers |= GenerateBishopMoves(position.BlackKing, position.BlackPieces, position.WhitePieces) & position.WhiteBishops;
+                attackers |= GenerateRookMoves(position.BlackKing, position.BlackPieces, position.WhitePieces) & position.WhiteRooks;
+                attackers |= GenerateQueenMoves(position.BlackKing, position.BlackPieces, position.WhitePieces) & position.WhiteQueens;
             }
             return attackers;
         }
@@ -273,7 +310,6 @@ namespace ChessBot.Core
             ulong attacks = 0ul;
             if (p.WhiteToMove)
             {
-                // Does this make the king disappear?
                 p.WhiteKing = 0ul;
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackPawns))
                 {
@@ -281,19 +317,19 @@ namespace ChessBot.Core
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackKnights))
                 {
-                    attacks |= GenerateKnightMoves(1ul << i, false, p);
+                    attacks |= GenerateKnightMoves(1ul << i, p.WhitePieces, p.BlackPieces);
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackBishops))
                 {
-                    attacks |= GenerateBishopMoves(1ul << i, false, p);
+                    attacks |= GenerateBishopMoves(1ul << i, p.WhitePieces, p.BlackPieces);
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackRooks))
                 {
-                    attacks |= GenerateRookMoves(1ul << i, false, p);
+                    attacks |= GenerateRookMoves(1ul << i, p.WhitePieces, p.BlackPieces);
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackQueens))
                 {
-                    attacks |= GenerateQueenMoves(1ul << i, false, p);
+                    attacks |= GenerateQueenMoves(1ul << i, p.WhitePieces, p.BlackPieces);
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackKing))
                 {
@@ -309,19 +345,19 @@ namespace ChessBot.Core
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhiteKnights))
                 {
-                    attacks |= GenerateKnightMoves(1ul << i, true, p);
+                    attacks |= GenerateKnightMoves(1ul << i, p.BlackPieces, p.WhitePieces);
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhiteBishops))
                 {
-                    attacks |= GenerateBishopMoves(1ul << i, false, p);
+                    attacks |= GenerateBishopMoves(1ul << i, p.BlackPieces, p.WhitePieces);
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhiteRooks))
                 {
-                    attacks |= GenerateRookMoves(1ul << i, true, p);
+                    attacks |= GenerateRookMoves(1ul << i, p.BlackPieces, p.WhitePieces);
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhiteQueens))
                 {
-                    attacks |= GenerateQueenMoves(1ul << i, true, p);
+                    attacks |= GenerateQueenMoves(1ul << i, p.BlackPieces, p.WhitePieces);
                 }
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhiteKing))
                 {
