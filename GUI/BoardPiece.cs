@@ -155,6 +155,17 @@ namespace ChessBot.GUI
                 // Don't need to flag promotion for player's UI moves (I think) because flags are only used for analysis
                 move.FlagPromotion(_renderer.AutoPromotionPiece);
             }
+            if (Piece == Piece.King)
+            {
+                if (BoardPosition - desiredSquare == 2)
+                {
+                    move.MoveType = MoveType.QueenCastle;
+                }
+                else if (BoardPosition - desiredSquare == -2)
+                {
+                    move.MoveType = MoveType.KingCastle;
+                }
+            }
             if (_renderer.Core.CanMakeMove(move, _renderer.Core.CurrentPosition))
             {
                 // If we can move, redraw the board based on the current position

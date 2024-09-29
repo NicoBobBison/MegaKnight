@@ -396,13 +396,59 @@ namespace ChessBot.Core
         ulong GenerateKingMoves(ulong kingPosition, Position position)
         {
             // TODO: Add castling
-            return GenerateKingMovesRaw(kingPosition, position) & ~GetKingCheckSquares(position);
+            ulong checkedSquares = GetKingCheckSquares(position);
+            return (GenerateKingMovesRaw(kingPosition, position) | GenerateKingCastleMoves(checkedSquares, position)) & ~checkedSquares;
         }
         ulong GenerateKingMovesRaw(ulong kingPosition, Position position)
         {
             int index = BitboardHelper.SinglePopBitboardToIndex(kingPosition);
             ulong friendlyBlockers = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
             return _kingAttacks[index] & ~friendlyBlockers;
+        }
+        ulong GenerateKingCastleMoves(ulong checkedSquares, Position position)
+        {
+            ulong friendlyKing = position.WhiteToMove ? position.WhiteKing : position.BlackKing;
+            if ((friendlyKing & checkedSquares) > 0)
+            {
+                // Can't castle in check
+                return 0ul;
+            }
+            ulong castleMoves = 0ul;
+            ulong whiteKingRookOrigin = 1ul << 7;
+            ulong whiteQueenRookOrigin = 1ul;
+            ulong blackKingRookOrigin = 1ul << 63;
+            ulong blackQueenRookOrigin = 1ul << 56;
+            ulong whiteKingOrigin = 1ul << 4;
+            ulong blackKingOrigin = 1ul << 60;
+            ulong piecesAndCheckedSquares = position.AllPieces | checkedSquares;
+            // Check if we have castling rights and if rook is on correct square (to check if rook has been captured)
+            bool kingSideCastle = position.WhiteToMove ? position.WhiteKingCastle && (position.WhiteRooks & whiteKingRookOrigin) > 0 :
+                                                         position.BlackKingCastle && (position.BlackRooks & blackKingRookOrigin) > 0;
+            bool queenSideCastle = position.WhiteToMove ? position.WhiteQueenCastle && (position.WhiteRooks & whiteQueenRookOrigin) > 0 :
+                                                          position.BlackQueenCastle && (position.BlackRooks & blackQueenRookOrigin) > 0;
+            if (position.WhiteToMove)
+            {
+                if(kingSideCastle && ((whiteKingOrigin << 1 | whiteKingOrigin << 2)  & piecesAndCheckedSquares) == 0)
+                {
+                    castleMoves |= whiteKingOrigin << 2;
+                }
+                if (queenSideCastle && ((whiteKingOrigin >> 1 | whiteKingOrigin >> 2) & piecesAndCheckedSquares) == 0 && (whiteKingOrigin >> 3 & position.AllPieces) == 0)
+                {
+                    castleMoves |= whiteKingOrigin >> 2;
+                }
+            }
+            else
+            {
+                if (kingSideCastle && ((blackKingOrigin << 1 | blackKingOrigin << 2) & piecesAndCheckedSquares) > 0)
+                {
+                    castleMoves |= blackKingOrigin << 2;
+                }
+                if (queenSideCastle && ((blackKingOrigin >> 1 | blackKingOrigin >> 2) & piecesAndCheckedSquares) == 0 && (blackKingOrigin >> 3 & position.AllPieces) == 0)
+                {
+                    castleMoves |= blackKingOrigin >> 2;
+                }
+            }
+            return castleMoves;
         }
         /// <summary>
         /// Calculates a bishop attack while going through the first blocker hit. Useful for pins.

@@ -30,6 +30,11 @@ namespace ChessBot.Core
         public int BlackEnPassantIndex = -1;
         public int HalfMoveClock = 0;
 
+        public bool WhiteKingCastle = true;
+        public bool WhiteQueenCastle = true;
+        public bool BlackKingCastle = true;
+        public bool BlackQueenCastle = true;
+
         // Other helpful bitboards
         public ulong WhitePieces => WhitePawns | WhiteKnights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKing;
         public ulong BlackPieces => BlackPawns | BlackKnights | BlackBishops | BlackRooks | BlackQueens | BlackKing;
