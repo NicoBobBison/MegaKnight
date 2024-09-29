@@ -28,6 +28,7 @@ namespace ChessBot.Core
         public bool WhiteToMove;
         public int WhiteEnPassantIndex = -1;
         public int BlackEnPassantIndex = -1;
+        public int HalfMoveClock = 0;
 
         // Other helpful bitboards
         public ulong WhitePieces => WhitePawns | WhiteKnights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKing;

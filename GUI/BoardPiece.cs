@@ -158,10 +158,18 @@ namespace ChessBot.GUI
             if (_renderer.Core.CanMakeMove(move, _renderer.Core.CurrentPosition))
             {
                 // If we can move, redraw the board based on the current position
-                _renderer.Core.CurrentPosition = _renderer.Core.UpdatePositionWithLegalMove(move, _renderer.Core.CurrentPosition);
+                _renderer.Core.CurrentPosition = _renderer.Core.MakeMove(move, _renderer.Core.CurrentPosition);
                 _renderer.ClearMovePreview();
                 _renderer.RenderPosition(_renderer.Core.CurrentPosition);
                 DeletedBoardThisFrame = true;
+                if (_renderer.Core.CurrentPositionIsCheckmate())
+                {
+                    Debug.WriteLine(string.Format("Checkmate! {0} wins.", _renderer.Core.CurrentPosition.WhiteToMove ? "Black" : "White"));
+                }
+                else if (_renderer.Core.CurrentPositionIsStalemate())
+                {
+                    Debug.WriteLine("Stalemate. Draw.");
+                }
             }
             else
             {

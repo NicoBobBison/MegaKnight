@@ -5,9 +5,11 @@
         public Position CurrentPosition;
         public bool PlayerIsPlayingWhite = true;
         MoveGenerator _moveGenerator;
+        PositionEvaluator _positionEvaluator;
         public BotCore()
         {
             _moveGenerator = new MoveGenerator();
+            _positionEvaluator = new PositionEvaluator(_moveGenerator, this);
         }
         public bool CanMakeMove(Move move, Position position)
         {
@@ -19,7 +21,7 @@
             return _moveGenerator.GenerateMoves(startSquare, piece, position);
         }
         // Precondition: Move must be legal (check with CanMakeMove())
-        public Position UpdatePositionWithLegalMove(Move move, Position position)
+        public Position MakeMove(Move move, Position position)
         {
             position = UpdatePositionWithCaptures(move, position);
             position.WhiteEnPassantIndex = -1;
@@ -136,6 +138,9 @@
                 }
             }
             position.WhiteToMove = !position.WhiteToMove;
+
+            // TODO: After making a move, check if the position is checkmate/stalemate
+
             return position;
         }
         Position UpdatePositionWithCaptures(Move move, Position position)
@@ -213,6 +218,14 @@
             }
 
             return position;
+        }
+        public bool CurrentPositionIsCheckmate()
+        {
+            return _positionEvaluator.IsCheckmate(CurrentPosition);
+        }
+        public bool CurrentPositionIsStalemate()
+        {
+            return _positionEvaluator.IsStalemate(CurrentPosition);
         }
     }
 }

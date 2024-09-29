@@ -50,13 +50,7 @@ namespace ChessBot.Core
         public readonly ulong StartSquare;
         public readonly ulong EndSquare;
         public MoveType MoveType = MoveType.QuietMove; // TODO: store as ushort
-        public Move(Piece piece, Square startSquare, Square endSquare)
-        {
-            Piece = piece;
-            StartSquare = SquareToBitboard(startSquare);
-            EndSquare = SquareToBitboard(endSquare);
-        }
-        public Move(Piece piece, Square startSquare, Square endSquare, MoveType moveType)
+        public Move(Piece piece, Square startSquare, Square endSquare, MoveType moveType = MoveType.QuietMove)
         {
             Piece = piece;
             StartSquare = SquareToBitboard(startSquare);

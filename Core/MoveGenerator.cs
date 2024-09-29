@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ChessBot.Core
 {
@@ -41,6 +36,145 @@ namespace ChessBot.Core
             _knightAttacks = PrecomputeKnightMoves();
             _pawnAttacks = PrecomputePawnAttacks();
             _kingAttacks = PrecomputeKingMoves();
+        }
+        public List<Move> GenerateAllPossibleMoves(Position position)
+        {
+            List<Move> allMoves = new List<Move>();
+
+            ulong pawns = position.WhiteToMove ? position.WhitePawns : position.BlackPawns;
+            ulong knights = position.WhiteToMove ? position.WhiteKnights : position.BlackKnights;
+            ulong bishops = position.WhiteToMove ? position.WhiteBishops : position.BlackBishops;
+            ulong rooks = position.WhiteToMove ? position.WhiteRooks : position.BlackRooks;
+            ulong queens = position.WhiteToMove ? position.WhiteQueens : position.BlackQueens;
+            ulong king = position.WhiteToMove ? position.WhiteKing : position.BlackKing;
+            ulong enemyPieces = position.WhiteToMove ? position.BlackPieces : position.WhitePieces;
+
+            foreach(int i in BitboardHelper.BitboardToListOfSquareIndeces(pawns))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.Pawn, position);
+                foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                {
+                    bool isCapture = (1ul << j & enemyPieces) > 0;
+                    bool isPromotion = j >= 56 || j < 8;
+                    bool isEnPassant = (position.WhiteToMove && j == position.WhiteEnPassantIndex) || (!position.WhiteToMove && j == position.BlackEnPassantIndex);
+                    if (Math.Abs(i - j) == 16)
+                    {
+                        allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.DoublePawnPush));
+                    }
+                    else if (isEnPassant)
+                    {
+                        allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.EnPassant));
+                    }
+                    else
+                    {
+                        if(isCapture && isPromotion)
+                        {
+                            allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.KnightPromoCapture));
+                            allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.BishopPromoCapture));
+                            allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.RookPromoCapture));
+                            allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.QueenPromoCapture));
+                        }
+                        else if (isPromotion)
+                        {
+                            allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.KnightPromotion));
+                            allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.BishopPromotion));
+                            allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.RookPromotion));
+                            allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.QueenPromotion));
+                        }
+                        else if (isCapture)
+                        {
+                            allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.Capture));
+                        }
+                        else
+                        {
+                            allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j));
+                        }
+                    }
+                }
+            }
+            // TODO: Add other pieces
+            foreach(int i in BitboardHelper.BitboardToListOfSquareIndeces(knights))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.Knight, position);
+                foreach(int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                {
+                    bool isCapture = (1ul << j & enemyPieces) > 0;
+                    if (isCapture)
+                    {
+                        allMoves.Add(new Move(Piece.Knight, (Square)i, (Square)j, MoveType.Capture));
+                    }
+                    else
+                    {
+                        allMoves.Add(new Move(Piece.Knight, (Square)i, (Square)j));
+                    }
+                }
+            }
+            foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(bishops))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.Bishop, position);
+                foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                {
+                    bool isCapture = (1ul << j & enemyPieces) > 0;
+                    if (isCapture)
+                    {
+                        allMoves.Add(new Move(Piece.Bishop, (Square)i, (Square)j, MoveType.Capture));
+                    }
+                    else
+                    {
+                        allMoves.Add(new Move(Piece.Bishop, (Square)i, (Square)j));
+                    }
+                }
+            }
+            foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(rooks))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.Rook, position);
+                foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                {
+                    bool isCapture = (1ul << j & enemyPieces) > 0;
+                    if (isCapture)
+                    {
+                        allMoves.Add(new Move(Piece.Rook, (Square)i, (Square)j, MoveType.Capture));
+                    }
+                    else
+                    {
+                        allMoves.Add(new Move(Piece.Rook, (Square)i, (Square)j));
+                    }
+                }
+            }
+            foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(queens))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.Queen, position);
+                foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                {
+                    bool isCapture = (1ul << j & enemyPieces) > 0;
+                    if (isCapture)
+                    {
+                        allMoves.Add(new Move(Piece.Queen, (Square)i, (Square)j, MoveType.Capture));
+                    }
+                    else
+                    {
+                        allMoves.Add(new Move(Piece.Queen, (Square)i, (Square)j));
+                    }
+                }
+            }
+            foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(king))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.King, position);
+                foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                {
+                    bool isCapture = (1ul << j & enemyPieces) > 0;
+                    // TODO: Add castling
+                    if (isCapture)
+                    {
+                        allMoves.Add(new Move(Piece.King, (Square)i, (Square)j, MoveType.Capture));
+                    }
+                    else
+                    {
+                        allMoves.Add(new Move(Piece.King, (Square)i, (Square)j));
+                    }
+                }
+            }
+            return allMoves;
         }
         public ulong GenerateMoves(ulong startSquare, Piece piece, Position position)
         {
@@ -261,6 +395,7 @@ namespace ChessBot.Core
         }
         ulong GenerateKingMoves(ulong kingPosition, Position position)
         {
+            // TODO: Add castling
             return GenerateKingMovesRaw(kingPosition, position) & ~GetKingCheckSquares(position);
         }
         ulong GenerateKingMovesRaw(ulong kingPosition, Position position)
@@ -295,7 +430,7 @@ namespace ChessBot.Core
             blockers &= rookAttacks;
             return rookAttacks ^ GenerateRookAttacks(rookPosition, position.AllPieces ^ blockers);
         }
-        ulong GetPiecesAttackingKing(Position position)
+        public ulong GetPiecesAttackingKing(Position position)
         {
             ulong attackers = 0ul;
             if (position.WhiteToMove)
