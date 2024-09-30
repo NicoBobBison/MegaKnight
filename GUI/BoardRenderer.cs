@@ -11,6 +11,8 @@ namespace MegaKnight.GUI
 {
     internal class BoardRenderer
     {
+        const string initialFenPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
         public readonly BotCore Core;
 
         // Allow user to change what they want to promote to (defaulted to queens)
@@ -57,24 +59,9 @@ namespace MegaKnight.GUI
             _bottomRightOfBoard = new Vector2(screenSize.X / 2 - 4 * TileSize, screenSize.Y / 2 + 3 * TileSize);
             CreateBoardTiles();
             CreateMovePreviewCircles();
-            Position test = new Position();
-            test.WhiteToMove = true;
-            // This way of setting up the position is temporary and only for testing moves for now, will add FEN later
-            test.WhiteKing = 1ul << 4;
-            test.WhiteRooks = 1ul;
-            test.WhiteKnights = 1ul << 1;
-            test.WhitePawns = 5ul << 11;
-            test.WhitePawns |= 1ul << 32;
 
-            test.BlackKing = 1ul << 60;
-            test.BlackRooks = 1ul << 56;
-            test.BlackKnights = 1ul << 57;
-            test.BlackPawns = 1ul << 52;
-            test.BlackPawns |= 1ul << 49;
-
-            RenderPosition(test);
-            Core = new BotCore(test);
-
+            Core = new BotCore(initialFenPosition);
+            RenderPosition(Core.CurrentPosition);
         }
         public void Update(GameTime gameTime)
         {

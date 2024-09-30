@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System;
+using System.Linq;
 
 namespace MegaKnight.Core
 {
@@ -287,18 +288,128 @@ namespace MegaKnight.Core
         /// <returns>The FEN string as a position object</returns>
         Position FenToPosition(string fenString)
         {
+            Position position = new Position();
             string[] splitFen = fenString.Split(' ');
-            if(splitFen.Length != 6) throw new Exception("Invalid FEN string: " + fenString);
+            if(splitFen.Length != 6) throw new Exception("Invalid spaces FEN string: " + fenString);
 
             // 0: piece positions
             string[] rowsOfPieces = splitFen[0].Split("/");
-            // 1: side to move
-            // 2: castling rights
-            // 3: en passant target square
-            // 4: Half-move counter
-            // 5: Full-move counter (is this even necessary?)
+            if (rowsOfPieces.Length != 8) throw new Exception("Invalid /'s FEN string: " + fenString);
+            int boardPositionCount = 56;
+            foreach(string row in rowsOfPieces)
+            {
+                foreach (char c in row)
+                {
+                    if (char.IsNumber(c))
+                    {
+                        int charAsInt = c - '0';
+                        boardPositionCount += charAsInt;
+                    }
+                    else
+                    {
+                        switch (c)
+                        {
+                            case 'P':
+                                position.WhitePawns |= 1ul << boardPositionCount;
+                                break;
+                            case 'N':
+                                position.WhiteKnights |= 1ul << boardPositionCount;
+                                break;
+                            case 'B':
+                                position.WhiteBishops |= 1ul << boardPositionCount;
+                                break;
+                            case 'R':
+                                position.WhiteRooks |= 1ul << boardPositionCount;
+                                break;
+                            case 'Q':
+                                position.WhiteQueens |= 1ul << boardPositionCount;
+                                break;
+                            case 'K':
+                                position.WhiteKing |= 1ul << boardPositionCount;
+                                break;
+                            case 'p':
+                                position.BlackPawns |= 1ul << boardPositionCount;
+                                break;
+                            case 'n':
+                                position.BlackKnights |= 1ul << boardPositionCount;
+                                break;
+                            case 'b':
+                                position.BlackBishops |= 1ul << boardPositionCount;
+                                break;
+                            case 'r':
+                                position.BlackRooks |= 1ul << boardPositionCount;
+                                break;
+                            case 'q':
+                                position.BlackQueens |= 1ul << boardPositionCount;
+                                break;
+                            case 'k':
+                                position.BlackKing |= 1ul << boardPositionCount;
+                                break;
+                            default:
+                                throw new Exception("Invalid letter in FEN string: " + fenString);
+                        }
+                        boardPositionCount++;
+                    }
+                }
+                boardPositionCount -= 16;
+            }
 
-            Position position = new Position();
+            // 1: side to move
+            if (splitFen[1].ToCharArray()[0] == 'w')
+            {
+                position.WhiteToMove = true;
+            }
+            else
+            {
+                position.WhiteToMove = false;
+            }
+
+            // 2: castling rights
+            char[] castleRights = splitFen[2].ToCharArray();
+            if (castleRights[0] == '-')
+            {
+                position.WhiteKingCastle = false;
+                position.WhiteQueenCastle = false;
+                position.BlackKingCastle = false;
+                position.BlackQueenCastle = false;
+            }
+            else
+            {
+                if (castleRights.Contains('K'))
+                    position.WhiteKingCastle = true;
+                if (castleRights.Contains('Q'))
+                    position.WhiteQueenCastle = true;
+                if (castleRights.Contains('k'))
+                    position.BlackKingCastle = true;
+                if (castleRights.Contains('q'))
+                    position.BlackQueenCastle = true;
+            }
+
+            // 3: en passant target square
+            char[] enPassant = splitFen[3].ToCharArray();
+            if (enPassant[0] == '-')
+            {
+                position.EnPassantTargetSquare = -1;
+            }
+            else
+            {
+                int col = enPassant[0] - 'a';
+                int row = enPassant[1] - '1';
+                position.EnPassantTargetSquare = 8 * row + col;
+            }
+
+            // 4: Half-move counter
+            if (int.TryParse(splitFen[4], out int halfMoves))
+            {
+                position.HalfMoveClock = halfMoves;
+            }
+            else
+            {
+                throw new Exception("Invalid half move count for FEN string: " + fenString);
+            }
+
+            // 5: Full-move counter (is this even necessary?)
+            // Don't do anything with this for now
 
             return position;
         }

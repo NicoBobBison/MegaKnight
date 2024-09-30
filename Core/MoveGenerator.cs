@@ -439,7 +439,7 @@ namespace MegaKnight.Core
             }
             else
             {
-                if (kingSideCastle && ((blackKingOrigin << 1 | blackKingOrigin << 2) & piecesAndCheckedSquares) > 0)
+                if (kingSideCastle && ((blackKingOrigin << 1 | blackKingOrigin << 2) & piecesAndCheckedSquares) == 0)
                 {
                     castleMoves |= blackKingOrigin << 2;
                 }

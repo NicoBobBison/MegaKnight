@@ -30,10 +30,10 @@ namespace MegaKnight.Core
         public int EnPassantTargetSquare = -1;
         public int HalfMoveClock = 0;
 
-        public bool WhiteKingCastle = true;
-        public bool WhiteQueenCastle = true;
-        public bool BlackKingCastle = true;
-        public bool BlackQueenCastle = true;
+        public bool WhiteKingCastle = false;
+        public bool WhiteQueenCastle = false;
+        public bool BlackKingCastle = false;
+        public bool BlackQueenCastle = false;
 
         // Other helpful bitboards
         public ulong WhitePieces => WhitePawns | WhiteKnights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKing;
