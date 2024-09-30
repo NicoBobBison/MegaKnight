@@ -62,13 +62,7 @@ namespace MegaKnight.GUI
             Position test = new Position();
             test.WhiteToMove = true;
             // This way of setting up the position is temporary and only for testing moves for now, will add FEN later
-            test.BlackRooks = 257ul << 56;
-            test.BlackKing = 1ul << 60;
-            test.BlackPawns = 1ul << 55;
-
-            test.WhiteKing = 1ul << 4;
-            test.WhiteRooks = 1ul << 7;
-            test.WhiteKnights = 1ul << 50;
+            test.WhiteKing = 1ul << 32;
             RenderPosition(test);
             Core.CurrentPosition = test;
         }

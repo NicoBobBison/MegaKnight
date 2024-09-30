@@ -11,6 +11,7 @@ namespace MegaKnight.Core
         Dictionary<int, List<Position>> _previousPositions;
         public BotCore()
         {
+            Position.InitializeZobristHashValues();
             _moveGenerator = new MoveGenerator();
             _positionEvaluator = new PositionEvaluator(_moveGenerator, this);
         }

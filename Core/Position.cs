@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,6 +40,7 @@ namespace MegaKnight.Core
         public ulong WhitePieces => WhitePawns | WhiteKnights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKing;
         public ulong BlackPieces => BlackPawns | BlackKnights | BlackBishops | BlackRooks | BlackQueens | BlackKing;
         public ulong AllPieces => WhitePieces | BlackPieces;
+        static ulong[] _zobristHashValues;
         public bool IsSlidingPiece(ulong piecePosition)
         {
             if (BitboardHelper.GetBitboardPopCount(piecePosition) != 1)
@@ -48,6 +50,46 @@ namespace MegaKnight.Core
         public object Clone()
         {
             return MemberwiseClone();
+        }
+
+        public ulong Hash()
+        {
+            List<ulong> toHash = new List<ulong>();
+            ulong[] piecesAsList = new ulong[] { WhitePawns, WhiteKnights, WhiteBishops, WhiteRooks, WhiteQueens, WhiteKing,
+                                                 BlackPawns, BlackKnights, BlackBishops, BlackRooks, BlackQueens, BlackKing };
+            for(int pieceCount = 0; pieceCount < piecesAsList.Length; pieceCount++)
+            {
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(piecesAsList[pieceCount]))
+                {
+                    toHash.Add(_zobristHashValues[64 * pieceCount + i]);
+                }
+            }
+            // At this point, we've used indeces 0 to 12*64 - 1 random numbers
+            if (!WhiteToMove)     toHash.Add(_zobristHashValues[64 * 12]);
+            if (WhiteKingCastle)  toHash.Add(_zobristHashValues[64 * 12 + 1]);
+            if (WhiteQueenCastle) toHash.Add(_zobristHashValues[64 * 12 + 2]);
+            if (BlackKingCastle)  toHash.Add(_zobristHashValues[64 * 12 + 3]);
+            if (BlackQueenCastle) toHash.Add(_zobristHashValues[64 * 12 + 4]);
+
+            if (WhiteEnPassantIndex != -1) toHash.Add(_zobristHashValues[64 * 12 + 1 + 4 + WhiteEnPassantIndex % 8]);
+            if (BlackEnPassantIndex != -1) toHash.Add(_zobristHashValues[64 * 12 + 1 + 4 + 8 + BlackEnPassantIndex % 8]);
+
+            if (toHash.Count == 0) return 0ul;
+            ulong hash = toHash[0];
+            for(int i = 1; i < toHash.Count; i++)
+            {
+                hash ^= toHash[i];
+            }
+            return hash;
+        }
+        public static void InitializeZobristHashValues()
+        {
+            _zobristHashValues = new ulong[789];
+            Random r = new Random();
+            for(int i = 0; i < 789; i++)
+            {
+                _zobristHashValues[i] = Convert.ToUInt64(r.NextInt64());
+            }
         }
     }
 }
