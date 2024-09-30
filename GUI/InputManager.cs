@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
-namespace ChessBot.GUI
+namespace MegaKnight.GUI
 {
     internal static class InputManager
     {

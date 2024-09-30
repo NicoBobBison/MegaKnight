@@ -3,11 +3,11 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
-using ChessBot.Core;
+using MegaKnight.Core;
 using System.Diagnostics;
 using Microsoft.Xna.Framework.Input;
 
-namespace ChessBot.GUI
+namespace MegaKnight.GUI
 {
     internal class BoardRenderer
     {

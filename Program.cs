@@ -1,3 +1,3 @@
 ﻿
-using var game = new ChessBot.Game1();
+using var game = new MegaKnight.Game1();
 game.Run();

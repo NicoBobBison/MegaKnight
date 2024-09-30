@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace ChessBot.Core
+namespace MegaKnight.Core
 {
     internal class MoveGenerator
     {

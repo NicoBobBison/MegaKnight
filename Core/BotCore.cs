@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ChessBot.Core
+namespace MegaKnight.Core
 {
     internal class BotCore
     {

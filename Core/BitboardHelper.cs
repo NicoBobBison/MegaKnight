@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ChessBot.Core
+namespace MegaKnight.Core
 {
     internal static class BitboardHelper
     {

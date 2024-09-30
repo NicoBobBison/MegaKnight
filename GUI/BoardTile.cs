@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 
-namespace ChessBot.GUI
+namespace MegaKnight.GUI
 {
     internal class BoardTile
     {

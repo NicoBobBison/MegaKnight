@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ChessBot.GUI
+namespace MegaKnight.GUI
 {
     internal class MovePreview
     {

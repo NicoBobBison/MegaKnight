@@ -6,10 +6,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using ChessBot.Core;
+using MegaKnight.Core;
 using System.Diagnostics;
 
-namespace ChessBot.GUI
+namespace MegaKnight.GUI
 {
     internal class BoardPiece : IEquatable<BoardPiece>
     {

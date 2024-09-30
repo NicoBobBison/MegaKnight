@@ -1,9 +1,9 @@
-﻿using ChessBot.GUI;
+﻿using MegaKnight.GUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace ChessBot
+namespace MegaKnight
 {
     public class Game1 : Game
     {
