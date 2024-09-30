@@ -17,6 +17,8 @@ namespace ChessBot.GUI
         // Press Q for queen, R for rook, B for bishop, K for knight
         // TODO: Display this information with text
         public Piece AutoPromotionPiece = Piece.Queen;
+        // When the game is over, stop accepting input from player
+        public bool GameOver = false;
 
         #region Constants
         private Vector2 _bottomRightOfBoard;

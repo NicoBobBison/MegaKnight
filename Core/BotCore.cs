@@ -23,9 +23,11 @@
         // Precondition: Move must be legal (check with CanMakeMove())
         public Position MakeMove(Move move, Position position)
         {
+            position.HalfMoveClock++;
             position = UpdatePositionWithCaptures(move, position);
             position.WhiteEnPassantIndex = -1;
             position.BlackEnPassantIndex = -1;
+            if (move.Piece == Piece.Pawn || move.MoveType == MoveType.Capture) position.HalfMoveClock = 0;
             if (position.WhiteToMove)
             {
                 switch (move.Piece)
@@ -266,6 +268,10 @@
         public bool CurrentPositionIsStalemate()
         {
             return _positionEvaluator.IsStalemate(CurrentPosition);
+        }
+        public bool CurrentPositionIsDrawByFiftyMoveRule()
+        {
+            return _positionEvaluator.IsDrawByFiftyMoveRule(CurrentPosition);
         }
     }
 }

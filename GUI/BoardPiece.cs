@@ -35,7 +35,8 @@ namespace ChessBot.GUI
         }
         public void Update(GameTime gameTime)
         {
-            if(DeletedBoardThisFrame) return;
+            if (_renderer.GameOver) return;
+            if (DeletedBoardThisFrame) return;
 
             bool playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
             // bool playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite)
@@ -176,10 +177,17 @@ namespace ChessBot.GUI
                 if (_renderer.Core.CurrentPositionIsCheckmate())
                 {
                     Debug.WriteLine(string.Format("Checkmate! {0} wins.", _renderer.Core.CurrentPosition.WhiteToMove ? "Black" : "White"));
+                    _renderer.GameOver = true;
                 }
                 else if (_renderer.Core.CurrentPositionIsStalemate())
                 {
                     Debug.WriteLine("Stalemate. Draw.");
+                    _renderer.GameOver = true;
+                }
+                else if (_renderer.Core.CurrentPositionIsDrawByFiftyMoveRule())
+                {
+                    Debug.WriteLine("Draw by 50 move rule.");
+                    _renderer.GameOver = true;
                 }
             }
             else

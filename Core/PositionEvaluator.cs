@@ -34,5 +34,9 @@ namespace ChessBot.Core
         {
             return _moveGenerator.GetPiecesAttackingKing(position) == 0 && _moveGenerator.GenerateAllPossibleMoves(position).Count == 0;
         }
+        public bool IsDrawByFiftyMoveRule(Position position)
+        {
+            return position.HalfMoveClock >= 100;
+        }
     }
 }
