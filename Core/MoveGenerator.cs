@@ -56,7 +56,7 @@ namespace MegaKnight.Core
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
                     bool isPromotion = j >= 56 || j < 8;
-                    bool isEnPassant = (position.WhiteToMove && j == position.WhiteEnPassantIndex) || (!position.WhiteToMove && j == position.BlackEnPassantIndex);
+                    bool isEnPassant = j == position.EnPassantTargetSquare;
                     if (Math.Abs(i - j) == 16)
                     {
                         allMoves.Add(new Move(Piece.Pawn, (Square)i, (Square)j, MoveType.DoublePawnPush));
@@ -264,9 +264,9 @@ namespace MegaKnight.Core
                 {
                     moves |= (pawnPosition << 16) & ~position.AllPieces & moveMask;
                 }
-                ulong enPassant = moveMask & 1ul << position.BlackEnPassantIndex;
+                ulong enPassant = moveMask & 1ul << position.EnPassantTargetSquare;
                 // We can't en passant if it would cause a discovered check
-                if(enPassant > 0 && (GenerateRookAttacks(position.WhiteKing, position.AllPieces ^ pawnPosition ^ 1ul << position.BlackEnPassantIndex - 8) & (position.BlackRooks | position.BlackQueens)) > 0)
+                if(enPassant > 0 && (GenerateRookAttacks(position.WhiteKing, position.AllPieces ^ pawnPosition ^ 1ul << position.EnPassantTargetSquare - 8) & (position.BlackRooks | position.BlackQueens)) > 0)
                 {
                     enPassant = 0ul;
                 }
@@ -281,8 +281,8 @@ namespace MegaKnight.Core
                 {
                     moves |= (pawnPosition >> 16) & ~position.AllPieces & moveMask;
                 }
-                ulong enPassant = moveMask & 1ul << position.WhiteEnPassantIndex;
-                if (enPassant > 0 && (GenerateRookAttacks(position.BlackKing, position.AllPieces ^ pawnPosition ^ 1ul << position.WhiteEnPassantIndex + 8) & (position.WhiteRooks | position.WhiteQueens)) > 0)
+                ulong enPassant = moveMask & 1ul << position.EnPassantTargetSquare;
+                if (enPassant > 0 && (GenerateRookAttacks(position.BlackKing, position.AllPieces ^ pawnPosition ^ 1ul << position.EnPassantTargetSquare + 8) & (position.WhiteRooks | position.WhiteQueens)) > 0)
                 {
                     enPassant = 0ul;
                 }

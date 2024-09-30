@@ -27,8 +27,7 @@ namespace MegaKnight.Core
 
         // Other information
         public bool WhiteToMove;
-        public int WhiteEnPassantIndex = -1;
-        public int BlackEnPassantIndex = -1;
+        public int EnPassantTargetSquare = -1;
         public int HalfMoveClock = 0;
 
         public bool WhiteKingCastle = true;
@@ -70,8 +69,7 @@ namespace MegaKnight.Core
                 WhiteQueenCastle == other.WhiteQueenCastle &&
                 BlackKingCastle == other.BlackKingCastle &&
                 BlackQueenCastle == other.BlackQueenCastle &&
-                WhiteEnPassantIndex == other.WhiteEnPassantIndex &&
-                BlackEnPassantIndex == other.BlackEnPassantIndex;
+                EnPassantTargetSquare == other.EnPassantTargetSquare;
         }
 
         // Zobrist hashing
@@ -95,8 +93,7 @@ namespace MegaKnight.Core
             if (BlackKingCastle)  toHash.Add(_zobristHashValues[64 * 12 + 3]);
             if (BlackQueenCastle) toHash.Add(_zobristHashValues[64 * 12 + 4]);
 
-            if (WhiteEnPassantIndex != -1) toHash.Add(_zobristHashValues[64 * 12 + 1 + 4 + WhiteEnPassantIndex % 8]);
-            if (BlackEnPassantIndex != -1) toHash.Add(_zobristHashValues[64 * 12 + 1 + 4 + 8 + BlackEnPassantIndex % 8]);
+            if (EnPassantTargetSquare != -1) toHash.Add(_zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8]);
 
             if (toHash.Count == 0) return 0ul;
             ulong hash = toHash[0];
@@ -108,9 +105,9 @@ namespace MegaKnight.Core
         }
         public static void InitializeZobristHashValues()
         {
-            _zobristHashValues = new ulong[789];
+            _zobristHashValues = new ulong[781];
             Random r = new Random();
-            for(int i = 0; i < 789; i++)
+            for(int i = 0; i < 781; i++)
             {
                 _zobristHashValues[i] = Convert.ToUInt64(r.NextInt64());
             }

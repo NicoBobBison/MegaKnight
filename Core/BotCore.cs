@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 
 namespace MegaKnight.Core
 {
@@ -40,8 +41,7 @@ namespace MegaKnight.Core
         {
             position.HalfMoveClock++;
             position = UpdatePositionWithCaptures(move, position);
-            position.WhiteEnPassantIndex = -1;
-            position.BlackEnPassantIndex = -1;
+            position.EnPassantTargetSquare = -1;
             if (move.Piece == Piece.Pawn || move.MoveType == MoveType.Capture) position.HalfMoveClock = 0;
             if (position.WhiteToMove)
             {
@@ -73,7 +73,7 @@ namespace MegaKnight.Core
                         if (move.EndSquare == move.StartSquare << 16)
                         {
                             // Update en passant
-                            position.WhiteEnPassantIndex = BitboardHelper.SinglePopBitboardToIndex(move.StartSquare) + 8;
+                            position.EnPassantTargetSquare = BitboardHelper.SinglePopBitboardToIndex(move.StartSquare) + 8;
                         }
 
                         break;
@@ -149,7 +149,7 @@ namespace MegaKnight.Core
                         if (move.EndSquare == move.StartSquare >> 16)
                         {
                             // Update en passant
-                            position.BlackEnPassantIndex = BitboardHelper.SinglePopBitboardToIndex(move.StartSquare) - 8;
+                            position.EnPassantTargetSquare = BitboardHelper.SinglePopBitboardToIndex(move.StartSquare) - 8;
                         }
                         break;
                     case Piece.Knight:
@@ -205,10 +205,10 @@ namespace MegaKnight.Core
             ulong endSquare = move.EndSquare;
             if (position.WhiteToMove)
             {
-                if(move.Piece == Piece.Pawn && (move.EndSquare & (1ul << position.BlackEnPassantIndex)) > 0)
+                if(move.Piece == Piece.Pawn && (move.EndSquare & (1ul << position.EnPassantTargetSquare)) > 0)
                 {
                     // En passant capture
-                    position.BlackPawns &= ~(1ul << position.BlackEnPassantIndex - 8);
+                    position.BlackPawns &= ~(1ul << position.EnPassantTargetSquare - 8);
                 }
                 else if((position.BlackPieces & endSquare) > 0)
                 {
@@ -240,10 +240,10 @@ namespace MegaKnight.Core
             }
             else
             {
-                if (move.Piece == Piece.Pawn && (move.EndSquare & (1ul << position.WhiteEnPassantIndex)) > 0)
+                if (move.Piece == Piece.Pawn && (move.EndSquare & (1ul << position.EnPassantTargetSquare)) > 0)
                 {
                     // En passant capture
-                    position.WhitePawns &= ~(1ul << position.WhiteEnPassantIndex + 8);
+                    position.WhitePawns &= ~(1ul << position.EnPassantTargetSquare + 8);
                 }
                 else if ((position.WhitePieces & endSquare) > 0)
                 {
@@ -280,9 +280,27 @@ namespace MegaKnight.Core
         {
             _positionEvaluator.AddPositionToPreviousPositions(position);
         }
+        /// <summary>
+        /// Reads in a FEN string and creates a position based on it
+        /// </summary>
+        /// <param name="fenString">The FEN string</param>
+        /// <returns>The FEN string as a position object</returns>
         Position FenToPosition(string fenString)
         {
+            string[] splitFen = fenString.Split(' ');
+            if(splitFen.Length != 6) throw new Exception("Invalid FEN string: " + fenString);
 
+            // 0: piece positions
+            string[] rowsOfPieces = splitFen[0].Split("/");
+            // 1: side to move
+            // 2: castling rights
+            // 3: en passant target square
+            // 4: Half-move counter
+            // 5: Full-move counter (is this even necessary?)
+
+            Position position = new Position();
+
+            return position;
         }
         #region Check current position for checkmate/draw
         public bool CurrentPositionIsCheckmate()

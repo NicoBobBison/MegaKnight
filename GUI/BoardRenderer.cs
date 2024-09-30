@@ -63,9 +63,14 @@ namespace MegaKnight.GUI
             test.WhiteKing = 1ul << 4;
             test.WhiteRooks = 1ul;
             test.WhiteKnights = 1ul << 1;
+            test.WhitePawns = 5ul << 11;
+            test.WhitePawns |= 1ul << 32;
+
             test.BlackKing = 1ul << 60;
             test.BlackRooks = 1ul << 56;
             test.BlackKnights = 1ul << 57;
+            test.BlackPawns = 1ul << 52;
+            test.BlackPawns |= 1ul << 49;
 
             RenderPosition(test);
             Core = new BotCore(test);
