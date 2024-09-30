@@ -1,4 +1,6 @@
-﻿namespace ChessBot.Core
+﻿using System.Collections.Generic;
+
+namespace ChessBot.Core
 {
     internal class BotCore
     {
@@ -6,6 +8,7 @@
         public bool PlayerIsPlayingWhite = true;
         MoveGenerator _moveGenerator;
         PositionEvaluator _positionEvaluator;
+        Dictionary<int, List<Position>> _previousPositions;
         public BotCore()
         {
             _moveGenerator = new MoveGenerator();
