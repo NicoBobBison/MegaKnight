@@ -57,14 +57,19 @@ namespace MegaKnight.GUI
             _bottomRightOfBoard = new Vector2(screenSize.X / 2 - 4 * TileSize, screenSize.Y / 2 + 3 * TileSize);
             CreateBoardTiles();
             CreateMovePreviewCircles();
-            Core = new BotCore();
-
             Position test = new Position();
             test.WhiteToMove = true;
             // This way of setting up the position is temporary and only for testing moves for now, will add FEN later
-            test.WhiteKing = 1ul << 32;
+            test.WhiteKing = 1ul << 4;
+            test.WhiteRooks = 1ul;
+            test.WhiteKnights = 1ul << 1;
+            test.BlackKing = 1ul << 60;
+            test.BlackRooks = 1ul << 56;
+            test.BlackKnights = 1ul << 57;
+
             RenderPosition(test);
-            Core.CurrentPosition = test;
+            Core = new BotCore(test);
+
         }
         public void Update(GameTime gameTime)
         {

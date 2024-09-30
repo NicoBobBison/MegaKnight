@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MegaKnight.Core
 {
-    internal class Position : ICloneable
+    internal class Position : ICloneable, IEquatable<Position>
     {
         // Bitboard representation of pieces. 64 bit long integer, with each bit representing a square.
         // a1 = least significant bit (right most), h8 = most significant bit (left most)
@@ -51,7 +51,31 @@ namespace MegaKnight.Core
         {
             return MemberwiseClone();
         }
+        public bool Equals(Position other)
+        {
+            return WhitePawns == other.WhitePawns &&
+                WhiteKnights == other.WhiteKnights &&
+                WhiteBishops == other.WhiteBishops &&
+                WhiteRooks == other.WhiteRooks &&
+                WhiteQueens == other.WhiteQueens &&
+                WhiteKing == other.WhiteKing &&
+                BlackPawns == other.BlackPawns &&
+                BlackKnights == other.BlackKnights &&
+                BlackBishops == other.BlackBishops &&
+                BlackRooks == other.BlackRooks &&
+                BlackQueens == other.BlackQueens &&
+                BlackKing == other.BlackKing &&
+                WhiteToMove == other.WhiteToMove &&
+                WhiteKingCastle == other.WhiteKingCastle &&
+                WhiteQueenCastle == other.WhiteQueenCastle &&
+                BlackKingCastle == other.BlackKingCastle &&
+                BlackQueenCastle == other.BlackQueenCastle &&
+                WhiteEnPassantIndex == other.WhiteEnPassantIndex &&
+                BlackEnPassantIndex == other.BlackEnPassantIndex;
+        }
 
+        // Zobrist hashing
+        // https://www.chessprogramming.org/Zobrist_Hashing
         public ulong Hash()
         {
             List<ulong> toHash = new List<ulong>();

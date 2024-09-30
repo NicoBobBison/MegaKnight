@@ -81,57 +81,6 @@ namespace MegaKnight.GUI
                     ScreenPosition = _tempScreenPosition;
                 }
             }
-
-            // TODO: This code is really bad, fix all of this
-            /*
-            bool playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
-            // bool playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite)
-            if (InputManager.GetMouseDown() && playerInteractionCondition)// _renderer.Core.PlayerIsPlayingWhite == _isWhite)
-            {
-                // If holding this piece
-                if(_selectedPiece == this)
-                {
-                    // Get hovered tile
-                    BoardTile hoveredTile = GetHoveredBoardTile(_renderer.BoardTiles);
-                    // If hovering a position on the board
-                    if(hoveredTile != null)
-                    {
-                        // Generate move based on hovered tile
-                        Square desiredSquare = (Square)hoveredTile.Index;
-                        Move move = new Move(Piece, BoardPosition, desiredSquare);
-                        // If move is valid
-                        if (_renderer.Core.CanMakeMove(move, _renderer.Core.CurrentPosition))
-                        {
-                            _renderer.BoardTiles[(int)BoardPosition].Piece = null;
-
-                            ScreenPosition = hoveredTile.Position + new Vector2(BoardRenderer.TileSize / 2);
-                            BoardPosition = desiredSquare;
-                            _renderer.Core.CurrentPosition = _renderer.Core.UpdatePositionWithLegalMove(move, _renderer.Core.CurrentPosition);
-
-                            if(hoveredTile.Piece != null)
-                            {
-                                hoveredTile.Piece.MarkDeleted = true;
-                            }
-                            hoveredTile.Piece = this;
-                        }
-                    }
-                    _selectedPiece = null;
-                    BoardTile.HoveredTile = null;
-                    _renderer.ClearMovePreview();
-                }
-                else if(InputManager.IsHovering(GetCollisionBox()) && !MarkDeleted)
-                {
-                    _selectedPiece = this;
-                    BoardTile hoveredTile = GetHoveredBoardTile(_renderer.BoardTiles);
-                    if(hoveredTile != null)
-                    {
-                        BoardTile.HoveredTile = hoveredTile;
-                        ulong square = 1ul << (int)BoardPosition;
-                        _renderer.RenderMovePreview(square, Piece, _renderer.Core.CurrentPosition);
-                    }
-                }
-            }
-            */
         }
         public void Draw(SpriteBatch spriteBatch)
         {
@@ -171,23 +120,13 @@ namespace MegaKnight.GUI
             {
                 // If we can move, redraw the board based on the current position
                 _renderer.Core.CurrentPosition = _renderer.Core.MakeMove(move, _renderer.Core.CurrentPosition);
+
                 _renderer.ClearMovePreview();
                 _renderer.RenderPosition(_renderer.Core.CurrentPosition);
                 DeletedBoardThisFrame = true;
-                if (_renderer.Core.CurrentPositionIsCheckmate())
+                if (!CheckIfGameOver() && Piece != Piece.Pawn)
                 {
-                    Debug.WriteLine(string.Format("Checkmate! {0} wins.", _renderer.Core.CurrentPosition.WhiteToMove ? "Black" : "White"));
-                    _renderer.GameOver = true;
-                }
-                else if (_renderer.Core.CurrentPositionIsStalemate())
-                {
-                    Debug.WriteLine("Stalemate. Draw.");
-                    _renderer.GameOver = true;
-                }
-                else if (_renderer.Core.CurrentPositionIsDrawByFiftyMoveRule())
-                {
-                    Debug.WriteLine("Draw by 50 move rule.");
-                    _renderer.GameOver = true;
+                    _renderer.Core.AddPositionToPreviousPositions(_renderer.Core.CurrentPosition);
                 }
             }
             else
@@ -197,6 +136,42 @@ namespace MegaKnight.GUI
                 _renderer.ClearMovePreview();
             }
         }
+
+        private bool CheckIfGameOver()
+        {
+            if (_renderer.Core.CurrentPositionIsCheckmate())
+            {
+                Debug.WriteLine(string.Format("Checkmate! {0} wins.", _renderer.Core.CurrentPosition.WhiteToMove ? "Black" : "White"));
+                _renderer.GameOver = true;
+                return true;
+            }
+            else if (_renderer.Core.CurrentPositionIsStalemate())
+            {
+                Debug.WriteLine("Stalemate. Draw.");
+                _renderer.GameOver = true;
+                return true;
+            }
+            else if (_renderer.Core.CurrentPositionIsDrawByFiftyMoveRule())
+            {
+                Debug.WriteLine("Draw by 50 move rule.");
+                _renderer.GameOver = true;
+                return true;
+            }
+            else if (_renderer.Core.CurrentPositionIsDrawByRepetition())
+            {
+                Debug.WriteLine("Draw by repetition.");
+                _renderer.GameOver = true;
+                return true;
+            }
+            else if (_renderer.Core.CurrentPositionIsDrawByInsufficientMaterial())
+            {
+                Debug.WriteLine("Draw by insufficient material.");
+                _renderer.GameOver = true;
+                return true;
+            }
+            return false;
+        }
+
         public bool Equals(BoardPiece other)
         {
             return BoardPosition == other.BoardPosition && ScreenPosition == other.ScreenPosition && Piece == other.Piece;
