@@ -162,8 +162,8 @@ namespace MegaKnight.Core
                 foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
-                    bool kingSideCastle = j == i << 2;
-                    bool queenSideCastle = j == i >> 2;
+                    bool kingSideCastle = j == i + 2;
+                    bool queenSideCastle = j == i - 2;
                     if (isCapture)
                     {
                         allMoves.Add(new Move(Piece.King, (Square)i, (Square)j, MoveType.Capture));
@@ -528,65 +528,66 @@ namespace MegaKnight.Core
         }
         ulong GetKingCheckSquares(Position position)
         {
-            // Need to clone this because we want to make the king disappear without changing the original object
-            Position p = (Position)position.Clone();
             ulong attacks = 0ul;
-            if (p.WhiteToMove)
+            if (position.WhiteToMove)
             {
-                p.WhiteKing = 0ul;
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackPawns))
+                ulong kingPos = position.WhiteKing;
+                position.WhiteKing = 0ul;
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackPawns))
                 {
-                    attacks |= GeneratePawnAttacks(1ul << i, false, p);
+                    attacks |= GeneratePawnAttacks(1ul << i, false, position);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackKnights))
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackKnights))
                 {
-                    attacks |= GenerateKnightMoves(1ul << i, p.WhitePieces, p.BlackPieces);
+                    attacks |= GenerateKnightMoves(1ul << i, position.WhitePieces, position.BlackPieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackBishops))
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackBishops))
                 {
-                    attacks |= GenerateBishopMoves(1ul << i, p.WhitePieces, p.BlackPieces);
+                    attacks |= GenerateBishopMoves(1ul << i, position.WhitePieces, position.BlackPieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackRooks))
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackRooks))
                 {
-                    attacks |= GenerateRookMoves(1ul << i, p.WhitePieces, p.BlackPieces);
+                    attacks |= GenerateRookMoves(1ul << i, position.WhitePieces, position.BlackPieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackQueens))
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackQueens))
                 {
-                    attacks |= GenerateQueenMoves(1ul << i, p.WhitePieces, p.BlackPieces);
+                    attacks |= GenerateQueenMoves(1ul << i, position.WhitePieces, position.BlackPieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.BlackKing))
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackKing))
                 {
-                    attacks |= GenerateKingMovesRaw(1ul << i, p);
+                    attacks |= GenerateKingMovesRaw(1ul << i, position);
                 }
+                position.WhiteKing = kingPos;
             }
             else
             {
-                p.BlackKing = 0ul;
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhitePawns))
+                ulong kingPos = position.BlackKing;
+                position.BlackKing = 0ul;
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhitePawns))
                 {
-                    attacks |= GeneratePawnAttacks(1ul << i, true, p);
+                    attacks |= GeneratePawnAttacks(1ul << i, true, position);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhiteKnights))
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhiteKnights))
                 {
-                    attacks |= GenerateKnightMoves(1ul << i, p.BlackPieces, p.WhitePieces);
+                    attacks |= GenerateKnightMoves(1ul << i, position.BlackPieces, position.WhitePieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhiteBishops))
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhiteBishops))
                 {
-                    attacks |= GenerateBishopMoves(1ul << i, p.BlackPieces, p.WhitePieces);
+                    attacks |= GenerateBishopMoves(1ul << i, position.BlackPieces, position.WhitePieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhiteRooks))
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhiteRooks))
                 {
-                    attacks |= GenerateRookMoves(1ul << i, p.BlackPieces, p.WhitePieces);
+                    attacks |= GenerateRookMoves(1ul << i, position.BlackPieces, position.WhitePieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhiteQueens))
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhiteQueens))
                 {
-                    attacks |= GenerateQueenMoves(1ul << i, p.BlackPieces, p.WhitePieces);
+                    attacks |= GenerateQueenMoves(1ul << i, position.BlackPieces, position.WhitePieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(p.WhiteKing))
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhiteKing))
                 {
-                    attacks |= GenerateKingMovesRaw(1ul << i, p);
+                    attacks |= GenerateKingMovesRaw(1ul << i, position);
                 }
-
+                position.BlackKing = kingPos;
             }
             return attacks;
         }

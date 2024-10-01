@@ -119,7 +119,7 @@ namespace MegaKnight.GUI
             if (_renderer.Core.CanMakeMove(move, _renderer.Core.CurrentPosition))
             {
                 // If we can move, redraw the board based on the current position
-                _renderer.Core.CurrentPosition = _renderer.Core.MakeMove(move, _renderer.Core.CurrentPosition);
+                _renderer.Core.MakeMove(move, _renderer.Core.CurrentPosition);
 
                 _renderer.ClearMovePreview();
                 _renderer.RenderPosition(_renderer.Core.CurrentPosition);

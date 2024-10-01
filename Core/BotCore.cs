@@ -7,6 +7,8 @@ namespace MegaKnight.Core
 {
     internal class BotCore
     {
+        const string _fenStartingPosition = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+
         public Position CurrentPosition;
         public bool PlayerIsPlayingWhite = true;
         MoveGenerator _moveGenerator;
@@ -21,17 +23,24 @@ namespace MegaKnight.Core
             CurrentPosition = initialPosition;
             AddPositionToPreviousPositions(initialPosition);
         } */      
-        public BotCore(string fenString)
+        public BotCore()
         {
             Position.InitializeZobristHashValues();
             _moveGenerator = new MoveGenerator();
             _positionEvaluator = new PositionEvaluator(_moveGenerator, this);
-            Position p = FenToPosition(fenString);
+            Position p = FenToPosition(_fenStartingPosition);
             CurrentPosition = p;
             AddPositionToPreviousPositions(p);
 
             Perft = new Perft(_moveGenerator, this);
-            Perft.RunPerft(p, 1);
+            Perft.RunPerft(p, 5);
+            Perft.RunPerft(p, 5);
+            Perft.RunPerft(p, 5);
+            Perft.RunPerft(p, 5);
+            Perft.RunPerft(p, 5);
+            Perft.RunPerft(p, 5);
+            Perft.RunPerft(p, 5);
+            Perft.RunPerft(p, 5);
         }
 
         public bool CanMakeMove(Move move, Position position)
@@ -44,7 +53,7 @@ namespace MegaKnight.Core
             return _moveGenerator.GenerateMoves(startSquare, piece, position);
         }
         // Precondition: Move must be legal (check with CanMakeMove())
-        public Position MakeMove(Move move, Position position)
+        public void MakeMove(Move move, Position position)
         {
             position.HalfMoveClock++;
             position = UpdatePositionWithCaptures(move, position);
@@ -55,7 +64,7 @@ namespace MegaKnight.Core
                 switch (move.Piece)
                 {
                     case Piece.Pawn:
-                        position.WhitePawns &= ~move.StartSquare;
+                        position.WhitePawns ^= move.StartSquare;
                         // Check promotion
                         if (move.MoveType == MoveType.QueenPromotion || move.MoveType == MoveType.QueenPromoCapture)
                         {
@@ -82,15 +91,14 @@ namespace MegaKnight.Core
                             // Update en passant
                             position.EnPassantTargetSquare = BitboardHelper.SinglePopBitboardToIndex(move.StartSquare) + 8;
                         }
-
                         break;
                     case Piece.Knight:
                         position.WhiteKnights |= move.EndSquare;
-                        position.WhiteKnights &= ~move.StartSquare;
+                        position.WhiteKnights ^= move.StartSquare;
                         break;
                     case Piece.Bishop:
                         position.WhiteBishops |= move.EndSquare;
-                        position.WhiteBishops &= ~move.StartSquare;
+                        position.WhiteBishops ^= move.StartSquare;
                         break;
                     case Piece.Rook:
                         if ((move.StartSquare & 1ul) > 0)
@@ -102,26 +110,26 @@ namespace MegaKnight.Core
                             position.WhiteKingCastle = false;
                         }
                         position.WhiteRooks |= move.EndSquare;
-                        position.WhiteRooks &= ~move.StartSquare;
+                        position.WhiteRooks ^= move.StartSquare;
                         break;
                     case Piece.Queen:
                         position.WhiteQueens |= move.EndSquare;
-                        position.WhiteQueens &= ~move.StartSquare;
+                        position.WhiteQueens ^= move.StartSquare;
                         break;
                     case Piece.King:
                         position.WhiteKing |= move.EndSquare;
-                        position.WhiteKing &= ~move.StartSquare;
+                        position.WhiteKing ^= move.StartSquare;
                         position.WhiteKingCastle = false;
                         position.WhiteQueenCastle = false;
                         if(move.MoveType == MoveType.KingCastle)
                         {
                             position.WhiteRooks |= 1ul << 5;
-                            position.WhiteRooks &= ~(1ul << 7);
+                            position.WhiteRooks ^= 1ul << 7;
                         }
                         else if(move.MoveType == MoveType.QueenCastle)
                         {
                             position.WhiteRooks |= 1ul << 3;
-                            position.WhiteRooks &= ~1ul;
+                            position.WhiteRooks ^= 1ul;
                         }
                         break;
                 }
@@ -131,7 +139,7 @@ namespace MegaKnight.Core
                 switch (move.Piece)
                 {
                     case Piece.Pawn:
-                        position.BlackPawns &= ~move.StartSquare;
+                        position.BlackPawns ^= move.StartSquare;
                         // Check promotion
                         if (move.MoveType == MoveType.QueenPromotion || move.MoveType == MoveType.QueenPromoCapture)
                         {
@@ -161,11 +169,11 @@ namespace MegaKnight.Core
                         break;
                     case Piece.Knight:
                         position.BlackKnights |= move.EndSquare;
-                        position.BlackKnights &= ~move.StartSquare;
+                        position.BlackKnights ^= move.StartSquare;
                         break;
                     case Piece.Bishop:
                         position.BlackBishops |= move.EndSquare;
-                        position.BlackBishops &= ~move.StartSquare;
+                        position.BlackBishops ^= move.StartSquare;
                         break;
                     case Piece.Rook:
                         if ((move.StartSquare & 1ul << 56) > 0)
@@ -177,32 +185,35 @@ namespace MegaKnight.Core
                             position.BlackKingCastle = false;
                         }
                         position.BlackRooks |= move.EndSquare;
-                        position.BlackRooks &= ~move.StartSquare;
+                        position.BlackRooks ^= move.StartSquare;
                         break;
                     case Piece.Queen:
                         position.BlackQueens |= move.EndSquare;
-                        position.BlackQueens &= ~move.StartSquare;
+                        position.BlackQueens ^= move.StartSquare;
                         break;
                     case Piece.King:
                         position.BlackKing |= move.EndSquare;
-                        position.BlackKing &= ~move.StartSquare;
+                        position.BlackKing ^= move.StartSquare;
                         position.BlackKingCastle = false;
                         position.BlackQueenCastle = false;
                         if (move.MoveType == MoveType.KingCastle)
                         {
                             position.BlackRooks |= 1ul << 61;
-                            position.BlackRooks &= ~(1ul << 63);
+                            position.BlackRooks ^= 1ul << 63;
                         }
                         else if (move.MoveType == MoveType.QueenCastle)
                         {
                             position.BlackRooks |= 1ul << 59;
-                            position.BlackRooks &= ~(1ul << 56);
+                            position.BlackRooks ^= 1ul << 56;
                         }
                         break;
                 }
             }
             position.WhiteToMove = !position.WhiteToMove;
-            return position;
+        }
+        public void UnmakeMove(Move move, Position position)
+        {
+            // TODO: Implement this, since it's probably faster to unmake a move than to copy the entire board
         }
         Position UpdatePositionWithCaptures(Move move, Position position)
         {

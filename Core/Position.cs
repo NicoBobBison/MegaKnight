@@ -30,10 +30,10 @@ namespace MegaKnight.Core
         public int EnPassantTargetSquare = -1;
         public int HalfMoveClock = 0;
 
-        public bool WhiteKingCastle = false;
-        public bool WhiteQueenCastle = false;
-        public bool BlackKingCastle = false;
-        public bool BlackQueenCastle = false;
+        public bool WhiteKingCastle;
+        public bool WhiteQueenCastle;
+        public bool BlackKingCastle;
+        public bool BlackQueenCastle;
 
         // Other helpful bitboards
         public ulong WhitePieces => WhitePawns | WhiteKnights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKing;
@@ -69,7 +69,8 @@ namespace MegaKnight.Core
                 WhiteQueenCastle == other.WhiteQueenCastle &&
                 BlackKingCastle == other.BlackKingCastle &&
                 BlackQueenCastle == other.BlackQueenCastle &&
-                EnPassantTargetSquare == other.EnPassantTargetSquare;
+                EnPassantTargetSquare == other.EnPassantTargetSquare &&
+                HalfMoveClock == other.HalfMoveClock;
         }
 
         // Zobrist hashing
@@ -111,6 +112,11 @@ namespace MegaKnight.Core
             {
                 _zobristHashValues[i] = Convert.ToUInt64(r.NextInt64());
             }
+        }
+        public void PrintPosition()
+        {
+            Debug.WriteLine("Printing position...");
+            BitboardHelper.PrintBitboard(AllPieces);
         }
     }
 }

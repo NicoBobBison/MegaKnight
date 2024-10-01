@@ -23,6 +23,7 @@ namespace MegaKnight.Debugging
         public void RunPerft(Position startPosition, int maxDepth)
         {
             Debug.WriteLine("Running Perft on depth " + maxDepth);
+            Stopwatch stopwatch = Stopwatch.StartNew();
             List<Move> moves = _moveGenerator.GenerateAllPossibleMoves(startPosition);
             ulong totalNodes = 0ul;
             foreach(Move move in moves)
@@ -35,6 +36,10 @@ namespace MegaKnight.Debugging
                 totalNodes += subnodes;
             }
             Debug.WriteLine("Number of nodes: " + totalNodes);
+            stopwatch.Stop();
+            Debug.WriteLine("Total seconds: " + stopwatch.ElapsedMilliseconds / 1000f);
+            Debug.WriteLine("Nodes per second: " + totalNodes / (stopwatch.ElapsedMilliseconds / 1000f));
+            Debug.WriteLine("");
         }
         ulong PerftRecursive(Position position, int depth)
         {
