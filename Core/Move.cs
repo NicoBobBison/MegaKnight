@@ -101,5 +101,11 @@ namespace MegaKnight.Core
                     throw new Exception("Cannot promote to piece types king or pawn");
             }
         }
+        public override string ToString()
+        {
+            int startSquareIndex = BitboardHelper.SinglePopBitboardToIndex(StartSquare);
+            int endSquareIndex = BitboardHelper.SinglePopBitboardToIndex(EndSquare);
+            return Enum.GetName((Square)startSquareIndex) + Enum.GetName((Square)endSquareIndex);
+        }
     }
 }

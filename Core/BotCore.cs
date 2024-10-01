@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.Linq;
+using MegaKnight.Debugging;
 
 namespace MegaKnight.Core
 {
@@ -10,14 +11,16 @@ namespace MegaKnight.Core
         public bool PlayerIsPlayingWhite = true;
         MoveGenerator _moveGenerator;
         PositionEvaluator _positionEvaluator;
-        public BotCore(Position initialPosition)
+
+        Perft _perft;
+/*        public BotCore(Position initialPosition)
         {
             Position.InitializeZobristHashValues();
             _moveGenerator = new MoveGenerator();
             _positionEvaluator = new PositionEvaluator(_moveGenerator, this);
             CurrentPosition = initialPosition;
             AddPositionToPreviousPositions(initialPosition);
-        }
+        } */      
         public BotCore(string fenString)
         {
             Position.InitializeZobristHashValues();
@@ -26,6 +29,9 @@ namespace MegaKnight.Core
             Position p = FenToPosition(fenString);
             CurrentPosition = p;
             AddPositionToPreviousPositions(p);
+
+            _perft = new Perft(_moveGenerator, this);
+            _perft.RunPerft(p, 3);
         }
 
         public bool CanMakeMove(Move move, Position position)

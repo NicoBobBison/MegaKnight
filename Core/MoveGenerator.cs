@@ -258,12 +258,13 @@ namespace MegaKnight.Core
             ulong moves = 0ul;
             if (position.WhiteToMove)
             {
-                ulong oneForward = (pawnPosition << 8) & ~position.AllPieces & moveMask;
+                ulong oneForward = (pawnPosition << 8) & ~position.AllPieces;
                 moves |= oneForward;
                 if(BitboardHelper.SinglePopBitboardToIndex(pawnPosition) / 8 == 1 && oneForward > 0)
                 {
                     moves |= (pawnPosition << 16) & ~position.AllPieces & moveMask;
                 }
+                moves &= moveMask;
                 ulong enPassant = moveMask & 1ul << position.EnPassantTargetSquare;
                 // We can't en passant if it would cause a discovered check
                 if(enPassant > 0 && (GenerateRookAttacks(position.WhiteKing, position.AllPieces ^ pawnPosition ^ 1ul << position.EnPassantTargetSquare - 8) & (position.BlackRooks | position.BlackQueens)) > 0)
@@ -275,12 +276,13 @@ namespace MegaKnight.Core
             }
             else
             {
-                ulong oneForward = (pawnPosition >> 8) & ~position.AllPieces & moveMask;
+                ulong oneForward = (pawnPosition >> 8) & ~position.AllPieces;
                 moves |= oneForward;
                 if (BitboardHelper.SinglePopBitboardToIndex(pawnPosition) / 8 == 6 && oneForward > 0)
                 {
                     moves |= (pawnPosition >> 16) & ~position.AllPieces & moveMask;
                 }
+                moves &= moveMask;
                 ulong enPassant = moveMask & 1ul << position.EnPassantTargetSquare;
                 if (enPassant > 0 && (GenerateRookAttacks(position.BlackKing, position.AllPieces ^ pawnPosition ^ 1ul << position.EnPassantTargetSquare + 8) & (position.WhiteRooks | position.WhiteQueens)) > 0)
                 {
