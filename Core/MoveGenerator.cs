@@ -92,7 +92,6 @@ namespace MegaKnight.Core
                     }
                 }
             }
-            // TODO: Add other pieces
             foreach(int i in BitboardHelper.BitboardToListOfSquareIndeces(knights))
             {
                 ulong moves = GenerateMoves(1ul << i, Piece.Knight, position);
@@ -163,10 +162,19 @@ namespace MegaKnight.Core
                 foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
-                    // TODO: Add castling
+                    bool kingSideCastle = j == i << 2;
+                    bool queenSideCastle = j == i >> 2;
                     if (isCapture)
                     {
                         allMoves.Add(new Move(Piece.King, (Square)i, (Square)j, MoveType.Capture));
+                    }
+                    else if (kingSideCastle)
+                    {
+                        allMoves.Add(new Move(Piece.King, (Square)i, (Square)j, MoveType.KingCastle));
+                    }
+                    else if (queenSideCastle)
+                    {
+                        allMoves.Add(new Move(Piece.King, (Square)i, (Square)j, MoveType.QueenCastle));
                     }
                     else
                     {
@@ -397,7 +405,6 @@ namespace MegaKnight.Core
         }
         ulong GenerateKingMoves(ulong kingPosition, Position position)
         {
-            // TODO: Add castling
             ulong checkedSquares = GetKingCheckSquares(position);
             return (GenerateKingMovesRaw(kingPosition, position) | GenerateKingCastleMoves(checkedSquares, position)) & ~checkedSquares;
         }

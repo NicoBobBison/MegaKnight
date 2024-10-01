@@ -12,7 +12,7 @@ namespace MegaKnight.Core
         MoveGenerator _moveGenerator;
         PositionEvaluator _positionEvaluator;
 
-        Perft _perft;
+        public Perft Perft;
 /*        public BotCore(Position initialPosition)
         {
             Position.InitializeZobristHashValues();
@@ -30,8 +30,8 @@ namespace MegaKnight.Core
             CurrentPosition = p;
             AddPositionToPreviousPositions(p);
 
-            _perft = new Perft(_moveGenerator, this);
-            _perft.RunPerft(p, 3);
+            Perft = new Perft(_moveGenerator, this);
+            Perft.RunPerft(p, 1);
         }
 
         public bool CanMakeMove(Move move, Position position)
@@ -202,9 +202,6 @@ namespace MegaKnight.Core
                 }
             }
             position.WhiteToMove = !position.WhiteToMove;
-
-            // TODO: After making a move, check if the position is checkmate/stalemate
-
             return position;
         }
         Position UpdatePositionWithCaptures(Move move, Position position)

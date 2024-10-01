@@ -11,7 +11,7 @@ namespace MegaKnight.GUI
 {
     internal class BoardRenderer
     {
-        const string initialFenPosition = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/R3K2R b KQkq - 0 1";
+        const string initialFenPosition = "r4rk1/1ppp1pp1/8/8/8/1P6/2PP1PP1/R4RK1 w - - 0 1";
 
         public readonly BotCore Core;
 
