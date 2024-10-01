@@ -34,13 +34,6 @@ namespace MegaKnight.Core
 
             Perft = new Perft(_moveGenerator, this);
             Perft.RunPerft(p, 5);
-            Perft.RunPerft(p, 5);
-            Perft.RunPerft(p, 5);
-            Perft.RunPerft(p, 5);
-            Perft.RunPerft(p, 5);
-            Perft.RunPerft(p, 5);
-            Perft.RunPerft(p, 5);
-            Perft.RunPerft(p, 5);
         }
 
         public bool CanMakeMove(Move move, Position position)
