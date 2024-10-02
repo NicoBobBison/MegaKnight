@@ -48,10 +48,11 @@ namespace MegaKnight.Core
             ulong queens = position.WhiteToMove ? position.WhiteQueens : position.BlackQueens;
             ulong king = position.WhiteToMove ? position.WhiteKing : position.BlackKing;
             ulong enemyPieces = position.WhiteToMove ? position.BlackPieces : position.WhitePieces;
+            ulong piecesAttackingKing = GetPiecesAttackingKing(position);
 
-            foreach(int i in BitboardHelper.BitboardToListOfSquareIndeces(pawns))
+            foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(pawns))
             {
-                ulong moves = GenerateMoves(1ul << i, Piece.Pawn, position);
+                ulong moves = GenerateMoves(1ul << i, Piece.Pawn, position, piecesAttackingKing);
                 foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
@@ -94,7 +95,7 @@ namespace MegaKnight.Core
             }
             foreach(int i in BitboardHelper.BitboardToListOfSquareIndeces(knights))
             {
-                ulong moves = GenerateMoves(1ul << i, Piece.Knight, position);
+                ulong moves = GenerateMoves(1ul << i, Piece.Knight, position, piecesAttackingKing);
                 foreach(int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
@@ -110,7 +111,7 @@ namespace MegaKnight.Core
             }
             foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(bishops))
             {
-                ulong moves = GenerateMoves(1ul << i, Piece.Bishop, position);
+                ulong moves = GenerateMoves(1ul << i, Piece.Bishop, position, piecesAttackingKing);
                 foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
@@ -126,7 +127,7 @@ namespace MegaKnight.Core
             }
             foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(rooks))
             {
-                ulong moves = GenerateMoves(1ul << i, Piece.Rook, position);
+                ulong moves = GenerateMoves(1ul << i, Piece.Rook, position, piecesAttackingKing);
                 foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
@@ -142,7 +143,7 @@ namespace MegaKnight.Core
             }
             foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(queens))
             {
-                ulong moves = GenerateMoves(1ul << i, Piece.Queen, position);
+                ulong moves = GenerateMoves(1ul << i, Piece.Queen, position, piecesAttackingKing);
                 foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
@@ -158,7 +159,7 @@ namespace MegaKnight.Core
             }
             foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(king))
             {
-                ulong moves = GenerateMoves(1ul << i, Piece.King, position);
+                ulong moves = GenerateMoves(1ul << i, Piece.King, position, piecesAttackingKing);
                 foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
@@ -191,6 +192,81 @@ namespace MegaKnight.Core
             ulong friendlyKing = position.WhiteToMove ? position.WhiteKing : position.BlackKing;
 
             ulong piecesAttackingKing = GetPiecesAttackingKing(position);
+            int numAttackers = BitboardHelper.GetBitboardPopCount(piecesAttackingKing);
+
+            // We need to store move and capture masks separately because of en passant potentially blocking a check
+            ulong moveMask = ulong.MaxValue;
+            ulong captureMask = ulong.MaxValue;
+
+            if (piece != Piece.King)
+            {
+                // If we are in double check, we can only move our king
+                if (numAttackers >= 2)
+                {
+                    return 0ul;
+                }
+                else if (numAttackers == 1)
+                {
+                    // We can only capture the attacking piece
+                    captureMask = piecesAttackingKing;
+                    if (position.IsSlidingPiece(piecesAttackingKing))
+                    {
+                        moveMask = GetSquaresBetweenPiecesRay(position.WhiteToMove ? position.WhiteKing : position.BlackKing, piecesAttackingKing);
+                    }
+                    else
+                    {
+                        moveMask = 0ul;
+                    }
+                }
+                ulong enemyBQ = position.WhiteToMove ? position.BlackBishops | position.BlackQueens : position.WhiteBishops | position.WhiteQueens;
+                ulong enemyRQ = position.WhiteToMove ? position.BlackRooks | position.BlackQueens : position.WhiteRooks | position.WhiteQueens;
+                ulong pinners = XRayBishopAttacks(friendlyKing, friendlyPieces, position) & enemyBQ;
+                // Remove this piece from the board temporarily
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(pinners))
+                {
+                    ulong overlap = GenerateBishopAttacks(1ul << i, (friendlyPieces ^ startSquare) | enemyPieces) & GenerateBishopAttacks(friendlyKing, (friendlyPieces ^ startSquare) | enemyPieces);
+                    if ((overlap & startSquare) > 0)
+                    {
+                        moveMask &= overlap;
+                        captureMask &= overlap | 1ul << i;
+                    }
+                }
+                pinners = XRayRookAttacks(friendlyKing, friendlyPieces, position) & enemyRQ;
+                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(pinners))
+                {
+                    ulong overlap = GenerateRookAttacks(1ul << i, (friendlyPieces ^ startSquare) | enemyPieces) & GenerateRookAttacks(friendlyKing, (friendlyPieces ^ startSquare) | enemyPieces);
+                    if ((overlap & startSquare) > 0)
+                    {
+                        moveMask &= overlap;
+                        captureMask &= overlap | 1ul << i;
+                    }
+                }
+            }
+
+            switch (piece)
+            {
+                case Piece.Pawn:
+                    return GeneratePawnMoves(startSquare, position, moveMask, captureMask);
+                case Piece.Knight:
+                    return GenerateKnightMoves(startSquare, friendlyPieces, enemyPieces, moveMask, captureMask);
+                case Piece.Bishop:
+                    return GenerateBishopMoves(startSquare, friendlyPieces, enemyPieces, moveMask, captureMask);
+                case Piece.Rook:
+                    return GenerateRookMoves(startSquare, friendlyPieces, enemyPieces, moveMask, captureMask);
+                case Piece.Queen:
+                    return GenerateQueenMoves(startSquare, friendlyPieces, enemyPieces, moveMask, captureMask);
+                case Piece.King:
+                    return GenerateKingMoves(startSquare, position);
+            }
+            throw new NotImplementedException("Piece is not accounted for in GenerateMoves");
+        }
+        // Overload to precompute pieces attacking king, since it is an expensive calculation
+        public ulong GenerateMoves(ulong startSquare, Piece piece, Position position, ulong piecesAttackingKing)
+        {
+            ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
+            ulong enemyPieces = position.WhiteToMove ? position.BlackPieces : position.WhitePieces;
+            ulong friendlyKing = position.WhiteToMove ? position.WhiteKing : position.BlackKing;
+
             int numAttackers = BitboardHelper.GetBitboardPopCount(piecesAttackingKing);
 
             // We need to store move and capture masks separately because of en passant potentially blocking a check

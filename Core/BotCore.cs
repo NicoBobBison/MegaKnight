@@ -22,7 +22,7 @@ namespace MegaKnight.Core
             _positionEvaluator = new PositionEvaluator(_moveGenerator, this);
             CurrentPosition = initialPosition;
             AddPositionToPreviousPositions(initialPosition);
-        } */      
+        } */
         public BotCore()
         {
             Position.InitializeZobristHashValues();
