@@ -48,6 +48,7 @@ namespace MegaKnight.Core
         // Precondition: Move must be legal (check with CanMakeMove())
         public void MakeMove(Move move, Position position)
         {
+            // TODO: Rewrite this to remove most of the branching if possible
             position.HalfMoveClock++;
             position = UpdatePositionWithCaptures(move, position);
             position.EnPassantTargetSquare = -1;
@@ -82,7 +83,7 @@ namespace MegaKnight.Core
                         if (move.EndSquare == move.StartSquare << 16)
                         {
                             // Update en passant
-                            position.EnPassantTargetSquare = BitboardHelper.SinglePopBitboardToIndex(move.StartSquare) + 8;
+                            position.EnPassantTargetSquare = (sbyte)(BitboardHelper.SinglePopBitboardToIndex(move.StartSquare) + 8);
                         }
                         break;
                     case Piece.Knight:
@@ -157,7 +158,7 @@ namespace MegaKnight.Core
                         if (move.EndSquare == move.StartSquare >> 16)
                         {
                             // Update en passant
-                            position.EnPassantTargetSquare = BitboardHelper.SinglePopBitboardToIndex(move.StartSquare) - 8;
+                            position.EnPassantTargetSquare = (sbyte)(BitboardHelper.SinglePopBitboardToIndex(move.StartSquare) - 8);
                         }
                         break;
                     case Piece.Knight:
@@ -402,13 +403,13 @@ namespace MegaKnight.Core
             {
                 int col = enPassant[0] - 'a';
                 int row = enPassant[1] - '1';
-                position.EnPassantTargetSquare = 8 * row + col;
+                position.EnPassantTargetSquare = (sbyte)(8 * row + col);
             }
 
             // 4: Half-move counter
             if (int.TryParse(splitFen[4], out int halfMoves))
             {
-                position.HalfMoveClock = halfMoves;
+                position.HalfMoveClock = (byte)halfMoves;
             }
             else
             {

@@ -27,8 +27,8 @@ namespace MegaKnight.Core
 
         // Other information
         public bool WhiteToMove;
-        public int EnPassantTargetSquare = -1;
-        public int HalfMoveClock = 0;
+        public sbyte EnPassantTargetSquare = -1;
+        public byte HalfMoveClock = 0;
 
         public bool WhiteKingCastle;
         public bool WhiteQueenCastle;
