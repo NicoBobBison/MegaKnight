@@ -33,6 +33,10 @@ namespace MegaKnight.GUI
         {
             return _currentKeys.IsKeyDown(key) && !_prevKeys.IsKeyDown(key);
         }
+        public static bool GetKeyPressed(Keys key)
+        {
+            return _currentKeys.IsKeyDown(key);
+        }
         public static Vector2 GetMousePosition()
         {
             return new Vector2(_currentMouse.X, _currentMouse.Y);

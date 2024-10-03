@@ -99,11 +99,22 @@ namespace MegaKnight.GUI
             Square desiredSquare = (Square)hoveredTile.Index;
             Move move = new Move(Piece, BoardPosition, desiredSquare);
             int squareIndex = BitboardHelper.SinglePopBitboardToIndex(move.EndSquare);
-
-            if (Piece == Piece.Pawn && ((_isWhite && squareIndex > 55) || (!_isWhite && squareIndex < 8)))
+            
+            if (Piece == Piece.Pawn)
             {
-                // Don't need to flag promotion for player's UI moves (I think) because flags are only used for analysis
-                move.FlagPromotion(_renderer.AutoPromotionPiece);
+                if((_isWhite && squareIndex > 55) || (!_isWhite && squareIndex < 8))
+                {
+                    // Don't need to flag promotion capture for player's UI moves (I think) because flags are only used for analysis
+                    move.FlagPromotion(_renderer.AutoPromotionPiece);
+                }
+                else if (Math.Abs((int)BoardPosition - (int)desiredSquare) == 16)
+                {
+                    move.MoveType = MoveType.DoublePawnPush;
+                }
+                else if ((int)desiredSquare == _renderer.Core.CurrentPosition.EnPassantTargetSquare)
+                {
+                    move.MoveType = MoveType.EnPassant;
+                }
             }
             if (Piece == Piece.King)
             {
@@ -119,7 +130,8 @@ namespace MegaKnight.GUI
             if (_renderer.Core.CanMakeMove(move, _renderer.Core.CurrentPosition))
             {
                 // If we can move, redraw the board based on the current position
-                _renderer.Core.MakeMove(move, _renderer.Core.CurrentPosition);
+                _renderer.Core.CurrentPosition.MakeMove(move);
+                if(InputManager.GetKeyPressed(Keys.Space))_renderer.Core.CurrentPosition.UnmakeMove(move);
 
                 _renderer.ClearMovePreview();
                 _renderer.RenderPosition(_renderer.Core.CurrentPosition);

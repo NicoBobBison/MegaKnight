@@ -26,9 +26,9 @@ namespace MegaKnight.Core
             List<Move> allMoves = _moveGenerator.GenerateAllPossibleMoves(position);
             foreach (Move move in allMoves)
             {
-                Position p = (Position)_core.CurrentPosition.Clone();
-                _core.MakeMove(move, p);
-                if(_moveGenerator.GetPiecesAttackingKing(p) == 0) return false;
+                position.MakeMove(move);
+                if(_moveGenerator.GetPiecesAttackingKing(position) == 0) return false;
+                position.UnmakeMove(move);
             }
             // Every move still leaves the king in check
             return true;

@@ -29,9 +29,9 @@ namespace MegaKnight.Debugging
             foreach(Move move in moves)
             {
                 Debug.Write(move.ToString() + ": ");
-                Position p = (Position)startPosition.Clone();
-                _core.MakeMove(move, p);
-                ulong subnodes = PerftRecursive(p, maxDepth - 1);
+                startPosition.MakeMove(move);
+                ulong subnodes = PerftRecursive(startPosition, maxDepth - 1);
+                startPosition.UnmakeMove(move);
                 Debug.WriteLine(subnodes);
                 totalNodes += subnodes;
             }
@@ -55,9 +55,10 @@ namespace MegaKnight.Debugging
             }
             foreach(Move move in moves)
             {
-                Position p = (Position)position.Clone();
-                _core.MakeMove(move, p);
-                nodes += PerftRecursive(p, depth - 1);
+                position.MakeMove(move);
+                //Debug.WriteLine(move.ToString());
+                nodes += PerftRecursive(position, depth - 1);
+                position.UnmakeMove(move);
             }
             return nodes;
         }

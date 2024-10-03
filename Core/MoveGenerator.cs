@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace MegaKnight.Core
@@ -214,6 +215,7 @@ namespace MegaKnight.Core
                 {
                     // We can only capture the attacking piece
                     captureMask = piecesAttackingKing;
+
                     if (position.IsSlidingPiece(piecesAttackingKing))
                     {
                         moveMask = GetSquaresBetweenPiecesRay(position.WhiteToMove ? position.WhiteKing : position.BlackKing, piecesAttackingKing);
@@ -298,8 +300,6 @@ namespace MegaKnight.Core
                         moveMask = 0ul;
                     }
                 }
-                ulong enemyBQ = position.WhiteToMove ? position.BlackBishops | position.BlackQueens : position.WhiteBishops | position.WhiteQueens;
-                ulong enemyRQ = position.WhiteToMove ? position.BlackRooks | position.BlackQueens : position.WhiteRooks | position.WhiteQueens;
                 // Remove this piece from the board temporarily
                 foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(bqPinners))
                 {
@@ -352,9 +352,9 @@ namespace MegaKnight.Core
                     moves |= (pawnPosition << 16) & ~position.AllPieces & moveMask;
                 }
                 moves &= moveMask;
-                ulong enPassant = (pawnPosition << 7 | pawnPosition << 9) & moveMask & 1ul << position.EnPassantTargetSquare;
+                ulong enPassant = (pawnPosition << 7 | pawnPosition << 9) & (moveMask | captureMask << 8) & 1ul << position.EnPassantTargetSquare;
                 // We can't en passant if it would cause a discovered check
-                if(enPassant > 0 && (GenerateRookAttacks(position.WhiteKing, position.AllPieces ^ pawnPosition ^ 1ul << position.EnPassantTargetSquare - 8) & (position.BlackRooks | position.BlackQueens)) > 0)
+                if(enPassant > 0 && (GenerateHorizontalAttacks(position.WhiteKing, position.AllPieces ^ pawnPosition ^ 1ul << position.EnPassantTargetSquare - 8) & (position.BlackRooks | position.BlackQueens)) > 0)
                 {
                     enPassant = 0ul;
                 }
@@ -370,8 +370,8 @@ namespace MegaKnight.Core
                     moves |= (pawnPosition >> 16) & ~position.AllPieces & moveMask;
                 }
                 moves &= moveMask;
-                ulong enPassant = (pawnPosition >> 7 | pawnPosition >> 9) & moveMask & 1ul << position.EnPassantTargetSquare;
-                if (enPassant > 0 && (GenerateRookAttacks(position.BlackKing, position.AllPieces ^ pawnPosition ^ 1ul << position.EnPassantTargetSquare + 8) & (position.WhiteRooks | position.WhiteQueens)) > 0)
+                ulong enPassant = (pawnPosition >> 7 | pawnPosition >> 9) & (moveMask | captureMask >> 8) & 1ul << position.EnPassantTargetSquare;
+                if (enPassant > 0 && (GenerateHorizontalAttacks(position.BlackKing, position.AllPieces ^ pawnPosition ^ 1ul << position.EnPassantTargetSquare + 8) & (position.WhiteRooks | position.WhiteQueens)) > 0)
                 {
                     enPassant = 0ul;
                 }
@@ -392,6 +392,28 @@ namespace MegaKnight.Core
         {
             ulong moves = GenerateRookAttacks(rookPosition, friendlyPieces | enemyPieces);
             return moves & (moveMask | captureMask) & ~friendlyPieces;
+        }
+        ulong GenerateHorizontalAttacks(ulong piecePosition, ulong occupancy)
+        {
+            ulong moves = 0ul;
+            int indexOfPosition = BitOperations.TrailingZeroCount(piecePosition);
+
+            ulong attackRay = _rayAttacks[indexOfPosition, (int)Direction.East];
+            moves |= attackRay;
+            if ((attackRay & occupancy) > 0)
+            {
+                int firstMaskedBlocker = BitOperations.TrailingZeroCount(attackRay & occupancy);
+                moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.East];
+            }
+
+            attackRay = _rayAttacks[indexOfPosition, (int)Direction.West];
+            moves |= attackRay;
+            if ((attackRay & occupancy) > 0)
+            {
+                int firstMaskedBlocker = 63 - BitOperations.LeadingZeroCount(attackRay & occupancy);
+                moves &= ~_rayAttacks[firstMaskedBlocker, (int)Direction.West];
+            }
+            return moves;
         }
         ulong GenerateRookAttacks(ulong rookPosition, ulong occupancy)
         {
