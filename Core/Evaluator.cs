@@ -6,17 +6,51 @@ using System.Threading.Tasks;
 
 namespace MegaKnight.Core
 {
-    internal class PositionEvaluator
+    internal class Evaluator
     {
         MoveGenerator _moveGenerator;
         BotCore _core;
         const int _prevPositionsCapacity = 500;
         Dictionary<int, List<Position>> _previousPositions;
-        public PositionEvaluator(MoveGenerator moveGenerator, BotCore core)
+        public Evaluator(MoveGenerator moveGenerator, BotCore core)
         {
             _moveGenerator = moveGenerator;
             _core = core;
             _previousPositions = new Dictionary<int, List<Position>>(_prevPositionsCapacity);
+        }
+        /// <summary>
+        /// Evaluates a position based on various heuristics. Positive numbers are good for white while negative numbers are good for black.
+        /// </summary>
+        /// <param name="position">Position to evaluate</param>
+        /// <returns>The evaluation result. Positive numbers are good for white, negative numbers are good for black, and 0 means the position is drawn.</returns>
+        public int Evaluate(Position position)
+        {
+            int whiteToMove = position.WhiteToMove ? 1 : -1;
+
+            if (IsCheckmate(position))
+            {
+                return -10000 * whiteToMove;
+            }
+            if (IsDraw(position))
+            {
+                return 0;
+            }
+
+            int evaluation = 0;
+
+            const int pawnValue = 1;
+            const int knightValue = 3;
+            const int bishopValue = 3;
+            const int rookValue = 5;
+            const int queenValue = 8;
+
+            evaluation += pawnValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhitePawns).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackPawns).Length);
+            evaluation += knightValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhiteKnights).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackKnights).Length);
+            evaluation += bishopValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhiteBishops).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackBishops).Length);
+            evaluation += rookValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhiteRooks).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackRooks).Length);
+            evaluation += queenValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhiteQueens).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackQueens).Length);
+
+            return evaluation * whiteToMove;
         }
         public bool IsCheckmate(Position position)
         {
@@ -32,6 +66,10 @@ namespace MegaKnight.Core
             }
             // Every move still leaves the king in check
             return true;
+        }
+        bool IsDraw(Position position)
+        {
+            return IsStalemate(position) || IsDrawByFiftyMoveRule(position) || IsDrawByInsufficientMaterial(position) || IsDrawByRepetition(position);
         }
         public bool IsStalemate(Position position)
         {

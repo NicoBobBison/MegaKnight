@@ -30,7 +30,7 @@ namespace MegaKnight.Core
             if (square < 0 || square > 63) Debug.WriteLine("Cannot print " + square + ": out of bounds");
             PrintBitboard(1ul << square);
         }
-        public static int[] BitboardToListOfSquareIndeces(ulong bitboard)
+        public static int[] BoardToArrayOfIndeces(ulong bitboard)
         {
             int[] indeces = new int[GetBitboardPopCount(bitboard)];
             int indexCount = 0;

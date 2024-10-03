@@ -56,10 +56,10 @@ namespace MegaKnight.Core
             ulong bqPinners = XRayBishopAttacks(king, position.WhiteToMove ? position.WhitePieces : position.BlackPieces, position) & (enemyBishops | enemyQueens);
             ulong rqPinners = XRayRookAttacks(king, position.WhiteToMove ? position.WhitePieces : position.BlackPieces, position) & (enemyRooks | enemyQueens);
 
-            foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(pawns))
+            foreach (int i in BitboardHelper.BoardToArrayOfIndeces(pawns))
             {
                 ulong moves = GenerateMoves(1ul << i, Piece.Pawn, position, piecesAttackingKing, bqPinners, rqPinners);
-                foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                foreach (int j in BitboardHelper.BoardToArrayOfIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
                     bool isPromotion = j >= 56 || j < 8;
@@ -99,10 +99,10 @@ namespace MegaKnight.Core
                     }
                 }
             }
-            foreach(int i in BitboardHelper.BitboardToListOfSquareIndeces(knights))
+            foreach(int i in BitboardHelper.BoardToArrayOfIndeces(knights))
             {
                 ulong moves = GenerateMoves(1ul << i, Piece.Knight, position, piecesAttackingKing, bqPinners, rqPinners);
-                foreach(int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                foreach(int j in BitboardHelper.BoardToArrayOfIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
                     if (isCapture)
@@ -115,10 +115,10 @@ namespace MegaKnight.Core
                     }
                 }
             }
-            foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(bishops))
+            foreach (int i in BitboardHelper.BoardToArrayOfIndeces(bishops))
             {
                 ulong moves = GenerateMoves(1ul << i, Piece.Bishop, position, piecesAttackingKing, bqPinners, rqPinners);
-                foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                foreach (int j in BitboardHelper.BoardToArrayOfIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
                     if (isCapture)
@@ -131,10 +131,10 @@ namespace MegaKnight.Core
                     }
                 }
             }
-            foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(rooks))
+            foreach (int i in BitboardHelper.BoardToArrayOfIndeces(rooks))
             {
                 ulong moves = GenerateMoves(1ul << i, Piece.Rook, position, piecesAttackingKing, bqPinners, rqPinners);
-                foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                foreach (int j in BitboardHelper.BoardToArrayOfIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
                     if (isCapture)
@@ -147,10 +147,10 @@ namespace MegaKnight.Core
                     }
                 }
             }
-            foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(queens))
+            foreach (int i in BitboardHelper.BoardToArrayOfIndeces(queens))
             {
                 ulong moves = GenerateMoves(1ul << i, Piece.Queen, position, piecesAttackingKing, bqPinners, rqPinners);
-                foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                foreach (int j in BitboardHelper.BoardToArrayOfIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
                     if (isCapture)
@@ -163,10 +163,10 @@ namespace MegaKnight.Core
                     }
                 }
             }
-            foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(king))
+            foreach (int i in BitboardHelper.BoardToArrayOfIndeces(king))
             {
                 ulong moves = GenerateMoves(1ul << i, Piece.King, position, piecesAttackingKing, bqPinners, rqPinners);
-                foreach (int j in BitboardHelper.BitboardToListOfSquareIndeces(moves))
+                foreach (int j in BitboardHelper.BoardToArrayOfIndeces(moves))
                 {
                     bool isCapture = (1ul << j & enemyPieces) > 0;
                     bool kingSideCastle = j == i + 2;
@@ -229,7 +229,7 @@ namespace MegaKnight.Core
                 ulong enemyRQ = position.WhiteToMove ? position.BlackRooks | position.BlackQueens : position.WhiteRooks | position.WhiteQueens;
                 ulong pinners = XRayBishopAttacks(friendlyKing, friendlyPieces, position) & enemyBQ;
                 // Remove this piece from the board temporarily
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(pinners))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(pinners))
                 {
                     ulong overlap = GenerateBishopAttacks(1ul << i, (friendlyPieces ^ startSquare) | enemyPieces) & GenerateBishopAttacks(friendlyKing, (friendlyPieces ^ startSquare) | enemyPieces);
                     if ((overlap & startSquare) > 0)
@@ -239,7 +239,7 @@ namespace MegaKnight.Core
                     }
                 }
                 pinners = XRayRookAttacks(friendlyKing, friendlyPieces, position) & enemyRQ;
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(pinners))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(pinners))
                 {
                     ulong overlap = GenerateRookAttacks(1ul << i, (friendlyPieces ^ startSquare) | enemyPieces) & GenerateRookAttacks(friendlyKing, (friendlyPieces ^ startSquare) | enemyPieces);
                     if ((overlap & startSquare) > 0)
@@ -301,7 +301,7 @@ namespace MegaKnight.Core
                     }
                 }
                 // Remove this piece from the board temporarily
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(bqPinners))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(bqPinners))
                 {
                     ulong overlap = GenerateBishopAttacks(1ul << i, (friendlyPieces ^ startSquare) | enemyPieces) & GenerateBishopAttacks(friendlyKing, (friendlyPieces ^ startSquare) | enemyPieces);
                     if((overlap & startSquare) > 0)
@@ -310,7 +310,7 @@ namespace MegaKnight.Core
                         captureMask &= overlap | 1ul << i;
                     }
                 }
-                foreach(int i in BitboardHelper.BitboardToListOfSquareIndeces(rqPinners))
+                foreach(int i in BitboardHelper.BoardToArrayOfIndeces(rqPinners))
                 {
                     ulong overlap = GenerateRookAttacks(1ul << i, (friendlyPieces ^ startSquare) | enemyPieces) & GenerateRookAttacks(friendlyKing, (friendlyPieces ^ startSquare) | enemyPieces);
                     if ((overlap & startSquare) > 0)
@@ -632,27 +632,27 @@ namespace MegaKnight.Core
             {
                 ulong kingPos = position.WhiteKing;
                 position.WhiteKing = 0ul;
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackPawns))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.BlackPawns))
                 {
                     attacks |= GeneratePawnAttacks(1ul << i, false, position);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackKnights))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.BlackKnights))
                 {
                     attacks |= GenerateKnightMoves(1ul << i, position.WhitePieces, position.BlackPieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackBishops))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.BlackBishops))
                 {
                     attacks |= GenerateBishopMoves(1ul << i, position.WhitePieces, position.BlackPieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackRooks))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.BlackRooks))
                 {
                     attacks |= GenerateRookMoves(1ul << i, position.WhitePieces, position.BlackPieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackQueens))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.BlackQueens))
                 {
                     attacks |= GenerateQueenMoves(1ul << i, position.WhitePieces, position.BlackPieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.BlackKing))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.BlackKing))
                 {
                     attacks |= GenerateKingMovesRaw(1ul << i, position);
                 }
@@ -662,27 +662,27 @@ namespace MegaKnight.Core
             {
                 ulong kingPos = position.BlackKing;
                 position.BlackKing = 0ul;
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhitePawns))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.WhitePawns))
                 {
                     attacks |= GeneratePawnAttacks(1ul << i, true, position);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhiteKnights))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.WhiteKnights))
                 {
                     attacks |= GenerateKnightMoves(1ul << i, position.BlackPieces, position.WhitePieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhiteBishops))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.WhiteBishops))
                 {
                     attacks |= GenerateBishopMoves(1ul << i, position.BlackPieces, position.WhitePieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhiteRooks))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.WhiteRooks))
                 {
                     attacks |= GenerateRookMoves(1ul << i, position.BlackPieces, position.WhitePieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhiteQueens))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.WhiteQueens))
                 {
                     attacks |= GenerateQueenMoves(1ul << i, position.BlackPieces, position.WhitePieces);
                 }
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(position.WhiteKing))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(position.WhiteKing))
                 {
                     attacks |= GenerateKingMovesRaw(1ul << i, position);
                 }

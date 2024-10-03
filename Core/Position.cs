@@ -25,7 +25,7 @@ namespace MegaKnight.Core
         public ulong BlackQueens;
         public ulong BlackKing;
 
-        ulong[] Bitboards => new ulong[] { WhitePawns, WhiteKnights, WhiteBishops, WhiteRooks, WhiteQueens, WhiteKing,
+        public ulong[] Bitboards => new ulong[] { WhitePawns, WhiteKnights, WhiteBishops, WhiteRooks, WhiteQueens, WhiteKing,
                                            BlackPawns, BlackKnights, BlackBishops, BlackRooks, BlackQueens, BlackKing };
 
 
@@ -387,7 +387,7 @@ namespace MegaKnight.Core
                                                  BlackPawns, BlackKnights, BlackBishops, BlackRooks, BlackQueens, BlackKing };
             for(int pieceCount = 0; pieceCount < piecesAsList.Length; pieceCount++)
             {
-                foreach (int i in BitboardHelper.BitboardToListOfSquareIndeces(piecesAsList[pieceCount]))
+                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(piecesAsList[pieceCount]))
                 {
                     toHash.Add(_zobristHashValues[64 * pieceCount + i]);
                 }

@@ -7,39 +7,42 @@ namespace MegaKnight.Core
 {
     internal class BotCore
     {
-        const string _fenStartingPosition = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+        const string _fenStartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
         public Position CurrentPosition;
         public bool PlayerIsPlayingWhite = true;
         MoveGenerator _moveGenerator;
-        PositionEvaluator _positionEvaluator;
+        Evaluator _evaluator;
+        Engine _engine;
 
         public Perft Perft;
-/*        public BotCore(Position initialPosition)
-        {
-            Position.InitializeZobristHashValues();
-            _moveGenerator = new MoveGenerator();
-            _positionEvaluator = new PositionEvaluator(_moveGenerator, this);
-            CurrentPosition = initialPosition;
-            AddPositionToPreviousPositions(initialPosition);
-        } */
         public BotCore()
         {
             Position.InitializeZobristHashValues();
+
             _moveGenerator = new MoveGenerator();
-            _positionEvaluator = new PositionEvaluator(_moveGenerator, this);
+            _evaluator = new Evaluator(_moveGenerator, this);
+            _engine = new Engine(_moveGenerator, _evaluator);
+
             Position p = FenToPosition(_fenStartingPosition);
             CurrentPosition = p;
             AddPositionToPreviousPositions(p);
 
-            Perft = new Perft(_moveGenerator, this);
-            Perft.RunPerft(p, 5);
+            // Perft = new Perft(_moveGenerator, this);
+            // Perft.RunPerft(p, 5);
         }
 
         public bool CanMakeMove(Move move, Position position)
         {
             ulong possibleMoves = _moveGenerator.GenerateMoves(move.StartSquare, move.Piece, position);
             return (possibleMoves & move.EndSquare) > 0;
+        }
+        public void MakeMoveOnCurrentPosition(Move move)
+        {
+            CurrentPosition.MakeMove(move);
+            if (CurrentPositionIsGameOver()) return;
+            Move engineMove = _engine.GetBestMove(CurrentPosition);
+            CurrentPosition.MakeMove(engineMove);
         }
         public ulong GetLegalMoves(ulong startSquare, Piece piece, Position position)
         {
@@ -48,7 +51,7 @@ namespace MegaKnight.Core
         // Precondition: Move must be legal (check with CanMakeMove())
         public void AddPositionToPreviousPositions(Position position)
         {
-            _positionEvaluator.AddPositionToPreviousPositions(position);
+            _evaluator.AddPositionToPreviousPositions(position);
         }
         /// <summary>
         /// Reads in a FEN string and creates a position based on it
@@ -182,26 +185,33 @@ namespace MegaKnight.Core
 
             return position;
         }
+
         #region Check current position for checkmate/draw
+        public bool CurrentPositionIsGameOver()
+        {
+            return CurrentPositionIsCheckmate() || CurrentPositionIsStalemate() ||
+                   CurrentPositionIsDrawByFiftyMoveRule() || CurrentPositionIsDrawByRepetition() || 
+                   CurrentPositionIsDrawByInsufficientMaterial();
+        }
         public bool CurrentPositionIsCheckmate()
         {
-            return _positionEvaluator.IsCheckmate(CurrentPosition);
+            return _evaluator.IsCheckmate(CurrentPosition);
         }
         public bool CurrentPositionIsStalemate()
         {
-            return _positionEvaluator.IsStalemate(CurrentPosition);
+            return _evaluator.IsStalemate(CurrentPosition);
         }
         public bool CurrentPositionIsDrawByFiftyMoveRule()
         {
-            return _positionEvaluator.IsDrawByFiftyMoveRule(CurrentPosition);
+            return _evaluator.IsDrawByFiftyMoveRule(CurrentPosition);
         }
         public bool CurrentPositionIsDrawByRepetition()
         {
-            return _positionEvaluator.IsDrawByRepetition(CurrentPosition);
+            return _evaluator.IsDrawByRepetition(CurrentPosition);
         }
         public bool CurrentPositionIsDrawByInsufficientMaterial()
         {
-            return _positionEvaluator.IsDrawByInsufficientMaterial(CurrentPosition);
+            return _evaluator.IsDrawByInsufficientMaterial(CurrentPosition);
         }
         #endregion
     }
