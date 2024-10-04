@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace MegaKnight.Core
 {
@@ -19,17 +20,17 @@ namespace MegaKnight.Core
             _previousPositions = new Dictionary<int, List<Position>>(_prevPositionsCapacity);
         }
         /// <summary>
-        /// Evaluates a position based on various heuristics. Positive numbers are good for white while negative numbers are good for black.
+        /// Evaluates a position based on various heuristics.
         /// </summary>
         /// <param name="position">Position to evaluate</param>
-        /// <returns>The evaluation result. Positive numbers are good for white, negative numbers are good for black, and 0 means the position is drawn.</returns>
+        /// <returns>The evaluation result relative to the side playing (positive = good, negative = bad, 0 = drawn).</returns>
         public int Evaluate(Position position)
         {
             int whiteToMove = position.WhiteToMove ? 1 : -1;
 
             if (IsCheckmate(position))
             {
-                return -10000 * whiteToMove;
+                return -10000;
             }
             if (IsDraw(position))
             {
@@ -61,13 +62,17 @@ namespace MegaKnight.Core
             foreach (Move move in allMoves)
             {
                 position.MakeMove(move);
-                if(_moveGenerator.GetPiecesAttackingKing(position) == 0) return false;
+                if (_moveGenerator.GetPiecesAttackingKing(position) == 0)
+                {
+                    position.UnmakeMove(move);
+                    return false;
+                }
                 position.UnmakeMove(move);
             }
             // Every move still leaves the king in check
             return true;
         }
-        bool IsDraw(Position position)
+        public bool IsDraw(Position position)
         {
             return IsStalemate(position) || IsDrawByFiftyMoveRule(position) || IsDrawByInsufficientMaterial(position) || IsDrawByRepetition(position);
         }

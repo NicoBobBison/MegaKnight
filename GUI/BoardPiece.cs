@@ -38,8 +38,8 @@ namespace MegaKnight.GUI
             if (_renderer.GameOver) return;
             if (DeletedBoardThisFrame) return;
 
-            // bool playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
-            bool playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite;
+            bool playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
+            // bool playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite;
 
             BoardTile hoveredTile = GetHoveredBoardTile(_renderer.BoardTiles);
 
@@ -131,7 +131,7 @@ namespace MegaKnight.GUI
             {
                 // If we can move, redraw the board based on the current position
                 _renderer.Core.MakeMoveOnCurrentPosition(move);
-                
+                //_renderer.Core.CurrentPosition.MakeMove(move);
                 if(InputManager.GetKeyPressed(Keys.Space))_renderer.Core.CurrentPosition.UnmakeMove(move);
 
                 _renderer.ClearMovePreview();
