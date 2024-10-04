@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Data;
 
 namespace MegaKnight.Core
 {
@@ -30,7 +31,7 @@ namespace MegaKnight.Core
 
             if (IsCheckmate(position))
             {
-                return -10000;
+                return -1000000;
             }
             if (IsDraw(position))
             {
@@ -39,11 +40,20 @@ namespace MegaKnight.Core
 
             int evaluation = 0;
 
-            const int pawnValue = 1;
-            const int knightValue = 3;
-            const int bishopValue = 3;
-            const int rookValue = 5;
-            const int queenValue = 8;
+            // All weights are in centipawns (1 centipawn = 0.01 pawns)
+            // Weight for value of a piece
+            const int pawnValue = 100;
+            const int knightValue = 300;
+            const int bishopValue = 300;
+            const int rookValue = 500;
+            const int queenValue = 900;
+
+            // Weight for mobility of pieces
+            const int pawnMobilityValue = 1;
+            const int knightMobilityValue = 3;
+            const int bishopMobilityValue = 3;
+            const int rookMobilityValue = 2;
+            const int queenMobilityValue = 1;
 
             evaluation += pawnValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhitePawns).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackPawns).Length);
             evaluation += knightValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhiteKnights).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackKnights).Length);
@@ -51,7 +61,22 @@ namespace MegaKnight.Core
             evaluation += rookValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhiteRooks).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackRooks).Length);
             evaluation += queenValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhiteQueens).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackQueens).Length);
 
+            evaluation += pawnMobilityValue * (CalculateMobility(position.WhitePawns, Piece.Pawn, position) - CalculateMobility(position.BlackPawns, Piece.Pawn, position));
+            evaluation += knightMobilityValue * (CalculateMobility(position.WhiteKnights, Piece.Knight, position) - CalculateMobility(position.BlackKnights, Piece.Knight, position));
+            evaluation += bishopMobilityValue * (CalculateMobility(position.WhiteBishops, Piece.Bishop, position) - CalculateMobility(position.BlackBishops, Piece.Bishop, position));
+            evaluation += rookMobilityValue * (CalculateMobility(position.WhiteRooks, Piece.Rook, position) - CalculateMobility(position.BlackRooks, Piece.Rook, position));
+            evaluation += queenMobilityValue * (CalculateMobility(position.WhiteQueens, Piece.Queen, position) - CalculateMobility(position.BlackQueens, Piece.Queen, position));
+
             return evaluation * whiteToMove;
+        }
+        int CalculateMobility(ulong pieces, Piece pieceType, Position position)
+        {
+            int mobility = 0;
+            foreach(int pieceIndex in BitboardHelper.BoardToArrayOfIndeces(pieces))
+            {
+                mobility += BitboardHelper.GetBitboardPopCount(_moveGenerator.GenerateMoves(1ul << pieceIndex, pieceType, position));
+            }
+            return mobility;
         }
         public bool IsCheckmate(Position position)
         {
