@@ -16,12 +16,13 @@ namespace MegaKnight.Core
         Dictionary<int, List<Position>> _previousPositions;
         public Evaluator(MoveGenerator moveGenerator, BotCore core)
         {
+            EvalWeights.Initialize();
             _moveGenerator = moveGenerator;
             _core = core;
             _previousPositions = new Dictionary<int, List<Position>>(_prevPositionsCapacity);
         }
         /// <summary>
-        /// Evaluates a position based on various heuristics.
+        /// Evaluates a position based on various strategies.
         /// </summary>
         /// <param name="position">Position to evaluate</param>
         /// <returns>The evaluation result relative to the side playing (positive = good, negative = bad, 0 = drawn).</returns>
@@ -40,32 +41,23 @@ namespace MegaKnight.Core
 
             int evaluation = 0;
 
-            // All weights are in centipawns (1 centipawn = 0.01 pawns)
-            // Weight for value of a piece
-            const int pawnValue = 100;
-            const int knightValue = 300;
-            const int bishopValue = 300;
-            const int rookValue = 500;
-            const int queenValue = 900;
+            int pawnDiff = BitboardHelper.BoardToArrayOfIndeces(position.WhitePawns).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackPawns).Length;
+            int knightDiff = BitboardHelper.BoardToArrayOfIndeces(position.WhiteKnights).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackKnights).Length;
+            int bishopDiff = BitboardHelper.BoardToArrayOfIndeces(position.WhiteBishops).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackBishops).Length;
+            int rookDiff = BitboardHelper.BoardToArrayOfIndeces(position.WhiteRooks).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackRooks).Length;
+            int queenDiff = BitboardHelper.BoardToArrayOfIndeces(position.WhiteQueens).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackQueens).Length;
 
-            // Weight for mobility of pieces
-            const int pawnMobilityValue = 1;
-            const int knightMobilityValue = 3;
-            const int bishopMobilityValue = 3;
-            const int rookMobilityValue = 2;
-            const int queenMobilityValue = 1;
+            evaluation += EvalWeights.PawnValueEarly * pawnDiff;
+            evaluation += EvalWeights.KnightValueEarly * knightDiff;
+            evaluation += EvalWeights.BishopValueEarly * bishopDiff;
+            evaluation += EvalWeights.RookValueEarly * rookDiff;
+            evaluation += EvalWeights.QueenValueEarly * queenDiff;
 
-            evaluation += pawnValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhitePawns).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackPawns).Length);
-            evaluation += knightValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhiteKnights).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackKnights).Length);
-            evaluation += bishopValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhiteBishops).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackBishops).Length);
-            evaluation += rookValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhiteRooks).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackRooks).Length);
-            evaluation += queenValue * (BitboardHelper.BoardToArrayOfIndeces(position.WhiteQueens).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackQueens).Length);
-
-            evaluation += pawnMobilityValue * (CalculateMobility(position.WhitePawns, Piece.Pawn, position) - CalculateMobility(position.BlackPawns, Piece.Pawn, position));
-            evaluation += knightMobilityValue * (CalculateMobility(position.WhiteKnights, Piece.Knight, position) - CalculateMobility(position.BlackKnights, Piece.Knight, position));
-            evaluation += bishopMobilityValue * (CalculateMobility(position.WhiteBishops, Piece.Bishop, position) - CalculateMobility(position.BlackBishops, Piece.Bishop, position));
-            evaluation += rookMobilityValue * (CalculateMobility(position.WhiteRooks, Piece.Rook, position) - CalculateMobility(position.BlackRooks, Piece.Rook, position));
-            evaluation += queenMobilityValue * (CalculateMobility(position.WhiteQueens, Piece.Queen, position) - CalculateMobility(position.BlackQueens, Piece.Queen, position));
+            evaluation += EvalWeights.PawnMobilityValue * (CalculateMobility(position.WhitePawns, Piece.Pawn, position) - CalculateMobility(position.BlackPawns, Piece.Pawn, position));
+            evaluation += EvalWeights.KnightMobilityValue * (CalculateMobility(position.WhiteKnights, Piece.Knight, position) - CalculateMobility(position.BlackKnights, Piece.Knight, position));
+            evaluation += EvalWeights.BishopMobilityValue * (CalculateMobility(position.WhiteBishops, Piece.Bishop, position) - CalculateMobility(position.BlackBishops, Piece.Bishop, position));
+            evaluation += EvalWeights.RookMobilityValue * (CalculateMobility(position.WhiteRooks, Piece.Rook, position) - CalculateMobility(position.BlackRooks, Piece.Rook, position));
+            evaluation += EvalWeights.QueenMobilityValue * (CalculateMobility(position.WhiteQueens, Piece.Queen, position) - CalculateMobility(position.BlackQueens, Piece.Queen, position));
 
             return evaluation * whiteToMove;
         }
