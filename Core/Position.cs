@@ -47,7 +47,7 @@ namespace MegaKnight.Core
         static Stack<UnmakeInfo> _unmakeInfos = new Stack<UnmakeInfo>();
         public bool IsSlidingPiece(ulong piecePosition)
         {
-            if (BitboardHelper.GetBitboardPopCount(piecePosition) != 1)
+            if (Helper.GetBitboardPopCount(piecePosition) != 1)
                 throw new Exception("Can't check sliding piece if piece position ulong doesn't have exactly one piece");
             return ((WhiteBishops | WhiteRooks | WhiteQueens | BlackBishops | BlackRooks | BlackQueens) & piecePosition) > 0;
         }
@@ -85,7 +85,7 @@ namespace MegaKnight.Core
                 }
                 else if(move.MoveType == MoveType.DoublePawnPush)
                 {
-                    EnPassantTargetSquare = WhiteToMove ? (sbyte)(BitboardHelper.SinglePopBitboardToIndex(move.StartSquare) + 8) : (sbyte)(BitboardHelper.SinglePopBitboardToIndex(move.StartSquare) - 8);
+                    EnPassantTargetSquare = WhiteToMove ? (sbyte)(Helper.SinglePopBitboardToIndex(move.StartSquare) + 8) : (sbyte)(Helper.SinglePopBitboardToIndex(move.StartSquare) - 8);
                 }
                 else if(move.MoveType == MoveType.KnightPromotion || move.MoveType == MoveType.KnightPromoCapture)
                 {
@@ -316,7 +316,7 @@ namespace MegaKnight.Core
                                                  BlackPawns, BlackKnights, BlackBishops, BlackRooks, BlackQueens, BlackKing };
             for(int pieceCount = 0; pieceCount < piecesAsList.Length; pieceCount++)
             {
-                foreach (int i in BitboardHelper.BoardToArrayOfIndeces(piecesAsList[pieceCount]))
+                foreach (int i in Helper.BoardToArrayOfIndeces(piecesAsList[pieceCount]))
                 {
                     toHash.Add(_zobristHashValues[64 * pieceCount + i]);
                 }

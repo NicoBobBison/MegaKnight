@@ -98,7 +98,7 @@ namespace MegaKnight.GUI
             // Generate move based on hovered tile
             Square desiredSquare = (Square)hoveredTile.Index;
             Move move = new Move(Piece, BoardPosition, desiredSquare);
-            int squareIndex = BitboardHelper.SinglePopBitboardToIndex(move.EndSquare);
+            int squareIndex = Helper.SinglePopBitboardToIndex(move.EndSquare);
             
             if (Piece == Piece.Pawn)
             {

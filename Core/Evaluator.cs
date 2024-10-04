@@ -16,7 +16,6 @@ namespace MegaKnight.Core
         Dictionary<int, List<Position>> _previousPositions;
         public Evaluator(MoveGenerator moveGenerator, BotCore core)
         {
-            EvalWeights.Initialize();
             _moveGenerator = moveGenerator;
             _core = core;
             _previousPositions = new Dictionary<int, List<Position>>(_prevPositionsCapacity);
@@ -41,17 +40,34 @@ namespace MegaKnight.Core
 
             int evaluation = 0;
 
-            int pawnDiff = BitboardHelper.BoardToArrayOfIndeces(position.WhitePawns).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackPawns).Length;
-            int knightDiff = BitboardHelper.BoardToArrayOfIndeces(position.WhiteKnights).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackKnights).Length;
-            int bishopDiff = BitboardHelper.BoardToArrayOfIndeces(position.WhiteBishops).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackBishops).Length;
-            int rookDiff = BitboardHelper.BoardToArrayOfIndeces(position.WhiteRooks).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackRooks).Length;
-            int queenDiff = BitboardHelper.BoardToArrayOfIndeces(position.WhiteQueens).Length - BitboardHelper.BoardToArrayOfIndeces(position.BlackQueens).Length;
+            // Value from 0 to 1 representing how far in the game we are. 0 = early game, 1 = late game.
+            float gamePhase = (32 - Helper.GetBitboardPopCount(position.AllPieces)) / 32f;
 
-            evaluation += EvalWeights.PawnValueEarly * pawnDiff;
-            evaluation += EvalWeights.KnightValueEarly * knightDiff;
-            evaluation += EvalWeights.BishopValueEarly * bishopDiff;
-            evaluation += EvalWeights.RookValueEarly * rookDiff;
-            evaluation += EvalWeights.QueenValueEarly * queenDiff;
+            int[] whitePawnIndeces = Helper.BoardToArrayOfIndeces(position.WhitePawns);
+            int[] whiteKnightIndeces = Helper.BoardToArrayOfIndeces(position.WhiteKnights);
+            int[] whiteBishopIndeces = Helper.BoardToArrayOfIndeces(position.WhiteBishops);
+            int[] whiteRookIndeces = Helper.BoardToArrayOfIndeces(position.WhiteRooks);
+            int[] whiteQueenIndeces = Helper.BoardToArrayOfIndeces(position.WhiteQueens);
+            int whiteKingIndex = Helper.SinglePopBitboardToIndex(position.WhiteKing);
+
+            int[] blackPawnIndeces = Helper.BoardToArrayOfIndeces(position.BlackPawns);
+            int[] blackKnightIndeces = Helper.BoardToArrayOfIndeces(position.BlackKnights);
+            int[] blackBishopIndeces = Helper.BoardToArrayOfIndeces(position.BlackBishops);
+            int[] blackRookIndeces = Helper.BoardToArrayOfIndeces(position.BlackRooks);
+            int[] blackQueenIndeces = Helper.BoardToArrayOfIndeces(position.BlackQueens);
+            int blackKingIndex = Helper.SinglePopBitboardToIndex(position.BlackKing);
+
+            int pawnDiff = whitePawnIndeces.Length - blackPawnIndeces.Length;
+            int knightDiff = whiteKnightIndeces.Length - blackKnightIndeces.Length;
+            int bishopDiff = whiteBishopIndeces.Length - blackBishopIndeces.Length;
+            int rookDiff = whiteRookIndeces.Length - blackRookIndeces.Length;
+            int queenDiff = whiteQueenIndeces.Length - blackQueenIndeces.Length;
+            
+            evaluation += (int)(Helper.Lerp(EvalWeights.PawnValueEarly, EvalWeights.PawnValueLate, gamePhase) * pawnDiff);
+            evaluation += (int)(Helper.Lerp(EvalWeights.KnightValueEarly, EvalWeights.KnightValueLate, gamePhase) * knightDiff);
+            evaluation += (int)(Helper.Lerp(EvalWeights.BishopValueEarly, EvalWeights.BishopValueLate, gamePhase) * bishopDiff);
+            evaluation += (int)(Helper.Lerp(EvalWeights.RookValueEarly, EvalWeights.RookValueLate, gamePhase) * rookDiff);
+            evaluation += (int)(Helper.Lerp(EvalWeights.QueenValueEarly, EvalWeights.QueenValueLate, gamePhase) * queenDiff);
 
             evaluation += EvalWeights.PawnMobilityValue * (CalculateMobility(position.WhitePawns, Piece.Pawn, position) - CalculateMobility(position.BlackPawns, Piece.Pawn, position));
             evaluation += EvalWeights.KnightMobilityValue * (CalculateMobility(position.WhiteKnights, Piece.Knight, position) - CalculateMobility(position.BlackKnights, Piece.Knight, position));
@@ -59,14 +75,19 @@ namespace MegaKnight.Core
             evaluation += EvalWeights.RookMobilityValue * (CalculateMobility(position.WhiteRooks, Piece.Rook, position) - CalculateMobility(position.BlackRooks, Piece.Rook, position));
             evaluation += EvalWeights.QueenMobilityValue * (CalculateMobility(position.WhiteQueens, Piece.Queen, position) - CalculateMobility(position.BlackQueens, Piece.Queen, position));
 
+            foreach(int i in whitePawnIndeces)
+            {
+                
+            }
+
             return evaluation * whiteToMove;
         }
         int CalculateMobility(ulong pieces, Piece pieceType, Position position)
         {
             int mobility = 0;
-            foreach(int pieceIndex in BitboardHelper.BoardToArrayOfIndeces(pieces))
+            foreach(int pieceIndex in Helper.BoardToArrayOfIndeces(pieces))
             {
-                mobility += BitboardHelper.GetBitboardPopCount(_moveGenerator.GenerateMoves(1ul << pieceIndex, pieceType, position));
+                mobility += Helper.GetBitboardPopCount(_moveGenerator.GenerateMoves(1ul << pieceIndex, pieceType, position));
             }
             return mobility;
         }
@@ -104,9 +125,9 @@ namespace MegaKnight.Core
         public bool IsDrawByInsufficientMaterial(Position position)
         {
             bool noQueensOrRooksOrPawns = (position.WhiteQueens | position.BlackQueens | position.WhiteRooks | position.BlackRooks | position.WhitePawns | position.BlackPawns) == 0;
-            bool OneOrLessKnightOrBishopTotal = BitboardHelper.GetBitboardPopCount(position.WhiteKnights | position.WhiteBishops | position.BlackKnights | position.BlackBishops) <= 1;
-            bool whiteHasTwoKnightsOnly = BitboardHelper.GetBitboardPopCount(position.WhiteKnights) == 2 && (position.BlackKnights | position.BlackBishops | position.WhiteBishops) == 0;
-            bool blackHasTwoKnightsOnly = BitboardHelper.GetBitboardPopCount(position.BlackKnights) == 2 && (position.WhiteKnights | position.WhiteBishops | position.BlackBishops) == 0;
+            bool OneOrLessKnightOrBishopTotal = Helper.GetBitboardPopCount(position.WhiteKnights | position.WhiteBishops | position.BlackKnights | position.BlackBishops) <= 1;
+            bool whiteHasTwoKnightsOnly = Helper.GetBitboardPopCount(position.WhiteKnights) == 2 && (position.BlackKnights | position.BlackBishops | position.WhiteBishops) == 0;
+            bool blackHasTwoKnightsOnly = Helper.GetBitboardPopCount(position.BlackKnights) == 2 && (position.WhiteKnights | position.WhiteBishops | position.BlackBishops) == 0;
             return noQueensOrRooksOrPawns && (OneOrLessKnightOrBishopTotal || whiteHasTwoKnightsOnly || blackHasTwoKnightsOnly);
         }
         public bool IsDrawByRepetition(Position position)

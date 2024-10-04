@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MegaKnight.Core
 {
-    internal static class BitboardHelper
+    internal static class Helper
     {
         public static string BitboardToString(ulong board)
         {
@@ -66,6 +66,10 @@ namespace MegaKnight.Core
         public static int GetBitboardPopCount(ulong bitboard)
         {
             return BitOperations.PopCount(bitboard);
+        }
+        public static float Lerp(float a, float b, float t)
+        {
+            return a * (1 - t) + b * t;
         }
     }
 }

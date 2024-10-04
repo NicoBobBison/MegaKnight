@@ -33,8 +33,8 @@ namespace MegaKnight.Core
         public const int QueenMobilityValue = 1;
 
         // Early game piece-square tables (from white's perspective, mirror for black's perspective)
-        public static int[,] PSTEarly;
-        public static int[,] PSTLate;
+        public static readonly int[][] PSTEarly = new int[][] { PawnPSTEarly, KnightPSTEarly, BishopPSTEarly, RookPSTEarly, QueenPSTEarly, KingPSTEarly };
+        public static readonly int[][] PSTLate = new int[][] { PawnPSTLate, KnightPSTLate, BishopPSTLate, RookPSTLate, QueenPSTLate, KingPSTLate };
         public static readonly int[] PawnPSTEarly = new int[]
         {
               0,   0,   0,   0,   0,   0,  0,   0,
@@ -167,9 +167,5 @@ namespace MegaKnight.Core
             -27, -11,   4,  13,  14,   4,  -5, -17,
             -53, -34, -21, -11, -28, -14, -24, -43
         };
-        public static void Initialize()
-        {
-
-        }
     }
 }

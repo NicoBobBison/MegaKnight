@@ -103,8 +103,8 @@ namespace MegaKnight.Core
         }
         public override string ToString()
         {
-            int startSquareIndex = BitboardHelper.SinglePopBitboardToIndex(StartSquare);
-            int endSquareIndex = BitboardHelper.SinglePopBitboardToIndex(EndSquare);
+            int startSquareIndex = Helper.SinglePopBitboardToIndex(StartSquare);
+            int endSquareIndex = Helper.SinglePopBitboardToIndex(EndSquare);
             return Enum.GetName((Square)startSquareIndex) + Enum.GetName((Square)endSquareIndex);
         }
     }

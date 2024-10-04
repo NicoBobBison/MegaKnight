@@ -171,7 +171,7 @@ namespace MegaKnight.GUI
         }
         void RenderBitboard(ulong bitboard, Texture2D pieceTexture, Piece pieceType, bool isWhite)
         {
-            foreach(int i in BitboardHelper.BoardToArrayOfIndeces(bitboard))
+            foreach(int i in Helper.BoardToArrayOfIndeces(bitboard))
             {
                 BoardPiece piece = new BoardPiece(pieceTexture, this, (Square)i, pieceType, isWhite);
                 BoardTiles[i].Piece = piece;
@@ -189,7 +189,7 @@ namespace MegaKnight.GUI
         public void RenderMovePreview(ulong startSquare, Piece piece, Position position)
         {
             ulong possibleMoves = Core.GetLegalMoves(startSquare, piece, position);
-            int[] moveIndeces = BitboardHelper.BoardToArrayOfIndeces(possibleMoves);
+            int[] moveIndeces = Helper.BoardToArrayOfIndeces(possibleMoves);
             for(int i = 0; i < 64; i++)
             {
                 _movePreviews[i].IsShown = LinearSearch(moveIndeces, i);
