@@ -27,14 +27,12 @@ namespace MegaKnight.Core
 
         // Weight for mobility of pieces
         public const int PawnMobilityValue = 1;
-        public const int KnightMobilityValue = 3;
-        public const int BishopMobilityValue = 3;
-        public const int RookMobilityValue = 2;
+        public const int KnightMobilityValue = 1;
+        public const int BishopMobilityValue = 1;
+        public const int RookMobilityValue = 1;
         public const int QueenMobilityValue = 1;
 
         // Early game piece-square tables (from white's perspective, mirror for black's perspective)
-        public static readonly int[][] PSTEarly = new int[][] { PawnPSTEarly, KnightPSTEarly, BishopPSTEarly, RookPSTEarly, QueenPSTEarly, KingPSTEarly };
-        public static readonly int[][] PSTLate = new int[][] { PawnPSTLate, KnightPSTLate, BishopPSTLate, RookPSTLate, QueenPSTLate, KingPSTLate };
         public static readonly int[] PawnPSTEarly = new int[]
         {
               0,   0,   0,   0,   0,   0,  0,   0,
@@ -167,5 +165,7 @@ namespace MegaKnight.Core
             -27, -11,   4,  13,  14,   4,  -5, -17,
             -53, -34, -21, -11, -28, -14, -24, -43
         };
+        public static readonly int[][] PSTEarly = new int[][] { PawnPSTEarly, KnightPSTEarly, BishopPSTEarly, RookPSTEarly, QueenPSTEarly, KingPSTEarly };
+        public static readonly int[][] PSTLate = new int[][] { PawnPSTLate, KnightPSTLate, BishopPSTLate, RookPSTLate, QueenPSTLate, KingPSTLate };
     }
 }

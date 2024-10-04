@@ -48,14 +48,17 @@ namespace MegaKnight.Core
             int[] whiteBishopIndeces = Helper.BoardToArrayOfIndeces(position.WhiteBishops);
             int[] whiteRookIndeces = Helper.BoardToArrayOfIndeces(position.WhiteRooks);
             int[] whiteQueenIndeces = Helper.BoardToArrayOfIndeces(position.WhiteQueens);
-            int whiteKingIndex = Helper.SinglePopBitboardToIndex(position.WhiteKing);
+            int[] whiteKingIndex = Helper.BoardToArrayOfIndeces(position.WhiteKing);
 
             int[] blackPawnIndeces = Helper.BoardToArrayOfIndeces(position.BlackPawns);
             int[] blackKnightIndeces = Helper.BoardToArrayOfIndeces(position.BlackKnights);
             int[] blackBishopIndeces = Helper.BoardToArrayOfIndeces(position.BlackBishops);
             int[] blackRookIndeces = Helper.BoardToArrayOfIndeces(position.BlackRooks);
             int[] blackQueenIndeces = Helper.BoardToArrayOfIndeces(position.BlackQueens);
-            int blackKingIndex = Helper.SinglePopBitboardToIndex(position.BlackKing);
+            int[] blackKingIndex = Helper.BoardToArrayOfIndeces(position.BlackKing);
+
+            int[][] allIndeces = new int[][] { whitePawnIndeces, whiteKnightIndeces, whiteBishopIndeces, whiteRookIndeces, whiteQueenIndeces, whiteKingIndex,
+                                               blackPawnIndeces, blackKnightIndeces, blackBishopIndeces, blackRookIndeces, blackQueenIndeces, blackKingIndex };
 
             int pawnDiff = whitePawnIndeces.Length - blackPawnIndeces.Length;
             int knightDiff = whiteKnightIndeces.Length - blackKnightIndeces.Length;
@@ -75,9 +78,22 @@ namespace MegaKnight.Core
             evaluation += EvalWeights.RookMobilityValue * (CalculateMobility(position.WhiteRooks, Piece.Rook, position) - CalculateMobility(position.BlackRooks, Piece.Rook, position));
             evaluation += EvalWeights.QueenMobilityValue * (CalculateMobility(position.WhiteQueens, Piece.Queen, position) - CalculateMobility(position.BlackQueens, Piece.Queen, position));
 
-            foreach(int i in whitePawnIndeces)
+            // PST for white pieces
+            for(int i = 0; i < 6; i++)
             {
-                
+                foreach(int square in allIndeces[i])
+                {
+                    evaluation += (int)Helper.Lerp(EvalWeights.PSTEarly[i][square ^ 56], EvalWeights.PSTLate[i][square ^ 56], gamePhase);
+                }
+            }
+
+            // PST for black pieces
+            for (int i = 0; i < 6; i++)
+            {
+                foreach (int square in allIndeces[i + 6])
+                {
+                    evaluation += (int)Helper.Lerp(EvalWeights.PSTEarly[i][square], EvalWeights.PSTLate[i][square], gamePhase);
+                }
             }
 
             return evaluation * whiteToMove;
