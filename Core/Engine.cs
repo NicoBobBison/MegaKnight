@@ -9,7 +9,7 @@ namespace MegaKnight.Core
 {
     internal class Engine
     {
-        const int defaultSearchDepth = 6;
+        const int defaultSearchDepth = 4;
 
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
@@ -31,8 +31,8 @@ namespace MegaKnight.Core
         {
             if (depth == 0) throw new Exception("Cannot start search with 0 depth");
 
-            int alpha = int.MaxValue;
-            int beta = int.MinValue;
+            int alpha = int.MinValue;
+            int beta = int.MaxValue;
 
             int max = int.MinValue;
             Move bestMove = null;
@@ -70,7 +70,6 @@ namespace MegaKnight.Core
                 position.MakeMove(move);
                 int score = -AlphaBeta(position, depth - 1, -beta, -alpha);
                 position.UnmakeMove(move);
-                alpha = Math.Max(alpha, score);
                 if (score > max)
                 {
                     max = score;
