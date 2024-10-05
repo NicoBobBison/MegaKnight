@@ -31,8 +31,9 @@ namespace MegaKnight.Core
         {
             if (depth == 0) throw new Exception("Cannot start search with 0 depth");
 
-            int alpha = int.MinValue;
-            int beta = int.MaxValue;
+            // Divide by two to avoid overflow issues
+            int alpha = int.MinValue / 2;
+            int beta = int.MaxValue / 2;
 
             int max = int.MinValue;
             Move bestMove = null;
