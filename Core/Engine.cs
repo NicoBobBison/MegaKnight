@@ -9,7 +9,7 @@ namespace MegaKnight.Core
 {
     internal class Engine
     {
-        const int defaultSearchDepth = 4;
+        const int defaultSearchDepth = 5;
 
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
@@ -17,6 +17,8 @@ namespace MegaKnight.Core
         {
             _moveGenerator = moveGenerator;
             _evaluator = evaluator;
+
+            List<Move> moves = new List<Move>();
         }
         public Move GetBestMove(Position position)
         {
@@ -38,7 +40,10 @@ namespace MegaKnight.Core
             int max = int.MinValue;
             Move bestMove = null;
 
-            foreach (Move move in _moveGenerator.GenerateAllPossibleMoves(position))
+            List<Move> possibleMoves = _moveGenerator.GenerateAllPossibleMoves(position);
+            SortMoves(possibleMoves);
+
+            foreach (Move move in possibleMoves)
             {
                 position.MakeMove(move);
                 int score = -AlphaBeta(position, depth - 1, -beta, -alpha);
@@ -56,11 +61,13 @@ namespace MegaKnight.Core
         }
         int AlphaBeta(Position position, int depth, int alpha, int beta)
         {
-            // TODO: Add quiescence search
-            if(depth == 0) return _evaluator.Evaluate(position);
+            // We don't flip signs for quiescence search because we aren't going down depth when we call it
+            if(depth == 0) return QuiescenceSearch(position, alpha, beta);
 
             int max = int.MinValue;
             List<Move> possibleMoves = _moveGenerator.GenerateAllPossibleMoves(position);
+            SortMoves(possibleMoves);
+
             // If we have no legal moves, it's either stalemate or checkmate
             if(possibleMoves.Count == 0)
             {
@@ -79,6 +86,45 @@ namespace MegaKnight.Core
                 if (score >= beta) return score;
             }
             return max;
+        }
+        int QuiescenceSearch(Position position, int alpha, int beta)
+        {
+            // The lower bound for moves we can make from this position
+            int standingPat = _evaluator.Evaluate(position);
+            if (standingPat >= beta) return standingPat;
+            alpha = Math.Max(alpha, standingPat);
+
+            int max = standingPat;
+            List<Move> moves = _moveGenerator.GenerateAllPossibleMoves(position);
+            SortMoves(moves);
+            foreach (Move move in moves)
+            {
+                if (!move.IsCapture()) continue;
+                position.MakeMove(move);
+                int score = -QuiescenceSearch(position, -beta, -alpha);
+                position.UnmakeMove(move);
+                if(score > max)
+                {
+                    max = score;
+                    alpha = Math.Max(alpha, score);
+                }
+                if(score >= beta) return score;
+            }
+            return max;
+        }
+        void SortMoves(List<Move> moves)
+        {
+            // TODO: Add better ways of sorting moves
+            for(int i = 0; i < moves.Count; i++)
+            {
+                // Check captures first
+                if (moves[i].IsCapture())
+                {
+                    Move m = moves[i];
+                    moves.RemoveAt(i);
+                    moves.Insert(0, m);
+                }
+            }
         }
     }
 }

@@ -101,6 +101,11 @@ namespace MegaKnight.Core
                     throw new Exception("Cannot promote to piece types king or pawn");
             }
         }
+        public bool IsCapture()
+        {
+            return MoveType == MoveType.Capture || MoveType == MoveType.KnightPromoCapture || MoveType == MoveType.BishopPromoCapture ||
+                   MoveType == MoveType.RookPromoCapture || MoveType == MoveType.QueenPromoCapture;
+        }
         public override string ToString()
         {
             int startSquareIndex = Helper.SinglePopBitboardToIndex(StartSquare);
