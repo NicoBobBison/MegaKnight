@@ -8,7 +8,7 @@ namespace MegaKnight.Core
 {
     internal static class EvalWeights
     {
-        // CREDIT: Most evaluation weights are taken from PeSTO's evaluation function
+        // CREDIT: Piece weights and piece-square tables taken from PeSTO's evaluation function
         // https://www.chessprogramming.org/PeSTO%27s_Evaluation_Function
 
         // All weights are in centipawns (1 centipawn = 0.01 pawns)

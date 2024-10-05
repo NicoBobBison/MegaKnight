@@ -9,7 +9,7 @@ namespace MegaKnight.Core
 {
     internal class Engine
     {
-        const int defaultSearchDepth = 3;
+        const int defaultSearchDepth = 6;
 
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
@@ -31,26 +31,33 @@ namespace MegaKnight.Core
         {
             if (depth == 0) throw new Exception("Cannot start search with 0 depth");
 
+            int alpha = int.MaxValue;
+            int beta = int.MinValue;
+
             int max = int.MinValue;
             Move bestMove = null;
 
             foreach (Move move in _moveGenerator.GenerateAllPossibleMoves(position))
             {
                 position.MakeMove(move);
-                int score = -SearchRecursive(position, depth - 1);
+                int score = -AlphaBeta(position, depth - 1, -beta, -alpha);
                 position.UnmakeMove(move);
                 if (score > max)
                 {
                     max = score;
                     bestMove = move;
+                    alpha = Math.Max(alpha, score);
                 }
+                if (score >= beta) return bestMove;
             }
             // Debug.WriteLine("Best move score: " + max);
             return bestMove;
         }
-        int SearchRecursive(Position position, int depth)
+        int AlphaBeta(Position position, int depth, int alpha, int beta)
         {
+            // TODO: Add quiescence search
             if(depth == 0) return _evaluator.Evaluate(position);
+
             int max = int.MinValue;
             List<Move> possibleMoves = _moveGenerator.GenerateAllPossibleMoves(position);
             // If we have no legal moves, it's either stalemate or checkmate
@@ -61,12 +68,15 @@ namespace MegaKnight.Core
             foreach (Move move in possibleMoves)
             {
                 position.MakeMove(move);
-                int score = -SearchRecursive(position, depth - 1);
+                int score = -AlphaBeta(position, depth - 1, -beta, -alpha);
                 position.UnmakeMove(move);
+                alpha = Math.Max(alpha, score);
                 if (score > max)
                 {
                     max = score;
+                    alpha = Math.Max(alpha, score);
                 }
+                if (score >= beta) return score;
             }
             return max;
         }

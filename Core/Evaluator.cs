@@ -92,7 +92,7 @@ namespace MegaKnight.Core
             {
                 foreach (int square in allIndeces[i + 6])
                 {
-                    evaluation += (int)Helper.Lerp(EvalWeights.PSTEarly[i][square], EvalWeights.PSTLate[i][square], gamePhase);
+                    evaluation -= (int)Helper.Lerp(EvalWeights.PSTEarly[i][square], EvalWeights.PSTLate[i][square], gamePhase);
                 }
             }
 
