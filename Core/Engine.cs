@@ -11,7 +11,7 @@ namespace MegaKnight.Core
     internal class Engine
     {
         // Maximum allowed search time
-        const float _maxSearchTime = 4;
+        const float _maxSearchTime = 10;
 
         // Need to figure out what to do with this. Base it off current depth or always keep constant?
         const int _quiescenceSearchDepth = 2;
@@ -103,10 +103,10 @@ namespace MegaKnight.Core
                     break;
                 }
             }
-            // Debug.WriteLine("Best move score: " + max);
             AddPositionToTranspositionTable(position, depth, int.MinValue / 2, beta, max, bestMove);
             Debug.WriteLine("Engine move: " + bestMove.ToString());
-            Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
+            // Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
+            Debug.WriteLine("Depth this search: " + depth);
             return bestMove;
         }
         int AlphaBeta(Position position, int depth, int alpha, int beta)
@@ -183,6 +183,7 @@ namespace MegaKnight.Core
             {
                 entry.NodeType = NodeType.PVNode;
             }
+            // "Always replace" strategy
             _transpositionTable[(int)(entry.HashKey % _transpositionTableCapacity)] = entry;
         }
 
@@ -218,7 +219,7 @@ namespace MegaKnight.Core
 
             int hash = (int)(position.Hash() % _transpositionTableCapacity);
             // Search for hash move first
-            for (int i = 0; i < moves.Count; i++)
+            for (int i = insertPos; i < moves.Count; i++)
             {
                 if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].BestMove == moves[i])
                 {
@@ -228,7 +229,7 @@ namespace MegaKnight.Core
             }
 
             // Check captures
-            for (int i = 0; i < moves.Count; i++)
+            for (int i = insertPos; i < moves.Count; i++)
             {
                 if (moves[i].IsCapture())
                 {
@@ -237,7 +238,6 @@ namespace MegaKnight.Core
                 }
             }
         }
-
         private static void PutMoveAtIndexInList(List<Move> moves, int indexToRemove, int indexToInsertAt)
         {
             Move m = moves[indexToRemove];
