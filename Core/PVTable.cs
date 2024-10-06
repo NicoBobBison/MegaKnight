@@ -35,13 +35,14 @@ namespace MegaKnight.Core
         {
             while(_maxDepth < depth)
             {
-                Move[] moves = new Move[GetStartIndex(_maxDepth + 1) + 1];
+                Move[] moves = new Move[GetStartIndex(_maxDepth + 2) - 1];
                 for(int i = 0; i < GetStartIndex(_maxDepth); i++)
                 {
                     moves[i] = _moves[i];
                 }
                 _moves = moves;
                 _maxDepth++;
+                Debug.WriteLine("Increased depth to " + _maxDepth);
             }
         }
         public Move[] GetPrincipalVariation(int depth)
@@ -51,16 +52,32 @@ namespace MegaKnight.Core
             Array.Copy(_moves, i, m, 0, depth);
             return m;
         }
-        public void SetPVValue(Move move, int depth, int ply)
+        public void SetPVValue(Move move, int depth, int offset)
         {
-            int i = GetStartIndex(depth) + ply;
+            int i = GetStartIndex(depth) + offset;
             EnsureDepth(depth + 1);
             _moves[i] = move;
         }
         public override string ToString()
         {
             string str = "";
-
+            int d = 1;
+            for(int i = 0; i < GetStartIndex(_maxDepth); i++)
+            {
+                for(int j = 0; j < d; j++)
+                {
+                    if (_moves[i] != null)
+                    {
+                        str += _moves[i].ToString() + " ";
+                    }
+                    else
+                    {
+                        str += "-    ";
+                    }
+                }
+                d++;
+                str += "\n";
+            }
             return str;
         }
     }
