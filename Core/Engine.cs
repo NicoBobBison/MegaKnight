@@ -9,16 +9,20 @@ namespace MegaKnight.Core
 {
     internal class Engine
     {
-        const int defaultSearchDepth = 5;
+        const int defaultSearchDepth = 4;
 
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
+
+        const int _transpositionTableCapacity = 10000;
+        Dictionary<int, TranspositionEntry> _transpositionTable;
+
         public Engine(MoveGenerator moveGenerator, Evaluator evaluator)
         {
             _moveGenerator = moveGenerator;
             _evaluator = evaluator;
 
-            List<Move> moves = new List<Move>();
+            _transpositionTable = new Dictionary<int, TranspositionEntry>(_transpositionTableCapacity);
         }
         public Move GetBestMove(Position position)
         {
@@ -54,22 +58,43 @@ namespace MegaKnight.Core
                     bestMove = move;
                     alpha = Math.Max(alpha, score);
                 }
-                if (score >= beta) return bestMove;
+                if (score >= beta) break;
             }
             // Debug.WriteLine("Best move score: " + max);
+            AddPositionToTranspositionTable(position, depth, int.MinValue / 2, int.MaxValue / 2, max, bestMove);
             return bestMove;
         }
         int AlphaBeta(Position position, int depth, int alpha, int beta)
         {
+            int alphaOriginal = alpha;
+            int hash = (int)(position.Hash() % _transpositionTableCapacity);
+            if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.Hash() && _transpositionTable[hash].Depth >= depth)
+            {
+                if (_transpositionTable[hash].NodeType == NodeType.PVNode)
+                {
+                    return _transpositionTable[hash].Evaluation;
+                }
+                else if (_transpositionTable[hash].NodeType == NodeType.CutNode)
+                {
+                    alpha = Math.Max(alpha, _transpositionTable[hash].Evaluation);
+                }
+                else
+                {
+                    beta = Math.Min(beta, _transpositionTable[hash].Evaluation);
+                }
+            }
+
             // We don't flip signs for quiescence search because we aren't going down depth when we call it
-            if(depth == 0) return QuiescenceSearch(position, alpha, beta);
+            if (depth == 0) return QuiescenceSearch(position, alpha, beta);
 
             int max = int.MinValue;
+            Move bestMove = null;
+
             List<Move> possibleMoves = _moveGenerator.GenerateAllPossibleMoves(position);
             SortMoves(possibleMoves);
 
             // If we have no legal moves, it's either stalemate or checkmate
-            if(possibleMoves.Count == 0)
+            if (possibleMoves.Count == 0)
             {
                 return _evaluator.Evaluate(position);
             }
@@ -81,12 +106,36 @@ namespace MegaKnight.Core
                 if (score > max)
                 {
                     max = score;
+                    bestMove = move;
                     alpha = Math.Max(alpha, score);
                 }
-                if (score >= beta) return score;
+                if (score >= beta) break;
             }
+            AddPositionToTranspositionTable(position, depth, alphaOriginal, beta, max, bestMove);
             return max;
         }
+        private void AddPositionToTranspositionTable(Position position, int depth, int alpha, int beta, int max, Move bestMove)
+        {
+            TranspositionEntry entry = new TranspositionEntry();
+            entry.Depth = depth;
+            entry.Evaluation = max;
+            entry.BestMove = bestMove;
+            entry.HashKey = position.Hash();
+            if (max <= alpha)
+            {
+                entry.NodeType = NodeType.AllNode;
+            }
+            else if (max >= beta)
+            {
+                entry.NodeType = NodeType.CutNode;
+            }
+            else
+            {
+                entry.NodeType = NodeType.PVNode;
+            }
+            _transpositionTable[(int)(entry.HashKey % _transpositionTableCapacity)] = entry;
+        }
+
         int QuiescenceSearch(Position position, int alpha, int beta)
         {
             // The lower bound for moves we can make from this position
@@ -108,13 +157,13 @@ namespace MegaKnight.Core
                     max = score;
                     alpha = Math.Max(alpha, score);
                 }
-                if(score >= beta) return score;
+                if(score >= beta) break;
             }
             return max;
         }
         void SortMoves(List<Move> moves)
         {
-            // TODO: Add better ways of sorting moves
+            int insertPos = 0;
             for(int i = 0; i < moves.Count; i++)
             {
                 // Check captures first
@@ -122,7 +171,8 @@ namespace MegaKnight.Core
                 {
                     Move m = moves[i];
                     moves.RemoveAt(i);
-                    moves.Insert(0, m);
+                    moves.Insert(insertPos, m);
+                    insertPos++;
                 }
             }
         }
