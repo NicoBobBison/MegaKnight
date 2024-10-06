@@ -41,6 +41,24 @@ namespace MegaKnight.Core
             int alpha = int.MinValue / 2;
             int beta = int.MaxValue / 2;
 
+            int alphaOriginal = alpha;
+            int hash = (int)(position.Hash() % _transpositionTableCapacity);
+            if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.Hash() && _transpositionTable[hash].Depth >= depth)
+            {
+                if (_transpositionTable[hash].NodeType == NodeType.PVNode)
+                {
+                    return _transpositionTable[hash].BestMove;
+                }
+                else if (_transpositionTable[hash].NodeType == NodeType.CutNode)
+                {
+                    alpha = Math.Max(alpha, _transpositionTable[hash].Evaluation);
+                }
+                else
+                {
+                    beta = Math.Min(beta, _transpositionTable[hash].Evaluation);
+                }
+            }
+
             int max = int.MinValue;
             Move bestMove = null;
 
@@ -62,6 +80,7 @@ namespace MegaKnight.Core
             }
             // Debug.WriteLine("Best move score: " + max);
             AddPositionToTranspositionTable(position, depth, int.MinValue / 2, int.MaxValue / 2, max, bestMove);
+            Debug.WriteLine("Engine move: " + bestMove.ToString());
             return bestMove;
         }
         int AlphaBeta(Position position, int depth, int alpha, int beta)

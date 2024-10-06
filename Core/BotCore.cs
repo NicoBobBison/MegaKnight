@@ -41,6 +41,9 @@ namespace MegaKnight.Core
         {
             CurrentPosition.MakeMove(move);
             if (CurrentPositionIsGameOver()) return;
+        }
+        public void MakeEngineMove()
+        {
             Move engineMove = _engine.GetBestMove(CurrentPosition);
             CurrentPosition.MakeMove(engineMove);
         }
