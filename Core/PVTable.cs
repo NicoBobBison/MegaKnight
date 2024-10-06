@@ -45,11 +45,16 @@ namespace MegaKnight.Core
                 Debug.WriteLine("Increased depth of PV table to " + _maxDepth);
             }
         }
-        public Move[] GetPrincipalVariation(int depth)
+        public Move[] GetPrincipalVariation()
+        {
+            return GetPrincipalVariation(_maxDepth);
+        }
+
+        Move[] GetPrincipalVariation(int depth)
         {
             Move[] m = new Move[depth];
             int i = GetStartIndex(depth);
-            Array.Copy(_moves, i, m, 0, depth);
+            Array.Copy(_moves, i, m, 0, depth - 1);
             return m;
         }
         public void SetPVValue(Move move, int depth, int offset)

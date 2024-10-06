@@ -52,7 +52,15 @@ namespace MegaKnight.Core
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             // Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Depth searched: " + depth);
+            Debug.WriteLine("Principle variation table: ");
             Debug.WriteLine(_principalVariation.ToString());
+            Debug.Write("Principle variation: ");
+            foreach(Move m in _principalVariation.GetPrincipalVariation())
+            {
+                if (m == null) Debug.Write("- ");
+                else Debug.Write(m.ToString() + " ");
+            }
+            Debug.WriteLine("");
             return bestMoveSoFar;
         }
         /// <summary>
