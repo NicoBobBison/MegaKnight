@@ -63,7 +63,7 @@ namespace MegaKnight.Core
             Move bestMove = null;
 
             List<Move> possibleMoves = _moveGenerator.GenerateAllPossibleMoves(position);
-            SortMoves(possibleMoves);
+            SortMoves(possibleMoves, position);
 
             foreach (Move move in possibleMoves)
             {
@@ -110,7 +110,7 @@ namespace MegaKnight.Core
             Move bestMove = null;
 
             List<Move> possibleMoves = _moveGenerator.GenerateAllPossibleMoves(position);
-            SortMoves(possibleMoves);
+            SortMoves(possibleMoves, position);
 
             // If we have no legal moves, it's either stalemate or checkmate
             if (possibleMoves.Count == 0)
@@ -164,7 +164,7 @@ namespace MegaKnight.Core
 
             int max = standingPat;
             List<Move> moves = _moveGenerator.GenerateAllPossibleMoves(position);
-            SortMoves(moves);
+            SortMoves(moves, position);
             foreach (Move move in moves)
             {
                 if (!move.IsCapture()) continue;
@@ -180,20 +180,37 @@ namespace MegaKnight.Core
             }
             return max;
         }
-        void SortMoves(List<Move> moves)
+        void SortMoves(List<Move> moves, Position position)
         {
             int insertPos = 0;
+
+            int hash = (int)(position.Hash() % _transpositionTableCapacity);
+            // Search for hash move first
             for(int i = 0; i < moves.Count; i++)
             {
-                // Check captures first
-                if (moves[i].IsCapture())
+                if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].BestMove == moves[i])
                 {
-                    Move m = moves[i];
-                    moves.RemoveAt(i);
-                    moves.Insert(insertPos, m);
+                    PutMoveAtIndexInList(moves, i);
                     insertPos++;
                 }
             }
+
+            // Check captures
+            for (int i = 0; i < moves.Count; i++)
+            {
+                if (moves[i].IsCapture())
+                {
+                    PutMoveAtIndexInList(moves, i);
+                    insertPos++;
+                }
+            }
+        }
+
+        private static void PutMoveAtIndexInList(List<Move> moves, int indexToRemove)
+        {
+            Move m = moves[indexToRemove];
+            moves.RemoveAt(indexToRemove);
+            moves.Insert(0, m);
         }
     }
 }
