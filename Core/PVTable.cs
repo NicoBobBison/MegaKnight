@@ -36,7 +36,7 @@ namespace MegaKnight.Core
             while(_maxDepth < depth)
             {
                 Move[] moves = new Move[GetStartIndex(_maxDepth + 2) - 1];
-                for(int i = 0; i < GetStartIndex(_maxDepth); i++)
+                for(int i = 0; i < GetStartIndex(_maxDepth + 1) - 1; i++)
                 {
                     moves[i] = _moves[i];
                 }
@@ -64,19 +64,19 @@ namespace MegaKnight.Core
             int d = 1;
             for(int i = 0; i < GetStartIndex(_maxDepth); i++)
             {
-                for(int j = 0; j < d; j++)
+                if (_moves[i] != null)
                 {
-                    if (_moves[i] != null)
-                    {
-                        str += _moves[i].ToString() + " ";
-                    }
-                    else
-                    {
-                        str += "-    ";
-                    }
+                    str += _moves[i].ToString() + " ";
                 }
-                d++;
-                str += "\n";
+                else
+                {
+                    str += "-    ";
+                }
+                if(i == GetStartIndex(d + 1) - 1)
+                {
+                    d++;
+                    str += "\n";
+                }
             }
             return str;
         }
