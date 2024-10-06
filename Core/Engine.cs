@@ -9,7 +9,8 @@ namespace MegaKnight.Core
 {
     internal class Engine
     {
-        const int defaultSearchDepth = 4;
+        const int _searchDepth = 5;
+        const int _quiescenceSearchDepth = 2;
 
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
@@ -26,7 +27,7 @@ namespace MegaKnight.Core
         }
         public Move GetBestMove(Position position)
         {
-            return Search(position, defaultSearchDepth);
+            return Search(position, _searchDepth);
         }
         /// <summary>
         /// Searches from a position using Negamax.
@@ -104,7 +105,7 @@ namespace MegaKnight.Core
             }
 
             // We don't flip signs for quiescence search because we aren't going down depth when we call it
-            if (depth == 0) return QuiescenceSearch(position, alpha, beta);
+            if (depth == 0) return QuiescenceSearch(position, alpha, beta, _quiescenceSearchDepth);
 
             int max = int.MinValue;
             Move bestMove = null;
@@ -155,11 +156,11 @@ namespace MegaKnight.Core
             _transpositionTable[(int)(entry.HashKey % _transpositionTableCapacity)] = entry;
         }
 
-        int QuiescenceSearch(Position position, int alpha, int beta)
+        int QuiescenceSearch(Position position, int alpha, int beta, int depth)
         {
             // The lower bound for moves we can make from this position
             int standingPat = _evaluator.Evaluate(position);
-            if (standingPat >= beta) return standingPat;
+            if (standingPat >= beta || depth == 0) return standingPat;
             alpha = Math.Max(alpha, standingPat);
 
             int max = standingPat;
@@ -169,7 +170,7 @@ namespace MegaKnight.Core
             {
                 if (!move.IsCapture()) continue;
                 position.MakeMove(move);
-                int score = -QuiescenceSearch(position, -beta, -alpha);
+                int score = -QuiescenceSearch(position, -beta, -alpha, depth - 1);
                 position.UnmakeMove(move);
                 if(score > max)
                 {

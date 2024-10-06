@@ -73,6 +73,7 @@ namespace MegaKnight.Core
             evaluation += (int)(Helper.Lerp(EvalWeights.RookValueEarly, EvalWeights.RookValueLate, gamePhase) * rookDiff);
             evaluation += (int)(Helper.Lerp(EvalWeights.QueenValueEarly, EvalWeights.QueenValueLate, gamePhase) * queenDiff);
 
+            // TODO: See if this check can be faster
             evaluation += EvalWeights.PawnMobilityValue * (CalculateMobility(position.WhitePawns, Piece.Pawn, position) - CalculateMobility(position.BlackPawns, Piece.Pawn, position));
             evaluation += EvalWeights.KnightMobilityValue * (CalculateMobility(position.WhiteKnights, Piece.Knight, position) - CalculateMobility(position.BlackKnights, Piece.Knight, position));
             evaluation += EvalWeights.BishopMobilityValue * (CalculateMobility(position.WhiteBishops, Piece.Bishop, position) - CalculateMobility(position.BlackBishops, Piece.Bishop, position));
