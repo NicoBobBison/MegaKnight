@@ -4,19 +4,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Reflection.Metadata.Ecma335;
 
 namespace MegaKnight.Core
 {
     internal class Engine
     {
-        const int _searchDepth = 5;
+        // Maximum allowed search time
+        const float _maxSearchTime = 4;
+
+        // Need to figure out what to do with this. Base it off current depth or always keep constant?
         const int _quiescenceSearchDepth = 2;
 
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
 
-        const int _transpositionTableCapacity = 10000;
+        const int _transpositionTableCapacity = 1000000;
         Dictionary<int, TranspositionEntry> _transpositionTable;
+        Stopwatch _moveStopwatch = Stopwatch.StartNew();
+
+        int _debugBranchesPruned;
 
         public Engine(MoveGenerator moveGenerator, Evaluator evaluator)
         {
@@ -27,7 +34,20 @@ namespace MegaKnight.Core
         }
         public Move GetBestMove(Position position)
         {
-            return Search(position, _searchDepth);
+            _moveStopwatch.Restart();
+            Move bestMoveSoFar = null;
+            int depth = 1;
+            while(_moveStopwatch.ElapsedMilliseconds / 1000 < _maxSearchTime)
+            {
+                Move move = Search(position, depth);
+                if (_moveStopwatch.ElapsedMilliseconds / 1000 < _maxSearchTime)
+                {
+                    bestMoveSoFar = move;
+                    depth++;
+                }
+            }
+            if (bestMoveSoFar == null) throw new Exception("Could not find a move fast enough");
+            return bestMoveSoFar;
         }
         /// <summary>
         /// Searches from a position using Negamax.
@@ -37,12 +57,12 @@ namespace MegaKnight.Core
         Move Search(Position position, int depth)
         {
             if (depth == 0) throw new Exception("Cannot start search with 0 depth");
+            _debugBranchesPruned = 0;
 
             // Divide by two to avoid overflow issues
             int alpha = int.MinValue / 2;
             int beta = int.MaxValue / 2;
 
-            int alphaOriginal = alpha;
             int hash = (int)(position.Hash() % _transpositionTableCapacity);
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.Hash() && _transpositionTable[hash].Depth >= depth)
             {
@@ -77,15 +97,21 @@ namespace MegaKnight.Core
                     bestMove = move;
                     alpha = Math.Max(alpha, score);
                 }
-                if (score >= beta) break;
+                if (score >= beta)
+                {
+                    _debugBranchesPruned++;
+                    break;
+                }
             }
             // Debug.WriteLine("Best move score: " + max);
-            AddPositionToTranspositionTable(position, depth, int.MinValue / 2, int.MaxValue / 2, max, bestMove);
+            AddPositionToTranspositionTable(position, depth, int.MinValue / 2, beta, max, bestMove);
             Debug.WriteLine("Engine move: " + bestMove.ToString());
+            Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             return bestMove;
         }
         int AlphaBeta(Position position, int depth, int alpha, int beta)
         {
+            if (_moveStopwatch.ElapsedMilliseconds / 1000 >= _maxSearchTime) return 0;
             int alphaOriginal = alpha;
             int hash = (int)(position.Hash() % _transpositionTableCapacity);
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.Hash() && _transpositionTable[hash].Depth >= depth)
@@ -129,7 +155,11 @@ namespace MegaKnight.Core
                     bestMove = move;
                     alpha = Math.Max(alpha, score);
                 }
-                if (score >= beta) break;
+                if (score >= beta)
+                {
+                    _debugBranchesPruned++;
+                    break;
+                }
             }
             AddPositionToTranspositionTable(position, depth, alphaOriginal, beta, max, bestMove);
             return max;
@@ -158,6 +188,7 @@ namespace MegaKnight.Core
 
         int QuiescenceSearch(Position position, int alpha, int beta, int depth)
         {
+            if (_moveStopwatch.ElapsedMilliseconds / 1000 >= _maxSearchTime) return 0;
             // The lower bound for moves we can make from this position
             int standingPat = _evaluator.Evaluate(position);
             if (standingPat >= beta || depth == 0) return standingPat;
@@ -187,11 +218,11 @@ namespace MegaKnight.Core
 
             int hash = (int)(position.Hash() % _transpositionTableCapacity);
             // Search for hash move first
-            for(int i = 0; i < moves.Count; i++)
+            for (int i = 0; i < moves.Count; i++)
             {
                 if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].BestMove == moves[i])
                 {
-                    PutMoveAtIndexInList(moves, i);
+                    PutMoveAtIndexInList(moves, i, insertPos);
                     insertPos++;
                 }
             }
@@ -201,17 +232,17 @@ namespace MegaKnight.Core
             {
                 if (moves[i].IsCapture())
                 {
-                    PutMoveAtIndexInList(moves, i);
+                    PutMoveAtIndexInList(moves, i, insertPos);
                     insertPos++;
                 }
             }
         }
 
-        private static void PutMoveAtIndexInList(List<Move> moves, int indexToRemove)
+        private static void PutMoveAtIndexInList(List<Move> moves, int indexToRemove, int indexToInsertAt)
         {
             Move m = moves[indexToRemove];
             moves.RemoveAt(indexToRemove);
-            moves.Insert(0, m);
+            moves.Insert(indexToInsertAt, m);
         }
     }
 }

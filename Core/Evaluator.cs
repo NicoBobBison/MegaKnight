@@ -42,7 +42,19 @@ namespace MegaKnight.Core
             int evaluation = 0;
 
             // Value from 0 to 1 representing how far in the game we are. 0 = early game, 1 = late game.
-            float gamePhase = (32 - Helper.GetBitboardPopCount(position.AllPieces)) / 32f;
+            float materialOnBoard = Helper.GetBitboardPopCount(position.WhitePawns | position.BlackPawns) * EvalWeights.PawnValueEarly +
+                                    Helper.GetBitboardPopCount(position.WhiteKnights | position.BlackKnights) * EvalWeights.KnightValueEarly +
+                                    Helper.GetBitboardPopCount(position.WhiteBishops | position.BlackBishops) * EvalWeights.BishopValueEarly +
+                                    Helper.GetBitboardPopCount(position.WhiteRooks | position.BlackRooks) * EvalWeights.RookValueEarly +
+                                    Helper.GetBitboardPopCount(position.WhiteQueens | position.BlackQueens) * EvalWeights.QueenValueEarly;
+
+            float totalPossibleMaterial = 16 * EvalWeights.PawnValueEarly +
+                                           4 * EvalWeights.KnightValueEarly +
+                                           4 * EvalWeights.BishopValueEarly +
+                                           4 * EvalWeights.RookValueEarly +
+                                           2 * EvalWeights.QueenValueEarly;
+
+            float gamePhase = (totalPossibleMaterial - materialOnBoard) / totalPossibleMaterial;
 
             int[] whitePawnIndeces = Helper.BoardToArrayOfIndeces(position.WhitePawns);
             int[] whiteKnightIndeces = Helper.BoardToArrayOfIndeces(position.WhiteKnights);
