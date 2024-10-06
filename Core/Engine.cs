@@ -11,7 +11,7 @@ namespace MegaKnight.Core
     internal class Engine
     {
         // Maximum allowed search time
-        const float _maxSearchTime = 10;
+        const float _maxSearchTime = 5;
 
         // Need to figure out what to do with this. Base it off current depth or always keep constant?
         const int _quiescenceSearchDepth = 2;
@@ -22,6 +22,7 @@ namespace MegaKnight.Core
         const int _transpositionTableCapacity = 1000000;
         Dictionary<int, TranspositionEntry> _transpositionTable;
         Stopwatch _moveStopwatch = Stopwatch.StartNew();
+        PVTable _principalVariation = new PVTable();
 
         int _debugBranchesPruned;
 
@@ -35,11 +36,12 @@ namespace MegaKnight.Core
         public Move GetBestMove(Position position)
         {
             _moveStopwatch.Restart();
+            _principalVariation = new PVTable();
             Move bestMoveSoFar = null;
             int depth = 1;
             while(_moveStopwatch.ElapsedMilliseconds / 1000 < _maxSearchTime)
             {
-                Move move = Search(position, depth);
+                Move move = Search(position, depth, 0);
                 if (_moveStopwatch.ElapsedMilliseconds / 1000 < _maxSearchTime)
                 {
                     bestMoveSoFar = move;
@@ -47,6 +49,9 @@ namespace MegaKnight.Core
                 }
             }
             if (bestMoveSoFar == null) throw new Exception("Could not find a move fast enough");
+            Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
+            // Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
+            Debug.WriteLine("Depth searched: " + depth);
             return bestMoveSoFar;
         }
         /// <summary>
@@ -54,7 +59,7 @@ namespace MegaKnight.Core
         /// </summary>
         /// <param name="position">The position to start from.</param>
         /// <returns>The best move based on the search.</returns>
-        Move Search(Position position, int depth)
+        Move Search(Position position, int depth, int pvIndex)
         {
             if (depth == 0) throw new Exception("Cannot start search with 0 depth");
             _debugBranchesPruned = 0;
@@ -89,12 +94,13 @@ namespace MegaKnight.Core
             foreach (Move move in possibleMoves)
             {
                 position.MakeMove(move);
-                int score = -AlphaBeta(position, depth - 1, -beta, -alpha);
+                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, pvIndex + 1);
                 position.UnmakeMove(move);
                 if (score > max)
                 {
                     max = score;
                     bestMove = move;
+                    _principalVariation.SetPVValue(move, depth, pvIndex);
                     alpha = Math.Max(alpha, score);
                 }
                 if (score >= beta)
@@ -104,12 +110,9 @@ namespace MegaKnight.Core
                 }
             }
             AddPositionToTranspositionTable(position, depth, int.MinValue / 2, beta, max, bestMove);
-            Debug.WriteLine("Engine move: " + bestMove.ToString());
-            // Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
-            Debug.WriteLine("Depth this search: " + depth);
             return bestMove;
         }
-        int AlphaBeta(Position position, int depth, int alpha, int beta)
+        int AlphaBeta(Position position, int depth, int alpha, int beta, int pvIndex)
         {
             if (_moveStopwatch.ElapsedMilliseconds / 1000 >= _maxSearchTime) return 0;
             int alphaOriginal = alpha;
@@ -147,12 +150,13 @@ namespace MegaKnight.Core
             foreach (Move move in possibleMoves)
             {
                 position.MakeMove(move);
-                int score = -AlphaBeta(position, depth - 1, -beta, -alpha);
+                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, pvIndex + 1);
                 position.UnmakeMove(move);
                 if (score > max)
                 {
                     max = score;
                     bestMove = move;
+                    _principalVariation.SetPVValue(move, depth, pvIndex);
                     alpha = Math.Max(alpha, score);
                 }
                 if (score >= beta)
