@@ -101,8 +101,11 @@ namespace MegaKnight.Core
                 {
                     max = score;
                     bestMove = move;
-                    _principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
-                    alpha = Math.Max(alpha, score);
+                    if (score > alpha)
+                    {
+                        alpha = score;
+                        _principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
+                    }
                 }
                 if (score >= beta)
                 {
@@ -157,8 +160,11 @@ namespace MegaKnight.Core
                 {
                     max = score;
                     bestMove = move;
-                    _principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
-                    alpha = Math.Max(alpha, score);
+                    if(score > alpha)
+                    {
+                        alpha = score;
+                        _principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
+                    }
                 }
                 if (score >= beta)
                 {

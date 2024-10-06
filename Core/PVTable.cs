@@ -42,7 +42,7 @@ namespace MegaKnight.Core
                 }
                 _moves = moves;
                 _maxDepth++;
-                Debug.WriteLine("Increased depth to " + _maxDepth);
+                Debug.WriteLine("Increased depth of PV table to " + _maxDepth);
             }
         }
         public Move[] GetPrincipalVariation(int depth)
