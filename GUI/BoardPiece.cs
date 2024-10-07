@@ -38,8 +38,11 @@ namespace MegaKnight.GUI
             if (_renderer.GameOver) return;
             if (DeletedBoardThisFrame) return;
 
-            bool playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
-            // bool playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite;
+            bool playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite;
+            if (_renderer.Core.PlayingAgainstEngine)
+            {
+                playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
+            }
 
             BoardTile hoveredTile = GetHoveredBoardTile(_renderer.BoardTiles);
 

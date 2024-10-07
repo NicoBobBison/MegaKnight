@@ -38,11 +38,6 @@ namespace MegaKnight.Core
         public Move GetBestMove(Position position)
         {
             _moveStopwatch.Restart();
-            Debug.WriteLine("Moves before making null move: " + position.AllLegalMovesToString(_moveGenerator));
-            position.MakeNullMove();
-            Debug.WriteLine("Moves after null move: " + position.AllLegalMovesToString(_moveGenerator));
-            position.UnmakeNullMove();
-            Debug.WriteLine("Moves after unmaking null move: " + position.AllLegalMovesToString(_moveGenerator));
 
             //_principalVariation = new PVTable();
             Move bestMoveSoFar = null;
@@ -170,12 +165,14 @@ namespace MegaKnight.Core
             // Null move pruning, R = 2
             if (!nullMoveSearch && depth > 2 && _moveGenerator.GetPiecesAttackingKing(position) == 0)
             {
+                Position p = (Position)position.Clone();
                 position.MakeNullMove();
                 int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, originalDepth, true);
                 if (nullMoveScore >= beta)
                 {
                     position.UnmakeNullMove();
                     _debugBranchesPruned++;
+                    if (!position.Equals(p)) throw new Exception("Positions don't match: " + position.ToString() + p.ToString());
                     return nullMoveScore;
                 }
                 position.UnmakeNullMove();

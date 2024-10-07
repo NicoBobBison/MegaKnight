@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MegaKnight.Core
 {
-    internal class Position : IEquatable<Position>
+    internal class Position : IEquatable<Position>, ICloneable
     {
         // Bitboard representation of pieces. 64 bit long integer, with each bit representing a square.
         // a1 = least significant bit (right most), h8 = most significant bit (left most)
@@ -74,7 +74,14 @@ namespace MegaKnight.Core
 
             SetBitboard(bitboardIndex, Bitboards[bitboardIndex] | move.EndSquare);
 
-            if(move.MoveType == MoveType.Capture) HalfMoveClock = 0;
+            if (move.MoveType == MoveType.Capture || move.Piece == Piece.Pawn)
+            {
+                HalfMoveClock = 0;
+            }
+            else
+            {
+                HalfMoveClock++;
+            }
             if (move.Piece == Piece.Pawn)
             {
                 HalfMoveClock = 0;
@@ -168,7 +175,6 @@ namespace MegaKnight.Core
 
             WhiteToMove = !WhiteToMove;
             _unmakeInfos.Push(unmakeInfo);
-            HalfMoveClock++;
         }
         public void UnmakeMove(Move move)
         {
@@ -244,6 +250,7 @@ namespace MegaKnight.Core
         }
         public void MakeNullMove()
         {
+            EnPassantTargetSquare = -1;
             UnmakeInfo unmakeInfo = new UnmakeInfo(EnPassantTargetSquare, HalfMoveClock, WhiteKingCastle, WhiteQueenCastle, BlackKingCastle, BlackQueenCastle);
             WhiteToMove = !WhiteToMove;
             _unmakeInfos.Push(unmakeInfo);
@@ -403,6 +410,14 @@ namespace MegaKnight.Core
                 str += " ";
             }
             return str;
+        }
+        /// <summary>
+        /// Should always use make/unmake instead of clone, this is just for debugging purposes
+        /// </summary>
+        /// <returns></returns>
+        public object Clone()
+        {
+            return MemberwiseClone();
         }
     }
 }

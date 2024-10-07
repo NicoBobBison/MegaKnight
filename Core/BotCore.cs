@@ -12,7 +12,7 @@ namespace MegaKnight.Core
 
         public Position CurrentPosition;
         public bool PlayerIsPlayingWhite = true;
-        public bool PlayingAgainstEngine = false;
+        public bool PlayingAgainstEngine = true;
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
         Engine _engine;
