@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using MegaKnight.Debugging;
+using System.Diagnostics;
 
 namespace MegaKnight.Core
 {
@@ -11,6 +12,7 @@ namespace MegaKnight.Core
 
         public Position CurrentPosition;
         public bool PlayerIsPlayingWhite = true;
+        public bool PlayingAgainstEngine = false;
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
         Engine _engine;
@@ -29,7 +31,7 @@ namespace MegaKnight.Core
             AddPositionToPreviousPositions(p);
 
             // Perft = new Perft(_moveGenerator, this);
-            // Perft.RunPerft(p, 5);
+            // Perft.RunPerft(p, 6);
             if(!PlayerIsPlayingWhite) MakeEngineMove();
         }
 

@@ -38,6 +38,12 @@ namespace MegaKnight.Core
         public Move GetBestMove(Position position)
         {
             _moveStopwatch.Restart();
+            Debug.WriteLine("Moves before making null move: " + position.AllLegalMovesToString(_moveGenerator));
+            position.MakeNullMove();
+            Debug.WriteLine("Moves after null move: " + position.AllLegalMovesToString(_moveGenerator));
+            position.UnmakeNullMove();
+            Debug.WriteLine("Moves after unmaking null move: " + position.AllLegalMovesToString(_moveGenerator));
+
             //_principalVariation = new PVTable();
             Move bestMoveSoFar = null;
             int depth = 1;
@@ -52,7 +58,7 @@ namespace MegaKnight.Core
             }
             if (bestMoveSoFar == null) throw new Exception("Could not find a move");
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
-            // Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
+            Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Depth searched: " + depth);
             //Debug.WriteLine("Principle variation table: ");
             //Debug.WriteLine(_principalVariation.ToString());
@@ -120,7 +126,6 @@ namespace MegaKnight.Core
                 }
                 if (score >= beta)
                 {
-                    _debugBranchesPruned++;
                     break;
                 }
             }
@@ -163,17 +168,18 @@ namespace MegaKnight.Core
                 return _evaluator.Evaluate(position);
             }
             // Null move pruning, R = 2
-            //if (!nullMoveSearch && depth > 2 && _moveGenerator.GetPiecesAttackingKing(position) == 0)
-            //{
-            //    position.WhiteToMove = !position.WhiteToMove;
-            //    int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, originalDepth, true);
-            //    if (nullMoveScore >= beta)
-            //    {
-            //        position.WhiteToMove = !position.WhiteToMove;
-            //        return nullMoveScore;
-            //    }
-            //    position.WhiteToMove = !position.WhiteToMove;
-            //}
+            if (!nullMoveSearch && depth > 2 && _moveGenerator.GetPiecesAttackingKing(position) == 0)
+            {
+                position.MakeNullMove();
+                int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, originalDepth, true);
+                if (nullMoveScore >= beta)
+                {
+                    position.UnmakeNullMove();
+                    _debugBranchesPruned++;
+                    return nullMoveScore;
+                }
+                position.UnmakeNullMove();
+            }
             foreach (Move move in possibleMoves)
             {
                 position.MakeMove(move);
@@ -192,7 +198,6 @@ namespace MegaKnight.Core
                 }
                 if (score >= beta)
                 {
-                    _debugBranchesPruned++;
                     break;
                 }
             }

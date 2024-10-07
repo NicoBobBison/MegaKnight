@@ -242,6 +242,24 @@ namespace MegaKnight.Core
             EnPassantTargetSquare = info.EnPassantTargetSquare;
             HalfMoveClock = info.HalfMoveClock;
         }
+        public void MakeNullMove()
+        {
+            UnmakeInfo unmakeInfo = new UnmakeInfo(EnPassantTargetSquare, HalfMoveClock, WhiteKingCastle, WhiteQueenCastle, BlackKingCastle, BlackQueenCastle);
+            WhiteToMove = !WhiteToMove;
+            _unmakeInfos.Push(unmakeInfo);
+            HalfMoveClock++;
+        }
+        public void UnmakeNullMove()
+        {
+            UnmakeInfo info = _unmakeInfos.Pop();
+            WhiteToMove = !WhiteToMove;
+            WhiteKingCastle = info.WhiteKingCastle;
+            WhiteQueenCastle = info.WhiteQueenCastle;
+            BlackKingCastle = info.BlackKingCastle;
+            BlackQueenCastle = info.BlackQueenCastle;
+            EnPassantTargetSquare = info.EnPassantTargetSquare;
+            HalfMoveClock = info.HalfMoveClock;
+        }
         void SetBitboard(int index, ulong val)
         {
             switch (index)
@@ -375,6 +393,16 @@ namespace MegaKnight.Core
             }
             return str + "\n";
 
+        }
+        public string AllLegalMovesToString(MoveGenerator moveGenerator)
+        {
+            string str = "";
+            foreach(Move move in moveGenerator.GenerateAllPossibleMoves(this))
+            {
+                str += move.ToString();
+                str += " ";
+            }
+            return str;
         }
     }
 }
