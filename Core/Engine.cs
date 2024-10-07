@@ -11,10 +11,10 @@ namespace MegaKnight.Core
     internal class Engine
     {
         // Maximum allowed search time
-        const float _maxSearchTime = 1;
+        const float _maxSearchTime = 3;
 
         // Need to figure out what to do with this. Base it off current depth or always keep constant?
-        const int _quiescenceSearchDepth = 2;
+        const int _quiescenceSearchDepth = 3;
 
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
@@ -22,7 +22,8 @@ namespace MegaKnight.Core
         const int _transpositionTableCapacity = 1000000;
         Dictionary<int, TranspositionEntry> _transpositionTable;
         Stopwatch _moveStopwatch = Stopwatch.StartNew();
-        PVTable _principalVariation = new PVTable();
+        // Temporarily commented PV table out, will (hopefully) fix it later
+        //PVTable _principalVariation = new PVTable();
 
         int _debugBranchesPruned;
 
@@ -36,7 +37,7 @@ namespace MegaKnight.Core
         public Move GetBestMove(Position position)
         {
             _moveStopwatch.Restart();
-            _principalVariation = new PVTable();
+            //_principalVariation = new PVTable();
             Move bestMoveSoFar = null;
             int depth = 1;
             while(_moveStopwatch.ElapsedMilliseconds / 1000 < _maxSearchTime)
@@ -52,14 +53,14 @@ namespace MegaKnight.Core
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             // Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Depth searched: " + depth);
-            Debug.WriteLine("Principle variation table: ");
-            Debug.WriteLine(_principalVariation.ToString());
-            Debug.Write("Principle variation: ");
-            foreach(Move m in _principalVariation.GetPrincipalVariation())
-            {
-                if (m == null) Debug.Write("- ");
-                else Debug.Write(m.ToString() + " ");
-            }
+            //Debug.WriteLine("Principle variation table: ");
+            //Debug.WriteLine(_principalVariation.ToString());
+            //Debug.Write("Principle variation: ");
+            //foreach(Move m in _principalVariation.GetPrincipalVariation())
+            //{
+            //    if (m == null) Debug.Write("- ");
+            //    else Debug.Write(m.ToString() + " ");
+            //}
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
@@ -112,7 +113,7 @@ namespace MegaKnight.Core
                     if (score > alpha)
                     {
                         alpha = score;
-                        _principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
+                        //_principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
                         // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
                     }
                 }
@@ -172,7 +173,7 @@ namespace MegaKnight.Core
                     if(score > alpha)
                     {
                         alpha = score;
-                        _principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
+                        //_principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
                         // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
                     }
                 }
