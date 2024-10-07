@@ -162,18 +162,18 @@ namespace MegaKnight.Core
             {
                 return _evaluator.Evaluate(position);
             }
-            // Null move pruning
-            if (!nullMoveSearch && depth > 3 && _moveGenerator.GetPiecesAttackingKing(position) == 0)
-            {
-                position.WhiteToMove = !position.WhiteToMove;
-                int nullMoveScore = -AlphaBeta(position, depth - 3, -beta, -beta + 1, originalDepth, true);
-                if (nullMoveScore >= beta)
-                {
-                    position.WhiteToMove = !position.WhiteToMove;
-                    return nullMoveScore;
-                }
-                position.WhiteToMove = !position.WhiteToMove;
-            }
+            // Null move pruning, R = 2
+            //if (!nullMoveSearch && depth > 2 && _moveGenerator.GetPiecesAttackingKing(position) == 0)
+            //{
+            //    position.WhiteToMove = !position.WhiteToMove;
+            //    int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, originalDepth, true);
+            //    if (nullMoveScore >= beta)
+            //    {
+            //        position.WhiteToMove = !position.WhiteToMove;
+            //        return nullMoveScore;
+            //    }
+            //    position.WhiteToMove = !position.WhiteToMove;
+            //}
             foreach (Move move in possibleMoves)
             {
                 position.MakeMove(move);
