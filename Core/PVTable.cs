@@ -35,8 +35,8 @@ namespace MegaKnight.Core
         {
             while(_maxDepth < depth)
             {
-                Move[] moves = new Move[GetStartIndex(_maxDepth + 2) - 1];
-                for(int i = 0; i < GetStartIndex(_maxDepth + 1) - 1; i++)
+                Move[] moves = new Move[GetStartIndex(_maxDepth + 2)];
+                for(int i = 0; i < GetStartIndex(_maxDepth + 1); i++)
                 {
                     moves[i] = _moves[i];
                 }

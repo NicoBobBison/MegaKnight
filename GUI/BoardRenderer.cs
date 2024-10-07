@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Content;
 using MegaKnight.Core;
 using System.Diagnostics;
 using Microsoft.Xna.Framework.Input;
+using System.Reflection;
 
 namespace MegaKnight.GUI
 {
@@ -173,9 +174,14 @@ namespace MegaKnight.GUI
         {
             foreach(int i in Helper.BoardToArrayOfIndeces(bitboard))
             {
+                int renderIndex = i;
+                if (!Core.PlayerIsPlayingWhite)
+                {
+                    renderIndex = renderIndex ^ 56 ^ 7;
+                }
                 BoardPiece piece = new BoardPiece(pieceTexture, this, (Square)i, pieceType, isWhite);
                 BoardTiles[i].Piece = piece;
-                piece.ScreenPosition = BoardTiles[i].Position + new Vector2(TileSize / 2);
+                piece.ScreenPosition = BoardTiles[renderIndex].Position + new Vector2(TileSize / 2);
                 _boardPieces.Add(piece);
             }
         }
@@ -192,7 +198,12 @@ namespace MegaKnight.GUI
             int[] moveIndeces = Helper.BoardToArrayOfIndeces(possibleMoves);
             for(int i = 0; i < 64; i++)
             {
-                _movePreviews[i].IsShown = LinearSearch(moveIndeces, i);
+                int index = i;
+                if (!Core.PlayerIsPlayingWhite)
+                {
+                    index = index ^ 56 ^ 7;
+                }
+                _movePreviews[index].IsShown = LinearSearch(moveIndeces, i);
             }
         }
         bool LinearSearch(int[] arr, int val)
