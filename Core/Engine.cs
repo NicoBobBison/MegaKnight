@@ -11,7 +11,7 @@ namespace MegaKnight.Core
     internal class Engine
     {
         // Maximum allowed search time
-        const float _maxSearchTime = 5;
+        const float _maxSearchTime = 1;
 
         // Need to figure out what to do with this. Base it off current depth or always keep constant?
         const int _quiescenceSearchDepth = 2;
@@ -113,6 +113,7 @@ namespace MegaKnight.Core
                     {
                         alpha = score;
                         _principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
+                        // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
                     }
                 }
                 if (score >= beta)
@@ -172,6 +173,7 @@ namespace MegaKnight.Core
                     {
                         alpha = score;
                         _principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
+                        // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
                     }
                 }
                 if (score >= beta)
@@ -234,6 +236,7 @@ namespace MegaKnight.Core
         }
         void SortMoves(List<Move> moves, Position position)
         {
+            // Sort moves with selection sort
             int insertPos = 0;
 
             int hash = (int)(position.Hash() % _transpositionTableCapacity);
