@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace MegaKnight.Core
 {
@@ -49,7 +50,7 @@ namespace MegaKnight.Core
                     depth++;
                 }
             }
-            if (bestMoveSoFar == null) throw new Exception("Could not find a move fast enough");
+            if (bestMoveSoFar == null) throw new Exception("Could not find a move");
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             // Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Depth searched: " + depth);
@@ -104,7 +105,7 @@ namespace MegaKnight.Core
             foreach (Move move in possibleMoves)
             {
                 position.MakeMove(move);
-                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, originalDepth);
+                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, originalDepth, false);
                 position.UnmakeMove(move);
                 if (score > max)
                 {
@@ -126,7 +127,7 @@ namespace MegaKnight.Core
             AddPositionToTranspositionTable(position, depth, int.MinValue / 2, beta, max, bestMove);
             return bestMove;
         }
-        int AlphaBeta(Position position, int depth, int alpha, int beta, int originalDepth)
+        int AlphaBeta(Position position, int depth, int alpha, int beta, int originalDepth, bool nullMoveSearch)
         {
             if (_moveStopwatch.ElapsedMilliseconds / 1000 >= _maxSearchTime) return 0;
             int alphaOriginal = alpha;
@@ -148,7 +149,7 @@ namespace MegaKnight.Core
             }
 
             // We don't flip signs for quiescence search because we aren't going down depth when we call it
-            if (depth == 0) return QuiescenceSearch(position, alpha, beta, _quiescenceSearchDepth);
+            if (depth <= 0) return QuiescenceSearch(position, alpha, beta, _quiescenceSearchDepth);
 
             int max = int.MinValue;
             Move bestMove = null;
@@ -161,10 +162,22 @@ namespace MegaKnight.Core
             {
                 return _evaluator.Evaluate(position);
             }
+            // Null move pruning
+            if (!nullMoveSearch && depth > 3 && _moveGenerator.GetPiecesAttackingKing(position) == 0)
+            {
+                position.WhiteToMove = !position.WhiteToMove;
+                int nullMoveScore = -AlphaBeta(position, depth - 3, -beta, -beta + 1, originalDepth, true);
+                if (nullMoveScore >= beta)
+                {
+                    position.WhiteToMove = !position.WhiteToMove;
+                    return nullMoveScore;
+                }
+                position.WhiteToMove = !position.WhiteToMove;
+            }
             foreach (Move move in possibleMoves)
             {
                 position.MakeMove(move);
-                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, originalDepth);
+                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, originalDepth, nullMoveSearch);
                 position.UnmakeMove(move);
                 if (score > max)
                 {

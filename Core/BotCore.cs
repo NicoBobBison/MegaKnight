@@ -10,7 +10,7 @@ namespace MegaKnight.Core
         const string _fenStartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
         public Position CurrentPosition;
-        public bool PlayerIsPlayingWhite = false;
+        public bool PlayerIsPlayingWhite = true;
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
         Engine _engine;
