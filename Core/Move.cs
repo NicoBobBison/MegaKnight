@@ -44,7 +44,7 @@ namespace MegaKnight.Core
         QueenPromoCapture
     }
 
-    internal class Move
+    internal class Move : IEquatable<Move>
     {
         public readonly Piece Piece;
         public readonly ulong StartSquare;
@@ -104,13 +104,35 @@ namespace MegaKnight.Core
         public bool IsCapture()
         {
             return MoveType == MoveType.Capture || MoveType == MoveType.KnightPromoCapture || MoveType == MoveType.BishopPromoCapture ||
-                   MoveType == MoveType.RookPromoCapture || MoveType == MoveType.QueenPromoCapture;
+                   MoveType == MoveType.RookPromoCapture || MoveType == MoveType.QueenPromoCapture || MoveType == MoveType.EnPassant;
+        }
+        public Piece GetPieceCapturing(Position position)
+        {
+            if (!IsCapture()) throw new Exception("Not capturing a piece");
+            if (MoveType == MoveType.EnPassant) return Piece.Pawn;
+            if ((EndSquare & (position.WhitePawns | position.BlackPawns)) > 0) return Piece.Pawn;
+            if ((EndSquare & (position.WhiteKnights | position.BlackKnights)) > 0) return Piece.Knight;
+            if ((EndSquare & (position.WhiteBishops | position.BlackBishops)) > 0) return Piece.Bishop;
+            if ((EndSquare & (position.WhiteRooks | position.BlackRooks)) > 0) return Piece.Rook;
+            if ((EndSquare & (position.WhiteQueens | position.BlackQueens)) > 0) return Piece.Queen;
+            throw new Exception("Could not get the captured piece type.");
         }
         public override string ToString()
         {
             int startSquareIndex = Helper.SinglePopBitboardToIndex(StartSquare);
             int endSquareIndex = Helper.SinglePopBitboardToIndex(EndSquare);
             return Enum.GetName((Square)startSquareIndex) + Enum.GetName((Square)endSquareIndex);
+        }
+        public string DetailedToString(Position position)
+        {
+            string baseString = ToString();
+            string captureString = IsCapture() ? " " + (int)Piece + "x" + (int)GetPieceCapturing(position) : "";
+            return baseString + captureString;
+        }
+
+        public bool Equals(Move other)
+        {
+            return Piece == other.Piece && StartSquare == other.StartSquare && EndSquare == other.EndSquare && MoveType == other.MoveType;
         }
     }
 }

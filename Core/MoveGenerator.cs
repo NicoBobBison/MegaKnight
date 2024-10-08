@@ -12,6 +12,7 @@ namespace MegaKnight.Core
             White,
             Black
         }
+
         #region Precomputed board masks
         ulong[,] _rayAttacks;
         ulong[] _knightAttacks;

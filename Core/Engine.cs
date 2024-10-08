@@ -12,7 +12,7 @@ namespace MegaKnight.Core
     internal class Engine
     {
         // Maximum allowed search time
-        const float _maxSearchTime = 3f;
+        const float _maxSearchTime = 4f;
 
         // Need to figure out what to do with this. Base it off current depth or always keep constant?
         const int _quiescenceSearchDepth = 3;
@@ -53,8 +53,8 @@ namespace MegaKnight.Core
             }
             if (bestMoveSoFar == null) throw new Exception("Could not find a move");
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
-            Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
-            Debug.WriteLine("Depth searched: " + depth);
+            // Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
+            Debug.WriteLine("Highest base depth searched: " + depth);
             //Debug.WriteLine("Principle variation table: ");
             //Debug.WriteLine(_principalVariation.ToString());
             //Debug.Write("Principle variation: ");
@@ -168,9 +168,9 @@ namespace MegaKnight.Core
                 position.MakeNullMove();
                 int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, originalDepth, true);
                 position.UnmakeNullMove();
+                // Prune this branch if the position is so strong that skipping a turn would still result in a winning position
                 if (nullMoveScore >= beta)
                 {
-                    _debugBranchesPruned++;
                     return nullMoveScore;
                 }
             }
@@ -251,29 +251,9 @@ namespace MegaKnight.Core
         }
         void SortMoves(List<Move> moves, Position position)
         {
-            // Sort moves with selection sort
-            int insertPos = 0;
-
-            int hash = (int)(position.Hash() % _transpositionTableCapacity);
-            // Search for hash move first
-            for (int i = insertPos; i < moves.Count; i++)
-            {
-                if (_transpositionTable.ContainsKey(hash) && (int)(_transpositionTable[hash].HashKey % _transpositionTableCapacity) == hash && _transpositionTable[hash].BestMove == moves[i])
-                {
-                    PutMoveAtIndexInList(moves, i, insertPos);
-                    insertPos++;
-                }
-            }
-
-            // Check captures
-            for (int i = insertPos; i < moves.Count; i++)
-            {
-                if (moves[i].IsCapture())
-                {
-                    PutMoveAtIndexInList(moves, i, insertPos);
-                    insertPos++;
-                }
-            }
+            // Sort moves with comparer. See MoveComparer for sorting methods
+            MoveComparer comparer = new MoveComparer(_transpositionTable, _transpositionTableCapacity, position);
+            moves.Sort(comparer);
         }
         private static void PutMoveAtIndexInList(List<Move> moves, int indexToRemove, int indexToInsertAt)
         {
