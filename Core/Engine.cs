@@ -12,7 +12,7 @@ namespace MegaKnight.Core
     internal class Engine
     {
         // Maximum allowed search time
-        const float _maxSearchTime = 3;
+        const float _maxSearchTime = 3f;
 
         // Need to figure out what to do with this. Base it off current depth or always keep constant?
         const int _quiescenceSearchDepth = 3;
@@ -168,20 +168,21 @@ namespace MegaKnight.Core
                 Position p = (Position)position.Clone();
                 position.MakeNullMove();
                 int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, originalDepth, true);
+                position.UnmakeNullMove();
+                if (!position.Equals(p)) throw new Exception("Positions don't match: " + p.ToString() + position.ToString());
                 if (nullMoveScore >= beta)
                 {
-                    position.UnmakeNullMove();
                     _debugBranchesPruned++;
-                    if (!position.Equals(p)) throw new Exception("Positions don't match: " + position.ToString() + p.ToString());
                     return nullMoveScore;
                 }
-                position.UnmakeNullMove();
             }
             foreach (Move move in possibleMoves)
             {
                 position.MakeMove(move);
+                //Debug.WriteLine(new string('\t', originalDepth - depth) + "M: " + move.ToString());
                 int score = -AlphaBeta(position, depth - 1, -beta, -alpha, originalDepth, nullMoveSearch);
                 position.UnmakeMove(move);
+                //Debug.WriteLine(new string('\t', originalDepth - depth) + "U: " + move.ToString());
                 if (score > max)
                 {
                     max = score;
@@ -259,7 +260,7 @@ namespace MegaKnight.Core
             // Search for hash move first
             for (int i = insertPos; i < moves.Count; i++)
             {
-                if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].BestMove == moves[i])
+                if (_transpositionTable.ContainsKey(hash) && (int)(_transpositionTable[hash].HashKey % _transpositionTableCapacity) == hash && _transpositionTable[hash].BestMove == moves[i])
                 {
                     PutMoveAtIndexInList(moves, i, insertPos);
                     insertPos++;

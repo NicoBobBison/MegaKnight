@@ -56,6 +56,7 @@ namespace MegaKnight.Core
             UnmakeInfo unmakeInfo = new UnmakeInfo(EnPassantTargetSquare, HalfMoveClock, WhiteKingCastle, WhiteQueenCastle, BlackKingCastle, BlackQueenCastle);
 
             byte blackToMove = WhiteToMove ? (byte)0 : (byte)1;
+            HalfMoveClock++;
 
             // Remove from start square
             int bitboardIndex = 6 * blackToMove + (int)move.Piece;
@@ -74,14 +75,7 @@ namespace MegaKnight.Core
 
             SetBitboard(bitboardIndex, Bitboards[bitboardIndex] | move.EndSquare);
 
-            if (move.MoveType == MoveType.Capture || move.Piece == Piece.Pawn)
-            {
-                HalfMoveClock = 0;
-            }
-            else
-            {
-                HalfMoveClock++;
-            }
+            if(move.MoveType == MoveType.Capture) HalfMoveClock = 0;
             if (move.Piece == Piece.Pawn)
             {
                 HalfMoveClock = 0;
@@ -237,7 +231,6 @@ namespace MegaKnight.Core
                     SetBitboard(6 * blackToMove + 3, Bitboards[6 * blackToMove + 3] & ~(1ul << 3 + blackToMove * 56));
                     SetBitboard(6 * blackToMove + 3, Bitboards[6 * blackToMove + 3] | (1ul << (blackToMove * 56)));
                 }
-
             }
             SetBitboard(bitboardIndex, Bitboards[bitboardIndex] | move.StartSquare);
 
@@ -250,7 +243,6 @@ namespace MegaKnight.Core
         }
         public void MakeNullMove()
         {
-            EnPassantTargetSquare = -1;
             UnmakeInfo unmakeInfo = new UnmakeInfo(EnPassantTargetSquare, HalfMoveClock, WhiteKingCastle, WhiteQueenCastle, BlackKingCastle, BlackQueenCastle);
             WhiteToMove = !WhiteToMove;
             _unmakeInfos.Push(unmakeInfo);
@@ -398,6 +390,8 @@ namespace MegaKnight.Core
                 }
                 str = "\n" + rowStr + str;
             }
+            str += "\nEn passant square: " + EnPassantTargetSquare;
+            str += "\nHalf move clock: " + HalfMoveClock;
             return str + "\n";
 
         }
