@@ -8,9 +8,9 @@ namespace MegaKnight.Core
 {
     public enum NodeType
     {
-        PVNode,
-        AllNode,
-        CutNode
+        Exact,
+        UpperBound,
+        LowerBound
     }
     internal class TranspositionEntry
     {

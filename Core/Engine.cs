@@ -4,15 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace MegaKnight.Core
 {
     internal class Engine
     {
         // Maximum allowed search time
-        const float _maxSearchTime = 4f;
+        const float _maxSearchTime = 3f;
 
         // Need to figure out what to do with this. Base it off current depth or always keep constant?
         const int _quiescenceSearchDepth = 3;
@@ -23,7 +21,6 @@ namespace MegaKnight.Core
         const int _transpositionTableCapacity = 1000000;
         Dictionary<int, TranspositionEntry> _transpositionTable;
         Stopwatch _moveStopwatch = Stopwatch.StartNew();
-        // Temporarily commented PV table out, will (hopefully) fix it later
         //PVTable _principalVariation = new PVTable();
 
         int _debugBranchesPruned;
@@ -44,7 +41,7 @@ namespace MegaKnight.Core
             int depth = 1;
             while(_moveStopwatch.ElapsedMilliseconds / 1000 < _maxSearchTime)
             {
-                Move move = Search(position, depth, depth);
+                Move move = Search(position, depth);
                 if (_moveStopwatch.ElapsedMilliseconds / 1000 < _maxSearchTime)
                 {
                     bestMoveSoFar = move;
@@ -55,6 +52,11 @@ namespace MegaKnight.Core
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             // Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
+            Debug.Write("PV: ");
+            foreach(Move m in CollectPV(position))
+            {
+                Debug.Write(m.ToString() + " ");
+            }
             //Debug.WriteLine("Principle variation table: ");
             //Debug.WriteLine(_principalVariation.ToString());
             //Debug.Write("Principle variation: ");
@@ -71,7 +73,7 @@ namespace MegaKnight.Core
         /// </summary>
         /// <param name="position">The position to start from.</param>
         /// <returns>The best move based on the search.</returns>
-        Move Search(Position position, int depth, int originalDepth)
+        Move Search(Position position, int depth)
         {
             if (depth == 0) throw new Exception("Cannot start search with 0 depth");
             _debugBranchesPruned = 0;
@@ -80,14 +82,15 @@ namespace MegaKnight.Core
             int alpha = int.MinValue / 2;
             int beta = int.MaxValue / 2;
 
+            int ply = 0;
             int hash = (int)(position.Hash() % _transpositionTableCapacity);
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.Hash() && _transpositionTable[hash].Depth >= depth)
             {
-                if (_transpositionTable[hash].NodeType == NodeType.PVNode)
+                if (_transpositionTable[hash].NodeType == NodeType.Exact)
                 {
                     return _transpositionTable[hash].BestMove;
                 }
-                else if (_transpositionTable[hash].NodeType == NodeType.CutNode)
+                else if (_transpositionTable[hash].NodeType == NodeType.LowerBound)
                 {
                     alpha = Math.Max(alpha, _transpositionTable[hash].Evaluation);
                 }
@@ -106,7 +109,7 @@ namespace MegaKnight.Core
             foreach (Move move in possibleMoves)
             {
                 position.MakeMove(move);
-                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, originalDepth, false);
+                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, ply + 1, false);
                 position.UnmakeMove(move);
                 if (score > max)
                 {
@@ -115,7 +118,7 @@ namespace MegaKnight.Core
                     if (score > alpha)
                     {
                         alpha = score;
-                        //_principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
+                        //_principalVariation.SetPVValue(move, ply + depth, ply);
                         // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
                     }
                 }
@@ -124,26 +127,28 @@ namespace MegaKnight.Core
                     break;
                 }
             }
-            AddPositionToTranspositionTable(position, depth, int.MinValue / 2, beta, max, bestMove);
+            AddPositionToTranspositionTable(position, depth, alpha, beta, max, bestMove);
             return bestMove;
         }
-        int AlphaBeta(Position position, int depth, int alpha, int beta, int originalDepth, bool nullMoveSearch)
+        int AlphaBeta(Position position, int depth, int alpha, int beta, int ply, bool nullMoveSearch)
         {
             if (_moveStopwatch.ElapsedMilliseconds / 1000 >= _maxSearchTime) return 0;
-            int alphaOriginal = alpha;
             int hash = (int)(position.Hash() % _transpositionTableCapacity);
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.Hash() && _transpositionTable[hash].Depth >= depth)
             {
-                if (_transpositionTable[hash].NodeType == NodeType.PVNode)
+                if (_transpositionTable[hash].NodeType == NodeType.Exact)
                 {
+                    Debug.WriteLine("Exact node found");
                     return _transpositionTable[hash].Evaluation;
                 }
-                else if (_transpositionTable[hash].NodeType == NodeType.CutNode)
+                else if (_transpositionTable[hash].NodeType == NodeType.LowerBound)
                 {
+                    Debug.WriteLine("Lower bound node found");
                     alpha = Math.Max(alpha, _transpositionTable[hash].Evaluation);
                 }
                 else
                 {
+                    //Debug.WriteLine("Upper bound node found");
                     beta = Math.Min(beta, _transpositionTable[hash].Evaluation);
                 }
             }
@@ -166,7 +171,7 @@ namespace MegaKnight.Core
             if (!nullMoveSearch && depth > 2 && _moveGenerator.GetPiecesAttackingKing(position) == 0)
             {
                 position.MakeNullMove();
-                int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, originalDepth, true);
+                int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, ply + 1, true);
                 position.UnmakeNullMove();
                 // Prune this branch if the position is so strong that skipping a turn would still result in a winning position
                 if (nullMoveScore >= beta)
@@ -178,7 +183,7 @@ namespace MegaKnight.Core
             {
                 position.MakeMove(move);
                 //Debug.WriteLine(new string('\t', originalDepth - depth) + "M: " + move.ToString());
-                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, originalDepth, nullMoveSearch);
+                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, ply + 1, nullMoveSearch);
                 position.UnmakeMove(move);
                 //Debug.WriteLine(new string('\t', originalDepth - depth) + "U: " + move.ToString());
                 if (score > max)
@@ -188,7 +193,7 @@ namespace MegaKnight.Core
                     if(score > alpha)
                     {
                         alpha = score;
-                        //_principalVariation.SetPVValue(move, originalDepth, originalDepth - depth);
+                        //_principalVariation.SetPVValue(move, ply + depth, ply);
                         // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
                     }
                 }
@@ -197,7 +202,7 @@ namespace MegaKnight.Core
                     break;
                 }
             }
-            AddPositionToTranspositionTable(position, depth, alphaOriginal, beta, max, bestMove);
+            AddPositionToTranspositionTable(position, depth, alpha, beta, max, bestMove);
             return max;
         }
         private void AddPositionToTranspositionTable(Position position, int depth, int alpha, int beta, int max, Move bestMove)
@@ -209,15 +214,15 @@ namespace MegaKnight.Core
             entry.HashKey = position.Hash();
             if (max <= alpha)
             {
-                entry.NodeType = NodeType.AllNode;
+                entry.NodeType = NodeType.UpperBound;
             }
             else if (max >= beta)
             {
-                entry.NodeType = NodeType.CutNode;
+                entry.NodeType = NodeType.LowerBound;
             }
             else
             {
-                entry.NodeType = NodeType.PVNode;
+                entry.NodeType = NodeType.Exact;
             }
             // "Always replace" strategy
             _transpositionTable[(int)(entry.HashKey % _transpositionTableCapacity)] = entry;
@@ -248,6 +253,25 @@ namespace MegaKnight.Core
                 if(score >= beta) break;
             }
             return max;
+        }
+        List<Move> CollectPV(Position startPosition)
+        {
+            List<Move> pv = new List<Move>();
+            CollectPVRecursive(pv, startPosition);
+            return pv;
+        }
+        void CollectPVRecursive(List<Move> pv, Position position)
+        {
+            int hash = (int)(position.Hash() % _transpositionTableCapacity);
+            if (!_transpositionTable.ContainsKey(hash)) return;
+
+            Move bestMove = _transpositionTable[hash].BestMove;
+            if (bestMove == null) return;
+
+            pv.Add(bestMove);
+            position.MakeMove(bestMove);
+            CollectPVRecursive(pv, position);
+            position.UnmakeMove(bestMove);
         }
         void SortMoves(List<Move> moves, Position position)
         {
