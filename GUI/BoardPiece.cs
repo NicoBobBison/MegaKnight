@@ -38,10 +38,10 @@ namespace MegaKnight.GUI
             if (_renderer.GameOver) return;
             if (DeletedBoardThisFrame) return;
 
-            bool playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite;
+            bool playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
             if (_renderer.Core.PlayingAgainstEngine)
             {
-                playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
+                playerInteractionCondition = _renderer.Core.PlayerIsPlayingWhite == _isWhite;
             }
 
             BoardTile hoveredTile = GetHoveredBoardTile(_renderer.BoardTiles);
@@ -139,9 +139,15 @@ namespace MegaKnight.GUI
                 // If we can move, redraw the board based on the current position
                 _renderer.ClearMovePreview();
                 _renderer.Core.MakeMoveOnCurrentPosition(move);
+                // For testing weird unmake interactions/bugs
+                // if (InputManager.GetKeyPressed(Keys.Space)) _renderer.Core.CurrentPosition.UnmakeMove(move);
                 _renderer.RenderPosition(_renderer.Core.CurrentPosition);
-                if(_renderer.Core.PlayingAgainstEngine) _renderer.Core.MakeEngineMove();
-                _renderer.RenderPosition(_renderer.Core.CurrentPosition);
+
+                if (_renderer.Core.PlayingAgainstEngine)
+                {
+                    _renderer.Core.MakeEngineMove();
+                    _renderer.RenderPosition(_renderer.Core.CurrentPosition);
+                }
 
                 DeletedBoardThisFrame = true;
                 if (!CheckIfGameOver() && Piece != Piece.Pawn)

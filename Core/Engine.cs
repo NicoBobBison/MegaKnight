@@ -165,11 +165,9 @@ namespace MegaKnight.Core
             // Null move pruning, R = 2
             if (!nullMoveSearch && depth > 2 && _moveGenerator.GetPiecesAttackingKing(position) == 0)
             {
-                Position p = (Position)position.Clone();
                 position.MakeNullMove();
                 int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, originalDepth, true);
                 position.UnmakeNullMove();
-                if (!position.Equals(p)) throw new Exception("Positions don't match: " + p.ToString() + position.ToString());
                 if (nullMoveScore >= beta)
                 {
                     _debugBranchesPruned++;

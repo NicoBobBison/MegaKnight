@@ -352,7 +352,8 @@ namespace MegaKnight.Core
                     moves |= (pawnPosition << 16) & ~position.AllPieces & moveMask;
                 }
                 moves &= moveMask;
-                ulong enPassant = (pawnPosition << 7 | pawnPosition << 9) & (moveMask | captureMask << 8) & 1ul << position.EnPassantTargetSquare;
+                ulong pawnSquareColor = (position.BlackPawns & 1ul << (position.EnPassantTargetSquare - 8)) << 8;
+                ulong enPassant = (pawnPosition << 7 | pawnPosition << 9) & (moveMask | captureMask << 8) & (1ul << position.EnPassantTargetSquare) & pawnSquareColor;
                 // We can't en passant if it would cause a discovered check
                 if(enPassant > 0 && (GenerateHorizontalAttacks(position.WhiteKing, position.AllPieces ^ pawnPosition ^ 1ul << position.EnPassantTargetSquare - 8) & (position.BlackRooks | position.BlackQueens)) > 0)
                 {
@@ -370,7 +371,8 @@ namespace MegaKnight.Core
                     moves |= (pawnPosition >> 16) & ~position.AllPieces & moveMask;
                 }
                 moves &= moveMask;
-                ulong enPassant = (pawnPosition >> 7 | pawnPosition >> 9) & (moveMask | captureMask >> 8) & 1ul << position.EnPassantTargetSquare;
+                ulong pawnSquareColor = (position.WhitePawns & (1ul << (position.EnPassantTargetSquare + 8))) >> 8;
+                ulong enPassant = (pawnPosition >> 7 | pawnPosition >> 9) & (moveMask | captureMask >> 8) & 1ul << position.EnPassantTargetSquare & pawnSquareColor;
                 if (enPassant > 0 && (GenerateHorizontalAttacks(position.BlackKing, position.AllPieces ^ pawnPosition ^ 1ul << position.EnPassantTargetSquare + 8) & (position.WhiteRooks | position.WhiteQueens)) > 0)
                 {
                     enPassant = 0ul;

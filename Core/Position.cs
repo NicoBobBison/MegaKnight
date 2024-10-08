@@ -81,8 +81,8 @@ namespace MegaKnight.Core
                 HalfMoveClock = 0;
                 if(move.MoveType == MoveType.EnPassant)
                 {
-                    WhitePawns &= ~(1ul << (EnPassantTargetSquare + 8));
-                    BlackPawns &= ~(1ul << (EnPassantTargetSquare - 8));
+                    if(WhiteToMove) BlackPawns &= ~(1ul << (EnPassantTargetSquare - 8));
+                    else WhitePawns &= ~(1ul << (EnPassantTargetSquare + 8));
                 }
                 else if(move.MoveType == MoveType.DoublePawnPush)
                 {

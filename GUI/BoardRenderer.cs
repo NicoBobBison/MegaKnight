@@ -80,7 +80,12 @@ namespace MegaKnight.GUI
             {
                 AutoPromotionPiece = Piece.Knight;
             }
-
+            // For testing null moves
+            //else if (InputManager.GetKeyDown(Keys.N))
+            //{
+            //    Core.CurrentPosition.MakeNullMove();
+            //    RenderPosition(Core.CurrentPosition);
+            //}
             BoardPiece.DeletedBoardThisFrame = false;
             foreach(BoardPiece piece in _boardPieces.ToArray())
             {
