@@ -26,7 +26,7 @@ namespace MegaKnight.Core
         {
             if (x.Equals(y)) return 0;
 
-            int hash = (int)(_position.Hash() % (uint)_transpositionTableCapacity);
+            int hash = (int)(_position.HashValue % (uint)_transpositionTableCapacity);
 
             // Check hash table first
             if(_transpositionTable.ContainsKey(hash) && (int)(_transpositionTable[hash].HashKey % (uint)_transpositionTableCapacity) == hash)

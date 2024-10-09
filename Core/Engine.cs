@@ -36,6 +36,7 @@ namespace MegaKnight.Core
         }
         public Move GetBestMove(Position position)
         {
+            position.InitializeHash();
             _moveStopwatch.Restart();
             _killerMoves = new Move[100];
 
@@ -86,8 +87,8 @@ namespace MegaKnight.Core
             int beta = int.MaxValue / 2;
 
             int ply = 0;
-            int hash = (int)(position.Hash() % _transpositionTableCapacity);
-            if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.Hash() && _transpositionTable[hash].Depth >= depth)
+            int hash = (int)(position.HashValue % _transpositionTableCapacity);
+            if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.HashValue && _transpositionTable[hash].Depth >= depth)
             {
                 if (_transpositionTable[hash].NodeType == NodeType.Exact)
                 {
@@ -138,8 +139,8 @@ namespace MegaKnight.Core
         {
             int alphaOriginal = alpha;
             if (_moveStopwatch.ElapsedMilliseconds / 1000 >= _maxSearchTime) return 0;
-            int hash = (int)(position.Hash() % _transpositionTableCapacity);
-            if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.Hash() && _transpositionTable[hash].Depth >= depth)
+            int hash = (int)(position.HashValue % _transpositionTableCapacity);
+            if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.HashValue && _transpositionTable[hash].Depth >= depth)
             {
                 if (_transpositionTable[hash].NodeType == NodeType.Exact)
                 {
@@ -213,7 +214,7 @@ namespace MegaKnight.Core
             TranspositionEntry entry = new TranspositionEntry();
             entry.Depth = depth;
             entry.Evaluation = evaluation;
-            entry.HashKey = position.Hash();
+            entry.HashKey = position.HashValue;
             if (evaluation <= alpha)
             {
                 entry.NodeType = NodeType.UpperBound;
@@ -265,7 +266,7 @@ namespace MegaKnight.Core
         }
         void CollectPVRecursive(List<Move> pv, Position position)
         {
-            int hash = (int)(position.Hash() % _transpositionTableCapacity);
+            int hash = (int)(position.HashValue % _transpositionTableCapacity);
             if (!_transpositionTable.ContainsKey(hash)) return;
 
             Move bestMove = _transpositionTable[hash].BestMove;

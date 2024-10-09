@@ -162,7 +162,7 @@ namespace MegaKnight.Core
         }
         public bool IsDrawByRepetition(Position position)
         {
-            int hash = (int)(position.Hash() % _prevPositionsCapacity);
+            int hash = (int)(position.HashValue % _prevPositionsCapacity);
             int count = 0;
             if(_previousPositions.ContainsKey(hash))
             {
@@ -179,7 +179,7 @@ namespace MegaKnight.Core
         }
         public void AddPositionToPreviousPositions(Position position)
         {
-            int hash = (int)(position.Hash() % _prevPositionsCapacity);
+            int hash = (int)(position.HashValue % _prevPositionsCapacity);
             if(!_previousPositions.ContainsKey(hash))
             {
                 _previousPositions.Add(hash, new List<Position>());

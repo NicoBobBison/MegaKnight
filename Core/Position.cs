@@ -28,7 +28,7 @@ namespace MegaKnight.Core
         public ulong[] Bitboards => new ulong[] { WhitePawns, WhiteKnights, WhiteBishops, WhiteRooks, WhiteQueens, WhiteKing,
                                                   BlackPawns, BlackKnights, BlackBishops, BlackRooks, BlackQueens, BlackKing };
 
-        public ulong HashValue;
+        public ulong HashValue { get; private set; }
 
         // Other information
         public bool WhiteToMove;
@@ -248,6 +248,7 @@ namespace MegaKnight.Core
         {
             UnmakeInfo info = _unmakeInfos.Pop();
             WhiteToMove = !WhiteToMove;
+            HashValue ^= _zobristHashValues[64 * 12];
 
             byte blackToMove = WhiteToMove ? (byte)0 : (byte)1;
 
@@ -268,31 +269,37 @@ namespace MegaKnight.Core
                     if (WhiteToMove)
                     {
                         BlackPawns |= move.EndSquare >> 8;
+                        HashValue ^= GetZobristValueForPieceSquare(6, move.EndSquare >> 8);
                     }
                     else
                     {
                         WhitePawns |= move.EndSquare << 8;
+                        HashValue ^= GetZobristValueForPieceSquare(0, move.EndSquare << 8);
                     }
                 }
                 else if (move.MoveType == MoveType.KnightPromotion || move.MoveType == MoveType.KnightPromoCapture)
                 {
                     int promoIndex = 6 * blackToMove + 1;
                     SetBitboard(promoIndex, Bitboards[promoIndex] & ~move.EndSquare);
+                    HashValue ^= GetZobristValueForPieceSquare(promoIndex, move.EndSquare);
                 }
                 else if (move.MoveType == MoveType.BishopPromotion || move.MoveType == MoveType.BishopPromoCapture)
                 {
                     int promoIndex = 6 * blackToMove + 2;
                     SetBitboard(promoIndex, Bitboards[promoIndex] & ~move.EndSquare);
+                    HashValue ^= GetZobristValueForPieceSquare(promoIndex, move.EndSquare);
                 }
                 else if (move.MoveType == MoveType.RookPromotion || move.MoveType == MoveType.RookPromoCapture)
                 {
                     int promoIndex = 6 * blackToMove + 3;
                     SetBitboard(promoIndex, Bitboards[promoIndex] & ~move.EndSquare);
+                    HashValue ^= GetZobristValueForPieceSquare(promoIndex, move.EndSquare);
                 }
                 else if (move.MoveType == MoveType.QueenPromotion || move.MoveType == MoveType.QueenPromoCapture)
                 {
                     int promoIndex = 6 * blackToMove + 4;
                     SetBitboard(promoIndex, Bitboards[promoIndex] & ~move.EndSquare);
+                    HashValue ^= GetZobristValueForPieceSquare(promoIndex, move.EndSquare);
                 }
 
             }
@@ -301,27 +308,54 @@ namespace MegaKnight.Core
                 if (move.MoveType == MoveType.KingCastle)
                 {
                     SetBitboard(6 * blackToMove + 3, Bitboards[6 * blackToMove + 3] & ~(1ul << 5 + (blackToMove * 56)));
+                    HashValue ^= GetZobristValueForPieceSquare(6 * blackToMove + 3, 1ul << 5 + (blackToMove * 56));
                     SetBitboard(6 * blackToMove + 3, Bitboards[6 * blackToMove + 3] | (1ul << 7 + (blackToMove * 56)));
+                    HashValue ^= GetZobristValueForPieceSquare(6 * blackToMove + 3, 1ul << 7 + (blackToMove * 56));
                 }
                 else if (move.MoveType == MoveType.QueenCastle)
                 {
                     SetBitboard(6 * blackToMove + 3, Bitboards[6 * blackToMove + 3] & ~(1ul << 3 + blackToMove * 56));
+                    HashValue ^= GetZobristValueForPieceSquare(6 * blackToMove + 3, 1ul << 3 + (blackToMove * 56));
                     SetBitboard(6 * blackToMove + 3, Bitboards[6 * blackToMove + 3] | (1ul << (blackToMove * 56)));
+                    HashValue ^= GetZobristValueForPieceSquare(6 * blackToMove + 3, 1ul << (blackToMove * 56));
                 }
             }
             SetBitboard(bitboardIndex, Bitboards[bitboardIndex] | move.StartSquare);
+            HashValue ^= GetZobristValueForPieceSquare(bitboardIndex, move.StartSquare);
 
-            WhiteKingCastle = info.WhiteKingCastle;
-            WhiteQueenCastle = info.WhiteQueenCastle;
-            BlackKingCastle = info.BlackKingCastle;
-            BlackQueenCastle = info.BlackQueenCastle;
-            EnPassantTargetSquare = info.EnPassantTargetSquare;
+            if(WhiteKingCastle != info.WhiteKingCastle)
+            {
+                WhiteKingCastle = info.WhiteKingCastle;
+                HashValue ^= _zobristHashValues[64 * 12 + 1];
+            }
+            if (WhiteQueenCastle != info.WhiteQueenCastle)
+            {
+                WhiteQueenCastle = info.WhiteQueenCastle;
+                HashValue ^= _zobristHashValues[64 * 12 + 2];
+            }
+            if (BlackKingCastle != info.BlackKingCastle)
+            {
+                BlackKingCastle = info.BlackKingCastle;
+                HashValue ^= _zobristHashValues[64 * 12 + 3];
+            }
+            if (BlackQueenCastle != info.BlackQueenCastle)
+            {
+                BlackQueenCastle = info.BlackQueenCastle;
+                HashValue ^= _zobristHashValues[64 * 12 + 4];
+            }
+            if(EnPassantTargetSquare != info.EnPassantTargetSquare)
+            {
+                HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
+                EnPassantTargetSquare = info.EnPassantTargetSquare;
+                if(info.EnPassantTargetSquare != -1) HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + info.EnPassantTargetSquare % 8];
+            }
             HalfMoveClock = info.HalfMoveClock;
         }
         public void MakeNullMove()
         {
             UnmakeInfo unmakeInfo = new UnmakeInfo(EnPassantTargetSquare, HalfMoveClock, WhiteKingCastle, WhiteQueenCastle, BlackKingCastle, BlackQueenCastle);
             WhiteToMove = !WhiteToMove;
+            HashValue ^= _zobristHashValues[64 * 12];
             _unmakeInfos.Push(unmakeInfo);
             HalfMoveClock++;
         }
@@ -329,11 +363,34 @@ namespace MegaKnight.Core
         {
             UnmakeInfo info = _unmakeInfos.Pop();
             WhiteToMove = !WhiteToMove;
-            WhiteKingCastle = info.WhiteKingCastle;
-            WhiteQueenCastle = info.WhiteQueenCastle;
-            BlackKingCastle = info.BlackKingCastle;
-            BlackQueenCastle = info.BlackQueenCastle;
-            EnPassantTargetSquare = info.EnPassantTargetSquare;
+            HashValue ^= _zobristHashValues[64 * 12];
+
+            if (WhiteKingCastle != info.WhiteKingCastle)
+            {
+                WhiteKingCastle = info.WhiteKingCastle;
+                HashValue ^= _zobristHashValues[64 * 12 + 1];
+            }
+            if (WhiteQueenCastle != info.WhiteQueenCastle)
+            {
+                WhiteQueenCastle = info.WhiteQueenCastle;
+                HashValue ^= _zobristHashValues[64 * 12 + 2];
+            }
+            if (BlackKingCastle != info.BlackKingCastle)
+            {
+                BlackKingCastle = info.BlackKingCastle;
+                HashValue ^= _zobristHashValues[64 * 12 + 3];
+            }
+            if (BlackQueenCastle != info.BlackQueenCastle)
+            {
+                BlackQueenCastle = info.BlackQueenCastle;
+                HashValue ^= _zobristHashValues[64 * 12 + 4];
+            }
+            if (EnPassantTargetSquare != info.EnPassantTargetSquare)
+            {
+                HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
+                EnPassantTargetSquare = info.EnPassantTargetSquare;
+                if (info.EnPassantTargetSquare != -1) HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + info.EnPassantTargetSquare % 8];
+            }
             HalfMoveClock = info.HalfMoveClock;
         }
         void SetBitboard(int index, ulong val)
