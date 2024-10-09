@@ -40,6 +40,7 @@ namespace MegaKnight.Core
             _moveStopwatch.Restart();
             _killerMoves = new Move[100];
 
+            ulong hashBefore = position.HashValue;
             //_principalVariation = new PVTable();
             Move bestMoveSoFar = null;
             int depth = 1;
@@ -53,6 +54,7 @@ namespace MegaKnight.Core
                 }
             }
             if (bestMoveSoFar == null) throw new Exception("Could not find a move");
+            Debug.Assert(hashBefore == position.HashValue);
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);

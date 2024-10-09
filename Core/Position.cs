@@ -191,17 +191,17 @@ namespace MegaKnight.Core
                 }
                 if (WhiteToMove)
                 {
+                    if(WhiteKingCastle) HashValue ^= _zobristHashValues[64 * 12 + 1];
                     WhiteKingCastle = false;
-                    HashValue ^= _zobristHashValues[64 * 12 + 1];
+                    if(WhiteQueenCastle) HashValue ^= _zobristHashValues[64 * 12 + 2];
                     WhiteQueenCastle = false;
-                    HashValue ^= _zobristHashValues[64 * 12 + 2];
                 }
                 else
                 {
+                    if(BlackKingCastle) HashValue ^= _zobristHashValues[64 * 12 + 3];
                     BlackKingCastle = false;
-                    HashValue ^= _zobristHashValues[64 * 12 + 3];
+                    if(BlackQueenCastle) HashValue ^= _zobristHashValues[64 * 12 + 4];
                     BlackQueenCastle = false;
-                    HashValue ^= _zobristHashValues[64 * 12 + 4];
                 }
             }
             else if(move.Piece == Piece.Rook)
@@ -235,7 +235,7 @@ namespace MegaKnight.Core
             }
             if (move.MoveType != MoveType.DoublePawnPush)
             {
-                HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
+                if(EnPassantTargetSquare != -1) HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
                 EnPassantTargetSquare = -1;
             }
 
@@ -252,10 +252,13 @@ namespace MegaKnight.Core
 
             byte blackToMove = WhiteToMove ? (byte)0 : (byte)1;
 
-            // Remove from start square
+            // Remove from end square
             int bitboardIndex = 6 * blackToMove + (int)move.Piece;
-            SetBitboard(bitboardIndex, Bitboards[bitboardIndex] & ~move.EndSquare);
-            HashValue ^= GetZobristValueForPieceSquare(bitboardIndex, move.EndSquare);
+            if (!move.IsPromotion())
+            {
+                SetBitboard(bitboardIndex, Bitboards[bitboardIndex] & ~move.EndSquare);
+                HashValue ^= GetZobristValueForPieceSquare(bitboardIndex, move.EndSquare);
+            }
 
             if (info.BitboardIndexOfCapturedPiece != -1)
             {
@@ -301,7 +304,6 @@ namespace MegaKnight.Core
                     SetBitboard(promoIndex, Bitboards[promoIndex] & ~move.EndSquare);
                     HashValue ^= GetZobristValueForPieceSquare(promoIndex, move.EndSquare);
                 }
-
             }
             else if(move.Piece == Piece.King)
             {
@@ -345,7 +347,7 @@ namespace MegaKnight.Core
             }
             if(EnPassantTargetSquare != info.EnPassantTargetSquare)
             {
-                HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
+                if(EnPassantTargetSquare != -1) HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
                 EnPassantTargetSquare = info.EnPassantTargetSquare;
                 if(info.EnPassantTargetSquare != -1) HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + info.EnPassantTargetSquare % 8];
             }

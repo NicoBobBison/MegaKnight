@@ -106,6 +106,11 @@ namespace MegaKnight.Core
             return MoveType == MoveType.Capture || MoveType == MoveType.KnightPromoCapture || MoveType == MoveType.BishopPromoCapture ||
                    MoveType == MoveType.RookPromoCapture || MoveType == MoveType.QueenPromoCapture || MoveType == MoveType.EnPassant;
         }
+        public bool IsPromotion()
+        {
+            return MoveType == MoveType.KnightPromotion || MoveType == MoveType.KnightPromoCapture || MoveType == MoveType.BishopPromotion || MoveType == MoveType.BishopPromoCapture ||
+                   MoveType == MoveType.RookPromotion   || MoveType == MoveType.RookPromoCapture   || MoveType == MoveType.QueenPromotion  || MoveType == MoveType.QueenPromoCapture;
+        }
         public Piece GetPieceCapturing(Position position)
         {
             if (!IsCapture()) throw new Exception("Not capturing a piece");
