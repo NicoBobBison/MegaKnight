@@ -12,11 +12,15 @@ namespace MegaKnight.Core
         Dictionary<int, TranspositionEntry> _transpositionTable;
         int _transpositionTableCapacity;
         Position _position;
-        public MoveComparer(Dictionary<int, TranspositionEntry> transpositionTable, int ttCapacity, Position position)
+        Move[] _killerMoves;
+        int _depth;
+        public MoveComparer(Dictionary<int, TranspositionEntry> transpositionTable, int ttCapacity, Position position, Move[] killerMoves, int depth)
         {
             _transpositionTable = transpositionTable;
             _transpositionTableCapacity = ttCapacity;
             _position = position;
+            _killerMoves = killerMoves;
+            _depth = depth;
         }
         public int Compare(Move x, Move y)
         {
@@ -27,13 +31,16 @@ namespace MegaKnight.Core
             // Check hash table first
             if(_transpositionTable.ContainsKey(hash) && (int)(_transpositionTable[hash].HashKey % (uint)_transpositionTableCapacity) == hash)
             {
-                if (_transpositionTable[hash].BestMove.Equals(x))
+                if (_transpositionTable[hash].BestMove != null)
                 {
-                    return -1000;
-                }
-                if (_transpositionTable[hash].BestMove.Equals(y))
-                {
-                    return 1000;
+                    if (_transpositionTable[hash].BestMove.Equals(x))
+                    {
+                        return -1000;
+                    }
+                    if (_transpositionTable[hash].BestMove.Equals(y))
+                    {
+                        return 1000;
+                    }
                 }
             }
 
@@ -56,6 +63,18 @@ namespace MegaKnight.Core
                 if (xVictimMinusAttacker > yVictimMinusAttacker) return -800 - xVictimMinusAttacker;
                 if (yVictimMinusAttacker > xVictimMinusAttacker) return 800 + yVictimMinusAttacker;
             }
+            if (_killerMoves[_depth] != null)
+            {
+                if (_killerMoves[_depth].Equals(x))
+                {
+                    return -700;
+                }
+                if (_killerMoves[_depth].Equals(y))
+                {
+                    return 700;
+                }
+            }
+
             return 0;
         }
     }
