@@ -36,7 +36,7 @@ namespace MegaKnight.Core
         }
         public Move GetBestMove(Position position)
         {
-            position.InitializeHash();
+            if(position.HashValue == 0) position.InitializeHash();
             _moveStopwatch.Restart();
             _killerMoves = new Move[100];
 
@@ -186,10 +186,18 @@ namespace MegaKnight.Core
             }
             foreach (Move move in possibleMoves)
             {
+                ulong hashBefore = position.HashValue;
                 position.MakeMove(move);
                 //Debug.WriteLine(new string('\t', originalDepth - depth) + "M: " + move.ToString());
                 int score = -AlphaBeta(position, depth - 1, -beta, -alpha, ply + 1, nullMoveSearch);
                 position.UnmakeMove(move);
+                if(hashBefore != position.HashValue)
+                {
+                    // Bug happens whenever double pawn push is made, en passant issue?
+                    Debug.WriteLine(position.ToString());
+                    Debug.WriteLine(move.ToString());
+                    throw new Exception("Making and undoing move caused hash mismatch");
+                }
                 //Debug.WriteLine(new string('\t', originalDepth - depth) + "U: " + move.ToString());
                 if (score > max)
                 {

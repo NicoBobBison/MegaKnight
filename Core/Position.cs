@@ -210,26 +210,26 @@ namespace MegaKnight.Core
                 {
                     if((move.StartSquare & 1ul) > 0)
                     {
+                        if(WhiteQueenCastle) HashValue ^= _zobristHashValues[64 * 12 + 2];
                         WhiteQueenCastle = false;
-                        HashValue ^= _zobristHashValues[64 * 12 + 2];
                     }
                     else if ((move.StartSquare & 1ul << 7) > 0)
                     {
+                        if(WhiteKingCastle) HashValue ^= _zobristHashValues[64 * 12 + 1];
                         WhiteKingCastle = false;
-                        HashValue ^= _zobristHashValues[64 * 12 + 1];
                     }
                 }
                 else
                 {
                     if ((move.StartSquare & 1ul << 56) > 0)
                     {
+                        if(BlackQueenCastle) HashValue ^= _zobristHashValues[64 * 12 + 4];
                         BlackQueenCastle = false;
-                        HashValue ^= _zobristHashValues[64 * 12 + 4];
                     }
                     else if ((move.StartSquare & 1ul << 63) > 0)
                     {
+                        if(BlackKingCastle) HashValue ^= _zobristHashValues[64 * 12 + 3];
                         BlackKingCastle = false;
-                        HashValue ^= _zobristHashValues[64 * 12 + 3];
                     }
                 }
             }
@@ -389,7 +389,7 @@ namespace MegaKnight.Core
             }
             if (EnPassantTargetSquare != info.EnPassantTargetSquare)
             {
-                HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
+                if (EnPassantTargetSquare != -1) HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
                 EnPassantTargetSquare = info.EnPassantTargetSquare;
                 if (info.EnPassantTargetSquare != -1) HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + info.EnPassantTargetSquare % 8];
             }
