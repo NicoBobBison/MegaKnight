@@ -98,6 +98,10 @@ namespace MegaKnight.Core
                 }
                 else if(move.MoveType == MoveType.DoublePawnPush)
                 {
+                    if (EnPassantTargetSquare != -1)
+                    {
+                        HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
+                    }
                     if (WhiteToMove)
                     {
                         EnPassantTargetSquare = (sbyte)(Helper.SinglePopBitboardToIndex(move.StartSquare) + 8);

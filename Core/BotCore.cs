@@ -33,7 +33,13 @@ namespace MegaKnight.Core
             // Perft = new Perft(_moveGenerator, this);
             // Perft.RunPerft(p, 6);
             if(!PlayerIsPlayingWhite) MakeEngineMove();
+
             CurrentPosition.InitializeHash();
+            //ulong hashBefore = CurrentPosition.HashValue;
+            //Move m = new Move(Piece.Pawn, Square.e2, Square.e4, MoveType.DoublePawnPush);
+            //CurrentPosition.MakeMove(m);
+            //CurrentPosition.UnmakeMove(m);
+            //Debug.Assert(hashBefore == CurrentPosition.HashValue);
         }
 
         public bool CanMakeMove(Move move, Position position)
