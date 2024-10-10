@@ -8,7 +8,7 @@ namespace MegaKnight.Core
 {
     internal class BotCore
     {
-        const string _fenStartingPosition = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+        const string _fenStartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
         public Position CurrentPosition;
         public bool PlayerIsPlayingWhite = true;

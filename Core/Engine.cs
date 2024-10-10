@@ -193,10 +193,10 @@ namespace MegaKnight.Core
                 position.UnmakeMove(move);
                 if(hashBefore != position.HashValue)
                 {
-                    // Bug happens whenever double pawn push is made, en passant issue?
+                    // Bug happens whenever double pawn push is made, not undoing the last en passant hash
                     Debug.WriteLine(position.ToString());
                     Debug.WriteLine(move.ToString());
-                    throw new Exception("Making and undoing move caused hash mismatch");
+                    throw new Exception("Making and unmaking move caused hash mismatch");
                 }
                 //Debug.WriteLine(new string('\t', originalDepth - depth) + "U: " + move.ToString());
                 if (score > max)

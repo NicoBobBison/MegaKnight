@@ -235,7 +235,10 @@ namespace MegaKnight.Core
             }
             if (move.MoveType != MoveType.DoublePawnPush)
             {
-                if(EnPassantTargetSquare != -1) HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
+                if (EnPassantTargetSquare != -1)
+                {
+                    HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
+                }
                 EnPassantTargetSquare = -1;
             }
 
@@ -347,9 +350,15 @@ namespace MegaKnight.Core
             }
             if(EnPassantTargetSquare != info.EnPassantTargetSquare)
             {
-                if(EnPassantTargetSquare != -1) HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
+                if (EnPassantTargetSquare != -1)
+                {
+                    HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + EnPassantTargetSquare % 8];
+                }
                 EnPassantTargetSquare = info.EnPassantTargetSquare;
-                if(info.EnPassantTargetSquare != -1) HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + info.EnPassantTargetSquare % 8];
+                if (info.EnPassantTargetSquare != -1)
+                {
+                    HashValue ^= _zobristHashValues[64 * 12 + 1 + 4 + info.EnPassantTargetSquare % 8];
+                }
             }
             HalfMoveClock = info.HalfMoveClock;
         }
