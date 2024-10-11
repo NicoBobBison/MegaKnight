@@ -56,7 +56,7 @@ namespace MegaKnight.Core
             }
             if (bestMoveSoFar == null) throw new Exception("Could not find a move");
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
-            //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
+            Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
             //Debug.Write("PV: ");
             //foreach(Move m in CollectPV(position))
@@ -82,7 +82,6 @@ namespace MegaKnight.Core
         Move Search(Position position, int depth)
         {
             if (depth == 0) throw new Exception("Cannot start search with 0 depth");
-            _debugBranchesPruned = 0;
 
             // Divide by two to avoid overflow issues
             int alpha = int.MinValue / 2;
@@ -268,16 +267,25 @@ namespace MegaKnight.Core
             // The lower bound for moves we can make from this position
             alpha = Math.Max(alpha, standingPat);
 
+            int max = standingPat;
+            List<Move> moves = _moveGenerator.GenerateAllPossibleMoves(position);
+            SortMoves(moves, position, depth);
+
             // Delta pruning, subtract 200 centipawns as a safety net (do we need to also add for pawn promotion?)
-            int bigDelta = (int)Helper.Lerp(EvalWeights.QueenValueEarly, EvalWeights.QueenValueLate, _evaluator.GetGamePhase(position)) - 200;
-            if(standingPat + bigDelta < alpha)
+            int queenVal = (int)Helper.Lerp(EvalWeights.QueenValueEarly, EvalWeights.QueenValueLate, _evaluator.GetGamePhase(position));
+            int bigDelta = queenVal - 200;
+            foreach(Move m in moves)
+            {
+                if (m.IsPromotion())
+                {
+                    bigDelta += queenVal;
+                }
+            }
+            if (standingPat + bigDelta < alpha)
             {
                 return standingPat;
             }
 
-            int max = standingPat;
-            List<Move> moves = _moveGenerator.GenerateAllPossibleMoves(position);
-            SortMoves(moves, position, depth);
             foreach (Move move in moves)
             {
                 if (!move.IsCapture()) continue;
