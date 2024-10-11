@@ -40,6 +40,7 @@ namespace MegaKnight.Core
             if(position.HashValue == 0) position.InitializeHash();
             _moveStopwatch.Restart();
             _killerMoves = new Move[100];
+            _debugBranchesPruned = 0;
 
             //_principalVariation = new PVTable();
             Move bestMoveSoFar = null;
@@ -245,6 +246,7 @@ namespace MegaKnight.Core
         int QuiescenceSearch(Position position, int alpha, int beta, int depth)
         {
             if (_moveStopwatch.ElapsedMilliseconds / 1000 >= _maxSearchTime) return 0;
+
             int standingPat = _evaluator.Evaluate(position);
             if (standingPat >= beta || depth == 0) return standingPat;
             int hash = (int)(position.HashValue % _transpositionTableCapacity);
@@ -265,6 +267,13 @@ namespace MegaKnight.Core
             }
             // The lower bound for moves we can make from this position
             alpha = Math.Max(alpha, standingPat);
+
+            // Delta pruning, subtract 200 centipawns as a safety net (do we need to also add for pawn promotion?)
+            int bigDelta = (int)Helper.Lerp(EvalWeights.QueenValueEarly, EvalWeights.QueenValueLate, _evaluator.GetGamePhase(position)) - 200;
+            if(standingPat + bigDelta < alpha)
+            {
+                return standingPat;
+            }
 
             int max = standingPat;
             List<Move> moves = _moveGenerator.GenerateAllPossibleMoves(position);

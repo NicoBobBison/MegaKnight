@@ -339,7 +339,6 @@ namespace MegaKnight.Core
             }
             throw new NotImplementedException("Piece is not accounted for in GenerateMoves");
         }
-
         // Assumed that the color of the piece moving is based on who's turn it is in the position
         ulong GeneratePawnMoves(ulong pawnPosition, Position position, ulong moveMask = ulong.MaxValue, ulong captureMask = ulong.MaxValue)
         {
