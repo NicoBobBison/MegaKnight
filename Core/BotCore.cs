@@ -28,11 +28,12 @@ namespace MegaKnight.Core
 
             Position p = FenToPosition(_fenStartingPosition);
             CurrentPosition = p;
-            AddPositionToPreviousPositions(p);
+            _evaluator.AddPositionToPreviousPositions(p);
+
 
             // Perft = new Perft(_moveGenerator, this);
             // Perft.RunPerft(p, 6);
-            if(!PlayerIsPlayingWhite) MakeEngineMove();
+            if (!PlayerIsPlayingWhite) MakeEngineMove();
 
             CurrentPosition.InitializeHash();
             //ulong hashBefore = CurrentPosition.HashValue;
@@ -49,22 +50,18 @@ namespace MegaKnight.Core
         }
         public void MakeMoveOnCurrentPosition(Move move)
         {
+            _evaluator.AddPositionToPreviousPositions(CurrentPosition);
             CurrentPosition.MakeMove(move);
-            if (CurrentPositionIsGameOver()) return;
         }
         public void MakeEngineMove()
         {
             Move engineMove = _engine.GetBestMove(CurrentPosition);
+            _evaluator.AddPositionToPreviousPositions(CurrentPosition);
             CurrentPosition.MakeMove(engineMove);
         }
         public ulong GetLegalMoves(ulong startSquare, Piece piece, Position position)
         {
             return _moveGenerator.GenerateMoves(startSquare, piece, position);
-        }
-        // Precondition: Move must be legal (check with CanMakeMove())
-        public void AddPositionToPreviousPositions(Position position)
-        {
-            _evaluator.AddPositionToPreviousPositions(position);
         }
         /// <summary>
         /// Reads in a FEN string and creates a position based on it

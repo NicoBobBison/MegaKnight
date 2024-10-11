@@ -115,7 +115,9 @@ namespace MegaKnight.Core
             foreach (Move move in possibleMoves)
             {
                 position.MakeMove(move);
+                _evaluator.AddPositionToPreviousPositions(position);
                 int score = -AlphaBeta(position, depth - 1, -beta, -alpha, ply + 1, false);
+                _evaluator.RemovePositionFromPreviousPositions(position);
                 position.UnmakeMove(move);
                 if (score > max)
                 {
@@ -186,18 +188,12 @@ namespace MegaKnight.Core
             }
             foreach (Move move in possibleMoves)
             {
-                ulong hashBefore = position.HashValue;
                 position.MakeMove(move);
+                _evaluator.AddPositionToPreviousPositions(position);
                 //Debug.WriteLine(new string('\t', originalDepth - depth) + "M: " + move.ToString());
                 int score = -AlphaBeta(position, depth - 1, -beta, -alpha, ply + 1, nullMoveSearch);
+                _evaluator.RemovePositionFromPreviousPositions(position);
                 position.UnmakeMove(move);
-                if(hashBefore != position.HashValue)
-                {
-                    // Bug happens whenever double pawn push is made, not undoing the last en passant hash
-                    Debug.WriteLine(position.ToString());
-                    Debug.WriteLine(move.ToString());
-                    throw new Exception("Making and unmaking move caused hash mismatch");
-                }
                 //Debug.WriteLine(new string('\t', originalDepth - depth) + "U: " + move.ToString());
                 if (score > max)
                 {
@@ -290,7 +286,9 @@ namespace MegaKnight.Core
             {
                 if (!move.IsCapture()) continue;
                 position.MakeMove(move);
+                _evaluator.AddPositionToPreviousPositions(position);
                 int score = -QuiescenceSearch(position, -beta, -alpha, depth - 1);
+                _evaluator.RemovePositionFromPreviousPositions(position);
                 position.UnmakeMove(move);
                 if(score > max)
                 {

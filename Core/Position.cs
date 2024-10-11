@@ -452,6 +452,7 @@ namespace MegaKnight.Core
         }
         public bool Equals(Position other)
         {
+            // No half move clock timer because we don't want to compare it for threefold repetition
             return WhitePawns == other.WhitePawns &&
                 WhiteKnights == other.WhiteKnights &&
                 WhiteBishops == other.WhiteBishops &&
@@ -469,8 +470,7 @@ namespace MegaKnight.Core
                 WhiteQueenCastle == other.WhiteQueenCastle &&
                 BlackKingCastle == other.BlackKingCastle &&
                 BlackQueenCastle == other.BlackQueenCastle &&
-                EnPassantTargetSquare == other.EnPassantTargetSquare &&
-                HalfMoveClock == other.HalfMoveClock;
+                EnPassantTargetSquare == other.EnPassantTargetSquare;
         }
 
         // Zobrist hashing

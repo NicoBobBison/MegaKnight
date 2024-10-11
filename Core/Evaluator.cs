@@ -12,8 +12,8 @@ namespace MegaKnight.Core
     {
         MoveGenerator _moveGenerator;
         BotCore _core;
-        // There's an average of 40 moves per game, so 400 buckets seems like a good number to avoid collisions
-        const int _prevPositionsCapacity = 400;
+
+        const int _prevPositionsCapacity = 100000;
         Dictionary<int, List<Position>> _previousPositions;
         public Evaluator(MoveGenerator moveGenerator, BotCore core)
         {
@@ -190,6 +190,14 @@ namespace MegaKnight.Core
                 _previousPositions.Add(hash, new List<Position>());
             }
             _previousPositions[hash].Add(position);
+        }
+        public void RemovePositionFromPreviousPositions(Position position)
+        {
+            int hash = (int)(position.HashValue % _prevPositionsCapacity);
+            if (_previousPositions.ContainsKey(hash))
+            {
+                _previousPositions[hash].Remove(position);
+            }
         }
     }
 }
