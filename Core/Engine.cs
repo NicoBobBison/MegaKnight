@@ -26,6 +26,7 @@ namespace MegaKnight.Core
         Move[] _killerMoves = new Move[100];
 
         int _debugBranchesPruned;
+        int _debugTranspositionsFound;
 
         public Engine(MoveGenerator moveGenerator, Evaluator evaluator)
         {
@@ -40,7 +41,6 @@ namespace MegaKnight.Core
             _moveStopwatch.Restart();
             _killerMoves = new Move[100];
 
-            ulong hashBefore = position.HashValue;
             //_principalVariation = new PVTable();
             Move bestMoveSoFar = null;
             int depth = 1;
@@ -54,7 +54,6 @@ namespace MegaKnight.Core
                 }
             }
             if (bestMoveSoFar == null) throw new Exception("Could not find a move");
-            Debug.Assert(hashBefore == position.HashValue);
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
@@ -92,6 +91,7 @@ namespace MegaKnight.Core
             int hash = (int)(position.HashValue % _transpositionTableCapacity);
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.HashValue && _transpositionTable[hash].Depth >= depth)
             {
+
                 if (_transpositionTable[hash].NodeType == NodeType.Exact)
                 {
                     return _transpositionTable[hash].BestMove;
@@ -245,9 +245,25 @@ namespace MegaKnight.Core
         int QuiescenceSearch(Position position, int alpha, int beta, int depth)
         {
             if (_moveStopwatch.ElapsedMilliseconds / 1000 >= _maxSearchTime) return 0;
-            // The lower bound for moves we can make from this position
             int standingPat = _evaluator.Evaluate(position);
             if (standingPat >= beta || depth == 0) return standingPat;
+            int hash = (int)(position.HashValue % _transpositionTableCapacity);
+            if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.HashValue && _transpositionTable[hash].Depth >= depth)
+            {
+                if (_transpositionTable[hash].NodeType == NodeType.Exact)
+                {
+                    return _transpositionTable[hash].Evaluation;
+                }
+                else if (_transpositionTable[hash].NodeType == NodeType.LowerBound)
+                {
+                    alpha = Math.Max(alpha, _transpositionTable[hash].Evaluation);
+                }
+                else
+                {
+                    beta = Math.Min(beta, _transpositionTable[hash].Evaluation);
+                }
+            }
+            // The lower bound for moves we can make from this position
             alpha = Math.Max(alpha, standingPat);
 
             int max = standingPat;
