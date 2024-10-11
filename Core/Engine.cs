@@ -277,7 +277,8 @@ namespace MegaKnight.Core
                     bigDelta += queenVal;
                 }
             }
-            if (standingPat + bigDelta < alpha)
+            // Check if best possible material capture would save position (also check game phase since we don't want this in endgame)
+            if (standingPat + bigDelta < alpha && _evaluator.GetGamePhase(position) < 0.7f)
             {
                 return standingPat;
             }

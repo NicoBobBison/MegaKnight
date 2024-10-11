@@ -30,7 +30,6 @@ namespace MegaKnight.Core
             CurrentPosition = p;
             _evaluator.AddPositionToPreviousPositions(p);
 
-
             // Perft = new Perft(_moveGenerator, this);
             // Perft.RunPerft(p, 6);
             if (!PlayerIsPlayingWhite) MakeEngineMove();
