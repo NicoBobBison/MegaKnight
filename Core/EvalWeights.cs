@@ -32,6 +32,10 @@ namespace MegaKnight.Core
         public const int RookMobilityValue = 1;
         public const int QueenMobilityValue = 1;
 
+        // Cutoffs (based on GetGamePhase()) for different phases of the game
+        public const float EarlyGameCutoff = 0.3f;
+        public const float MiddleGameCutoff = 0.7f;
+
         // Early game piece-square tables (from white's perspective, mirror for black's perspective)
         public static readonly int[] PawnPSTEarly = new int[]
         {

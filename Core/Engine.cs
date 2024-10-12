@@ -56,7 +56,7 @@ namespace MegaKnight.Core
             }
             if (bestMoveSoFar == null) throw new Exception("Could not find a move");
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
-            Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
+            //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
             //Debug.Write("PV: ");
             //foreach(Move m in CollectPV(position))
@@ -175,7 +175,7 @@ namespace MegaKnight.Core
                 return _evaluator.Evaluate(position);
             }
             // Null move pruning, R = 2
-            if (!nullMoveSearch && depth > 2 && _moveGenerator.GetPiecesAttackingKing(position) == 0)
+            if (!nullMoveSearch && depth > 2 && _moveGenerator.GetPiecesAttackingKing(position) == 0 && _evaluator.GetGamePhase(position) < EvalWeights.MiddleGameCutoff)
             {
                 position.MakeNullMove();
                 int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, ply + 1, true);
@@ -278,7 +278,7 @@ namespace MegaKnight.Core
                 }
             }
             // Check if best possible material capture would save position (also check game phase since we don't want this in endgame)
-            if (standingPat + bigDelta < alpha && _evaluator.GetGamePhase(position) < 0.7f)
+            if (standingPat + bigDelta < alpha && _evaluator.GetGamePhase(position) < EvalWeights.MiddleGameCutoff)
             {
                 return standingPat;
             }

@@ -7,6 +7,16 @@ using System.Diagnostics;
 
 namespace MegaKnight.Core
 {
+    // Should quiet moves be searched before losing captures?
+    /// <summary>
+    /// Sorts moves. Move ordering is as follows.
+    /// 1. Hash move
+    /// 2. Winning captures
+    /// 3. Equal captures
+    /// 4. Killer moves
+    /// 5. Losing captures
+    /// 6. Quiet moves
+    /// </summary>
     internal class MoveComparer : IComparer<Move>
     {
         Dictionary<int, TranspositionEntry> _transpositionTable;
@@ -28,7 +38,7 @@ namespace MegaKnight.Core
 
             int hash = (int)(_position.HashValue % (uint)_transpositionTableCapacity);
 
-            // Check hash table first
+            // Hash move
             if(_transpositionTable.ContainsKey(hash) && (int)(_transpositionTable[hash].HashKey % (uint)_transpositionTableCapacity) == hash)
             {
                 if (_transpositionTable[hash].BestMove != null)
@@ -47,22 +57,18 @@ namespace MegaKnight.Core
             bool xIsCapture = x.IsCapture();
             bool yIsCapture = y.IsCapture();
 
-            if(xIsCapture && !yIsCapture)
-            {
-                return -950;
-            }
-            if (yIsCapture && !xIsCapture)
-            {
-                return 950;
-            }
+            // Winning captures, then equal captures
             if (xIsCapture && yIsCapture)
             {
                 int[] pieceCapturingValues = new int[] { 1, 3, 3, 5, 9, 20 };
                 int xVictimMinusAttacker = pieceCapturingValues[(int)x.GetPieceCapturing(_position)] - pieceCapturingValues[(int)x.Piece];
                 int yVictimMinusAttacker = pieceCapturingValues[(int)y.GetPieceCapturing(_position)] - pieceCapturingValues[(int)y.Piece];
-                if (xVictimMinusAttacker > yVictimMinusAttacker) return -800 - xVictimMinusAttacker;
-                if (yVictimMinusAttacker > xVictimMinusAttacker) return 800 + yVictimMinusAttacker;
+                if (xVictimMinusAttacker >= 0 && xVictimMinusAttacker > yVictimMinusAttacker) return -800 - xVictimMinusAttacker;
+                if (yVictimMinusAttacker >= 0 && yVictimMinusAttacker > xVictimMinusAttacker) return 800 + yVictimMinusAttacker;
+                if (xVictimMinusAttacker < 0 && xVictimMinusAttacker > yVictimMinusAttacker) return -600 - xVictimMinusAttacker;
+                if (yVictimMinusAttacker < 0 && yVictimMinusAttacker > xVictimMinusAttacker) return 600 + yVictimMinusAttacker;
             }
+            // Killer moves
             if (_killerMoves[_depth] != null)
             {
                 if (_killerMoves[_depth].Equals(x))
@@ -73,6 +79,15 @@ namespace MegaKnight.Core
                 {
                     return 700;
                 }
+            }
+            // Losing captures
+            if (xIsCapture && !yIsCapture)
+            {
+                return -500;
+            }
+            if (yIsCapture && !xIsCapture)
+            {
+                return 500;
             }
 
             return 0;
