@@ -41,7 +41,6 @@ namespace MegaKnight.Core
             //CurrentPosition.UnmakeMove(m);
             //Debug.Assert(hashBefore == CurrentPosition.HashValue);
         }
-
         public bool CanMakeMove(Move move, Position position)
         {
             ulong possibleMoves = _moveGenerator.GenerateMoves(move.StartSquare, move.Piece, position);

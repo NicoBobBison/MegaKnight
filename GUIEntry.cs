@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace MegaKnight
 {
-    public class Game1 : Game
+    public class GUIEntry : Game
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
@@ -15,7 +15,7 @@ namespace MegaKnight
 
         private BoardRenderer _boardRenderer;
 
-        public Game1()
+        public GUIEntry()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";

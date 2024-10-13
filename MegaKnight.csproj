@@ -1,15 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <RollForward>Major</RollForward>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
+    <Configurations>Debug;Release;Console;GUI</Configurations>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'GUI'">
+	    <OutputType>WinExe</OutputType>
+	    <DefineConstants>GUI</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Console'">
+	    <OutputType>Exe</OutputType>
+	    <DefineConstants>CONSOLE</DefineConstants>
+    </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Console|AnyCPU'" />
   <ItemGroup>
     <None Remove="Icon.ico" />
     <None Remove="Icon.bmp" />
