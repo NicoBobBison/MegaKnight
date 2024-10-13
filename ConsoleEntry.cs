@@ -20,62 +20,78 @@ namespace MegaKnight
         }
         public async Task Run()
         {
-            RootCommand rootCommand = new RootCommand();
+            Console.WriteLine("MegaKnight by NicoBobBison");
+
+            RootCommand rootCommand = SetupRootCommand();
             while (true)
             {
-                string[] args = Console.ReadLine().Split(' ');
+                string input = Console.ReadLine();
+                if (input.Trim().ToLower() == "quit") return;
+
+                string[] args = input.Split(' ');
                 await rootCommand.InvokeAsync(args);
             }
-/*            Console.WriteLine("MegaKnight by NicoBobBison");
-            string args = Console.ReadLine();
-            while (args != "exit")
-            {
-                Process(args);
-                args = Console.ReadLine();
-            }
-*/        }
-        void Process(string argsString)
+        }
+        public RootCommand SetupRootCommand()
         {
-            string[] args = argsString.Split(' ');
-            if (args[0] == "uci")
+            Command uciCommand = new Command("uci", "Provides engine name and author, and gives a list of options to set via setoptions. Prints uciok afterwards.");
+            uciCommand.SetHandler(() =>
             {
                 Console.WriteLine("id name MegaKnight");
                 Console.WriteLine("id author NicoBobBison");
                 // TODO: Add configuration options
                 Console.WriteLine("uciok");
-            }
-            else if (args[0] == "position")
-            {
-                if(args.Length >= 2)
-                {
-                    if (args[1] == "startpos")
-                    {
-                        _core.SetPositionToStartPosition();
-                    }
-                    else if (args[1] == "fen")
-                    {
-                        if(args.Length >= 3)
-                        {
-                            string str = "";
-                            for(int i = 2; i < args.Length; i++)
-                            {
-                                str += args[i];
-                                if (i + 1 < args.Length) str += " ";
-                            }
-                            Console.WriteLine("Setting '" + str + "' as position");
-                            _core.SetPositionFromFEN(str);
-                        }
-                    }
-                }
-            }
-            else if (args[0] == "go")
-            {
+            });
 
-            }
-            else
+            Command positionCommand = new Command("position", "Sets a position.");
+            Option<bool> startPosOption = new Option<bool>("startpos", "Sets the internal position to the starting position.");
+            Option<string[]> fenPositionOption = new Option<string[]>("fen", "Sets the internal position from the FEN string.")
             {
-                Console.WriteLine("Invalid command");
-            }
+                AllowMultipleArgumentsPerToken = true
+            };
+            positionCommand.Add(startPosOption);
+            positionCommand.Add(fenPositionOption);
+            positionCommand.SetHandler((startPos, fenString) =>
+            {
+                if (startPos)
+                {
+                    _core.SetPositionToStartPosition();
+                }
+                else
+                {
+                    try
+                    {
+                        string str = "";
+                        for (int i = 0; i < fenString.Length; i++)
+                        {
+                            str += fenString[i];
+                            if (i + 1 < fenString.Length) str += " ";
+                        }
+                        _core.SetPositionFromFEN(str);
+                    }
+                    catch { } // We don't do anything if an error is thrown
+                    
+                }
+            },
+            startPosOption, fenPositionOption);
+
+            Command goCommand = new Command("go", "Starts a search.");
+            Option<float> wTimeOption = new Option<float>("wtime", "Remaining time for white to move.");
+            Option<float> bTimeOption = new Option<float>("btime", "Remaining time for black to move.");
+            Option<float> wIncrementOption = new Option<float>("winc", "White time increment per move.");
+            Option<float> bIncrementOption = new Option<float>("binc", "Black time increment per move.");
+            goCommand.SetHandler((wTime, bTime, wInc, bInc) =>
+            {
+             
+            },
+            wTimeOption, bTimeOption, wIncrementOption, bIncrementOption);
+
+            RootCommand rootCommand = new RootCommand()
+            {
+                uciCommand,
+                positionCommand,
+            };
+            return rootCommand;
         }
     }
 }
