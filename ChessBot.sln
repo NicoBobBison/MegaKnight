@@ -10,7 +10,6 @@ Global
 		Console|Any CPU = Console|Any CPU
 		Debug|Any CPU = Debug|Any CPU
 		GUI|Any CPU = GUI|Any CPU
-		MonoGameGUI|Any CPU = MonoGameGUI|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
@@ -20,7 +19,6 @@ Global
 		{98DAEF86-EC27-4F93-8D62-546C40D9D1DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98DAEF86-EC27-4F93-8D62-546C40D9D1DE}.GUI|Any CPU.ActiveCfg = GUI|Any CPU
 		{98DAEF86-EC27-4F93-8D62-546C40D9D1DE}.GUI|Any CPU.Build.0 = GUI|Any CPU
-		{98DAEF86-EC27-4F93-8D62-546C40D9D1DE}.MonoGameGUI|Any CPU.ActiveCfg = Release|Any CPU
 		{98DAEF86-EC27-4F93-8D62-546C40D9D1DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98DAEF86-EC27-4F93-8D62-546C40D9D1DE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection

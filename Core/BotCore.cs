@@ -8,10 +8,10 @@ namespace MegaKnight.Core
 {
     internal class BotCore
     {
-        const string _fenStartingPosition = "2kr3r/pbpn4/1p1ppq1p/8/2P5/2Q2N2/PPB2PPP/4RRK1 b - - 0 1";
+        const string _fenStartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
         public Position CurrentPosition;
-        public bool PlayerIsPlayingWhite = false;
+        public bool PlayerIsPlayingWhite = true;
         public bool PlayingAgainstEngine = true;
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
@@ -55,6 +55,10 @@ namespace MegaKnight.Core
         public ulong GetLegalMoves(ulong startSquare, Piece piece, Position position)
         {
             return _moveGenerator.GenerateMoves(startSquare, piece, position);
+        }
+        public void SetPositionFromFEN(string fenString)
+        {
+
         }
         /// <summary>
         /// Reads in a FEN string and creates a position based on it
