@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using MegaKnight.Debugging;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace MegaKnight.Core
 {
@@ -52,13 +53,28 @@ namespace MegaKnight.Core
             _evaluator.AddPositionToPreviousPositions(CurrentPosition);
             CurrentPosition.MakeMove(engineMove);
         }
+        public async Task MakeEngineMoveAsync()
+        {
+            await Task.Run(() =>
+            {
+                Move engineMove = _engine.GetBestMove(CurrentPosition);
+                _evaluator.AddPositionToPreviousPositions(CurrentPosition);
+                CurrentPosition.MakeMove(engineMove);
+            });
+        }
         public ulong GetLegalMoves(ulong startSquare, Piece piece, Position position)
         {
             return _moveGenerator.GenerateMoves(startSquare, piece, position);
         }
         public void SetPositionFromFEN(string fenString)
         {
-
+            _evaluator.ClearPreviousPositions();
+            CurrentPosition = FenToPosition(fenString);
+            _evaluator.AddPositionToPreviousPositions(CurrentPosition);
+        }
+        public void SetPositionToStartPosition()
+        {
+            SetPositionFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         }
         /// <summary>
         /// Reads in a FEN string and creates a position based on it

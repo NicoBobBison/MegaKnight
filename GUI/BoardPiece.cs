@@ -18,6 +18,7 @@ namespace MegaKnight.GUI
         public Square BoardPosition;
         public Vector2 ScreenPosition;
         public static bool DeletedBoardThisFrame = false;
+        static bool _canMovePiece = true; // Used to pause moving while engine thinks
 
         static BoardPiece _selectedPiece = null;
         Vector2 _tempScreenPosition;
@@ -33,10 +34,10 @@ namespace MegaKnight.GUI
             Piece = piece;
             _isWhite = isWhite;
         }
-        public void Update(GameTime gameTime)
+        public async Task Update(GameTime gameTime)
         {
             if (_renderer.GameOver) return;
-            if (DeletedBoardThisFrame) return;
+            if (DeletedBoardThisFrame || !_canMovePiece) return;
 
             bool playerInteractionCondition = _renderer.Core.CurrentPosition.WhiteToMove == _isWhite;
             if (_renderer.Core.PlayingAgainstEngine)
@@ -53,7 +54,7 @@ namespace MegaKnight.GUI
                 {
                     if (hoveredTile != _renderer.BoardTiles[(int)BoardPosition])
                     {
-                        TryMakeMove(hoveredTile);
+                        await TryMakeMove(hoveredTile);
                     }
                     else
                     {
@@ -77,7 +78,7 @@ namespace MegaKnight.GUI
             {
                 if(hoveredTile != _renderer.BoardTiles[(int)BoardPosition])
                 {
-                    TryMakeMove(hoveredTile);
+                    await TryMakeMove(hoveredTile);
                 }
                 else
                 {
@@ -89,7 +90,7 @@ namespace MegaKnight.GUI
         {
             spriteBatch.Draw(_texture, ScreenPosition, null, Color.White, 0, new Vector2(_texture.Width / 2, _texture.Height / 2), _pieceScale, SpriteEffects.None, 0);
         }
-        void TryMakeMove(BoardTile hoveredTile)
+        async Task TryMakeMove(BoardTile hoveredTile)
         {
             if (hoveredTile == null)
             {
@@ -143,8 +144,10 @@ namespace MegaKnight.GUI
 
                 if (_renderer.Core.PlayingAgainstEngine)
                 {
-                    _renderer.Core.MakeEngineMove();
+                    _canMovePiece = false;
+                    await _renderer.Core.MakeEngineMoveAsync();
                     _renderer.RenderPosition(_renderer.Core.CurrentPosition);
+                    _canMovePiece = true;
                 }
                 CheckIfGameOver();
                 DeletedBoardThisFrame = true;

@@ -40,12 +40,12 @@ namespace MegaKnight
             _boardRenderer = new BoardRenderer(Content, ScreenSize);
         }
 
-        protected override void Update(GameTime gameTime)
+        protected override async void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            _boardRenderer.Update(gameTime);
+            await _boardRenderer.Update(gameTime);
             InputManager.Update(gameTime);
 
             base.Update(gameTime);

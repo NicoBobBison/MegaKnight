@@ -126,6 +126,10 @@ namespace MegaKnight.Core
             float gamePhase = (totalPossibleMaterial - materialOnBoard) / totalPossibleMaterial;
             return gamePhase;
         }
+        public void ClearPreviousPositions()
+        {
+            _previousPositions.Clear();
+        }
         public bool IsCheckmate(Position position)
         {
             // If we're not in check, it's not checkmate

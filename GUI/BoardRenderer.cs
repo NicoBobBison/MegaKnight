@@ -7,6 +7,7 @@ using MegaKnight.Core;
 using System.Diagnostics;
 using Microsoft.Xna.Framework.Input;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace MegaKnight.GUI
 {
@@ -62,7 +63,7 @@ namespace MegaKnight.GUI
             Core = new BotCore();
             RenderPosition(Core.CurrentPosition);
         }
-        public void Update(GameTime gameTime)
+        public async Task Update(GameTime gameTime)
         {
             if (InputManager.GetKeyDown(Keys.Q))
             {
@@ -89,7 +90,7 @@ namespace MegaKnight.GUI
             BoardPiece.DeletedBoardThisFrame = false;
             foreach(BoardPiece piece in _boardPieces.ToArray())
             {
-                piece.Update(gameTime);
+                await piece.Update(gameTime);
             }
         }
         public void Draw(SpriteBatch spriteBatch)
