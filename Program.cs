@@ -1,4 +1,4 @@
-﻿#if GUI
+﻿#if GUI || DEBUG
 using var game = new MegaKnight.GUIEntry();
 game.Run();
 #elif CONSOLE

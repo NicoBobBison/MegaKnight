@@ -8,10 +8,10 @@ namespace MegaKnight.Core
 {
     internal class BotCore
     {
-        const string _fenStartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        const string _fenStartingPosition = "2kr3r/pbpn4/1p1ppq1p/8/2P5/2Q2N2/PPB2PPP/4RRK1 b - - 0 1";
 
         public Position CurrentPosition;
-        public bool PlayerIsPlayingWhite = true;
+        public bool PlayerIsPlayingWhite = false;
         public bool PlayingAgainstEngine = true;
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
@@ -32,14 +32,9 @@ namespace MegaKnight.Core
 
             // Perft = new Perft(_moveGenerator, this);
             // Perft.RunPerft(p, 6);
-            if (!PlayerIsPlayingWhite) MakeEngineMove();
+            if (!PlayerIsPlayingWhite && CurrentPosition.WhiteToMove) MakeEngineMove();
 
             CurrentPosition.InitializeHash();
-            //ulong hashBefore = CurrentPosition.HashValue;
-            //Move m = new Move(Piece.Pawn, Square.e2, Square.e4, MoveType.DoublePawnPush);
-            //CurrentPosition.MakeMove(m);
-            //CurrentPosition.UnmakeMove(m);
-            //Debug.Assert(hashBefore == CurrentPosition.HashValue);
         }
         public bool CanMakeMove(Move move, Position position)
         {

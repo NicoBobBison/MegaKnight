@@ -100,10 +100,6 @@ namespace MegaKnight.GUI
             }
             // Generate move based on hovered tile
             Square desiredSquare = (Square)hoveredTile.Index;
-            if (!_renderer.Core.PlayerIsPlayingWhite)
-            {
-                desiredSquare = (Square)((int)desiredSquare ^ 56 ^ 7);
-            }
             Move move = new Move(Piece, BoardPosition, desiredSquare);
             int squareIndex = Helper.SinglePopBitboardToIndex(move.EndSquare);
             
@@ -207,10 +203,16 @@ namespace MegaKnight.GUI
         BoardTile GetHoveredBoardTile(BoardTile[] tiles)
         {
             Vector2 mousePos = InputManager.GetMousePosition();
-            foreach(BoardTile tile in tiles)
+            for(int i = 0; i < tiles.Length; i++)
             {
-                if (tile.GetBoundingBox().Contains(mousePos))
-                    return tile;
+                if (tiles[i].GetBoundingBox().Contains(mousePos))
+                {
+                    if (!_renderer.Core.PlayerIsPlayingWhite)
+                    {
+                        return tiles[i ^ 56 ^ 7];
+                    }
+                    return tiles[i];
+                }
             }
             return null;
         }

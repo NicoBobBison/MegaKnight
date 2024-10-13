@@ -6,12 +6,19 @@ using System.Threading.Tasks;
 
 namespace MegaKnight
 {
+    /// <summary>
+    /// Run during console entry.
+    /// </summary>
     internal class ConsoleEntry
     {
         public void Run()
         {
-            Console.WriteLine("Test");
-            var a = Console.ReadLine();
+            Console.WriteLine("MegaKnight by NicoBobBison");
+            var input = Console.ReadLine();
+            while (input != "exit")
+            {
+
+            }
         }
     }
 }

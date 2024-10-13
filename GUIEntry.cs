@@ -5,6 +5,9 @@ using Microsoft.Xna.Framework.Input;
 
 namespace MegaKnight
 {
+    /// <summary>
+    /// Run during GUI configuration.
+    /// </summary>
     public class GUIEntry : Game
     {
         private GraphicsDeviceManager _graphics;
