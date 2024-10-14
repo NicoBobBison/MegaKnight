@@ -10,7 +10,12 @@ namespace MegaKnight.Core
     internal class Engine
     {
         // Maximum allowed search time
-        const float _maxSearchTime = 3f;
+        public float WhiteTimeRemaining = 1000 * 60 * 2;
+        public float BlackTimeRemaining = 1000 * 60 * 2;
+        public float WhiteTimeIncrement = 1000;
+        public float BlackTimeIncrement = 1000;
+        float _maxSearchTime;
+        float _engineTimeRemaining;
 
         // Need to figure out what to do with this. Base it off current depth or always keep constant?
         const int _quiescenceSearchDepth = 3;
@@ -37,7 +42,16 @@ namespace MegaKnight.Core
         }
         public Move GetBestMove(Position position)
         {
-            if(position.HashValue == 0) position.InitializeHash();
+            if (position.WhiteToMove)
+            {
+                _maxSearchTime = WhiteTimeRemaining / 20 + WhiteTimeIncrement / 2;
+            }
+            else
+            {
+                _maxSearchTime = BlackTimeRemaining / 20 + BlackTimeIncrement / 2;
+            }
+            _engineTimeRemaining = position.WhiteToMove ? WhiteTimeRemaining : BlackTimeRemaining;
+            if (position.HashValue == 0) position.InitializeHash();
             _moveStopwatch.Restart();
             _killerMoves = new Move[100];
             _debugBranchesPruned = 0;
@@ -45,35 +59,81 @@ namespace MegaKnight.Core
             //_principalVariation = new PVTable();
             Move bestMoveSoFar = null;
             int depth = 1;
-            while(_moveStopwatch.ElapsedMilliseconds / 1000 < _maxSearchTime)
+            while(_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
             {
                 Move move = Search(position, depth);
-                if (_moveStopwatch.ElapsedMilliseconds / 1000 < _maxSearchTime)
+                if (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
                 {
                     bestMoveSoFar = move;
                     depth++;
                 }
             }
+            if (position.WhiteToMove)
+            {
+                WhiteTimeRemaining -= _maxSearchTime;
+                WhiteTimeRemaining += WhiteTimeIncrement;
+            }
+            else
+            {
+                BlackTimeRemaining -= _maxSearchTime;
+                BlackTimeRemaining += BlackTimeIncrement;
+            }
             if (bestMoveSoFar == null) throw new Exception("Could not find a move");
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
-            //Debug.Write("PV: ");
-            //foreach(Move m in CollectPV(position))
-            //{
-            //    Debug.Write(m.ToString() + " ");
-            //}
-            //Debug.WriteLine("Principle variation table: ");
-            //Debug.WriteLine(_principalVariation.ToString());
-            //Debug.Write("Principle variation: ");
-            //foreach(Move m in _principalVariation.GetPrincipalVariation())
-            //{
-            //    if (m == null) Debug.Write("- ");
-            //    else Debug.Write(m.ToString() + " ");
-            //}
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
+        public async Task<Move> GetBestMoveAsync(Position position)
+        {
+            if (position.WhiteToMove)
+            {
+                _maxSearchTime = WhiteTimeRemaining / 20 + WhiteTimeIncrement / 2;
+            }
+            else
+            {
+                _maxSearchTime = BlackTimeRemaining / 20 + BlackTimeIncrement / 2;
+            }
+            _engineTimeRemaining = position.WhiteToMove ? WhiteTimeRemaining : BlackTimeRemaining;
+            if (position.HashValue == 0) position.InitializeHash();
+            _moveStopwatch.Restart();
+            _killerMoves = new Move[100];
+            _debugBranchesPruned = 0;
+
+            //_principalVariation = new PVTable();
+            Move bestMoveSoFar = null;
+            int depth = 1;
+            await Task.Run(() =>
+            {
+                while (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
+                {
+                    Move move = Search(position, depth);
+                    if (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
+                    {
+                        bestMoveSoFar = move;
+                        depth++;
+                    }
+                }
+            });
+            if (position.WhiteToMove)
+            {
+                WhiteTimeRemaining -= _maxSearchTime;
+                WhiteTimeRemaining += WhiteTimeIncrement;
+            }
+            else
+            {
+                BlackTimeRemaining -= _maxSearchTime;
+                BlackTimeRemaining += BlackTimeIncrement;
+            }
+            if (bestMoveSoFar == null) throw new Exception("Could not find a move");
+            Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
+            //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
+            Debug.WriteLine("Highest base depth searched: " + depth);
+            Debug.WriteLine("");
+            return bestMoveSoFar;
+        }
+
         /// <summary>
         /// Searches from a position using Negamax.
         /// </summary>
@@ -81,6 +141,8 @@ namespace MegaKnight.Core
         /// <returns>The best move based on the search.</returns>
         Move Search(Position position, int depth)
         {
+            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0) return null;
+
             if (depth == 0) throw new Exception("Cannot start search with 0 depth");
 
             // Divide by two to avoid overflow issues
@@ -141,8 +203,9 @@ namespace MegaKnight.Core
         }
         int AlphaBeta(Position position, int depth, int alpha, int beta, int ply, bool nullMoveSearch)
         {
+            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0) return 0;
+
             int alphaOriginal = alpha;
-            if (_moveStopwatch.ElapsedMilliseconds / 1000 >= _maxSearchTime) return 0;
             int hash = (int)(position.HashValue % _transpositionTableCapacity);
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.HashValue && _transpositionTable[hash].Depth >= depth)
             {
@@ -240,7 +303,7 @@ namespace MegaKnight.Core
 
         int QuiescenceSearch(Position position, int alpha, int beta, int depth)
         {
-            if (_moveStopwatch.ElapsedMilliseconds / 1000 >= _maxSearchTime) return 0;
+            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0) return 0;
 
             int standingPat = _evaluator.Evaluate(position);
             if (standingPat >= beta || depth == 0) return standingPat;

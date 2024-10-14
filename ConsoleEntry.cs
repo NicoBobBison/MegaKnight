@@ -70,26 +70,34 @@ namespace MegaKnight
                         _core.SetPositionFromFEN(str);
                     }
                     catch { } // We don't do anything if an error is thrown
-                    
                 }
             },
             startPosOption, fenPositionOption);
 
             Command goCommand = new Command("go", "Starts a search.");
-            Option<float> wTimeOption = new Option<float>("wtime", "Remaining time for white to move.");
-            Option<float> bTimeOption = new Option<float>("btime", "Remaining time for black to move.");
-            Option<float> wIncrementOption = new Option<float>("winc", "White time increment per move.");
-            Option<float> bIncrementOption = new Option<float>("binc", "Black time increment per move.");
-            goCommand.SetHandler((wTime, bTime, wInc, bInc) =>
+            Option<float> wTimeOption = new Option<float>(name: "wtime", description: "Remaining time for white to move (in ms).", getDefaultValue: () => 1000 * 120);
+            Option<float> bTimeOption = new Option<float>(name: "btime", description: "Remaining time for black to move (in ms).", getDefaultValue: () => 1000 * 120);
+            Option<float> wIncrementOption = new Option<float>("winc", "White time increment per move (in ms).");
+            Option<float> bIncrementOption = new Option<float>("binc", "Black time increment per move (in ms).");
+            goCommand.Add(wTimeOption);
+            goCommand.Add(bTimeOption);
+            goCommand.Add(wIncrementOption);
+            goCommand.Add(bIncrementOption);
+            goCommand.SetHandler(async (wTime, bTime, wInc, bInc) =>
             {
-             
+                _core.SetEngineTimeRules(wTime, bTime, wInc, bInc);
+                Move move = await _core.GetBestMoveAsync();
+                Console.WriteLine("bestmove " + move.ToString());
             },
             wTimeOption, bTimeOption, wIncrementOption, bIncrementOption);
+
+            Command stopCommand = new Command("stop", "Stops the current search.");
 
             RootCommand rootCommand = new RootCommand()
             {
                 uciCommand,
                 positionCommand,
+                goCommand
             };
             return rootCommand;
         }

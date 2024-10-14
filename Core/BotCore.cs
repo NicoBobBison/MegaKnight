@@ -62,6 +62,11 @@ namespace MegaKnight.Core
                 CurrentPosition.MakeMove(engineMove);
             });
         }
+        public async Task<Move> GetBestMoveAsync()
+        {
+            Move engineMove = await _engine.GetBestMoveAsync(CurrentPosition);
+            return engineMove;
+        }
         public ulong GetLegalMoves(ulong startSquare, Piece piece, Position position)
         {
             return _moveGenerator.GenerateMoves(startSquare, piece, position);
@@ -75,6 +80,13 @@ namespace MegaKnight.Core
         public void SetPositionToStartPosition()
         {
             SetPositionFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        }
+        public void SetEngineTimeRules(float whiteStartTime = 1000 * 120, float blackStartTime = 1000 * 120, float whiteTimeIncrement = 1000, float blackTimeIncrement = 1000)
+        {
+            _engine.WhiteTimeRemaining = whiteStartTime;
+            _engine.BlackTimeRemaining = blackStartTime;
+            _engine.WhiteTimeIncrement = whiteTimeIncrement;
+            _engine.BlackTimeIncrement = blackTimeIncrement;
         }
         /// <summary>
         /// Reads in a FEN string and creates a position based on it
