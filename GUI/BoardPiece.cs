@@ -139,7 +139,6 @@ namespace MegaKnight.GUI
                 // For testing weird unmake interactions/bugs
                 // if (InputManager.GetKeyPressed(Keys.Space)) _renderer.Core.CurrentPosition.UnmakeMove(move);
 
-                // To make rendering before calculating engine move actually possible, I think we need to wait a frame before starting engine calculation
                 _renderer.RenderPosition(_renderer.Core.CurrentPosition);
 
                 if (_renderer.Core.PlayingAgainstEngine)

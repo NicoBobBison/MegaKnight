@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Channels;
 
 namespace MegaKnight.Core
 {
@@ -85,7 +87,7 @@ namespace MegaKnight.Core
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
-        public async Task<Move> GetBestMoveAsync(Position position)
+        public async Task<Move> GetBestMoveAsync(Position position, CancellationToken cancelToken)
         {
             if (position.WhiteToMove)
             {
@@ -106,10 +108,10 @@ namespace MegaKnight.Core
             int depth = 1;
             await Task.Run(() =>
             {
-                while (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
+                while (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0 && !cancelToken.IsCancellationRequested)
                 {
-                    Move move = Search(position, depth);
-                    if (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
+                    Move move = Search(position, depth, cancelToken);
+                    if (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0 && !cancelToken.IsCancellationRequested)
                     {
                         bestMoveSoFar = move;
                         depth++;
@@ -139,9 +141,10 @@ namespace MegaKnight.Core
         /// </summary>
         /// <param name="position">The position to start from.</param>
         /// <returns>The best move based on the search.</returns>
-        Move Search(Position position, int depth)
+        Move Search(Position position, int depth, CancellationToken? cancel = null)
         {
-            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0) return null;
+            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
+                (cancel.HasValue && cancel.Value.IsCancellationRequested)) return null;
 
             if (depth == 0) throw new Exception("Cannot start search with 0 depth");
 
@@ -178,7 +181,7 @@ namespace MegaKnight.Core
             {
                 position.MakeMove(move);
                 _evaluator.AddPositionToPreviousPositions(position);
-                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, ply + 1, false);
+                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, ply + 1, false, cancel);
                 _evaluator.RemovePositionFromPreviousPositions(position);
                 position.UnmakeMove(move);
                 if (score > max)
@@ -197,13 +200,16 @@ namespace MegaKnight.Core
                     _killerMoves[depth] = bestMove;
                     break;
                 }
+                if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
+                   (cancel.HasValue && cancel.Value.IsCancellationRequested)) return null;
             }
             AddPositionToTranspositionTable(position, depth, int.MinValue / 2, beta, max, bestMove);
             return bestMove;
         }
-        int AlphaBeta(Position position, int depth, int alpha, int beta, int ply, bool nullMoveSearch)
+        int AlphaBeta(Position position, int depth, int alpha, int beta, int ply, bool nullMoveSearch, CancellationToken? cancel = null)
         {
-            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0) return 0;
+            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
+               (cancel.HasValue && cancel.Value.IsCancellationRequested)) return 0;
 
             int alphaOriginal = alpha;
             int hash = (int)(position.HashValue % _transpositionTableCapacity);
@@ -224,7 +230,7 @@ namespace MegaKnight.Core
             }
 
             // We don't flip signs for quiescence search because we aren't going down depth when we call it
-            if (depth <= 0) return QuiescenceSearch(position, alpha, beta, _quiescenceSearchDepth);
+            if (depth <= 0) return QuiescenceSearch(position, alpha, beta, _quiescenceSearchDepth, cancel);
 
             int max = int.MinValue;
             Move bestMove = null;
@@ -274,6 +280,8 @@ namespace MegaKnight.Core
                     _killerMoves[depth] = bestMove;
                     break;
                 }
+                if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
+                   (cancel.HasValue && cancel.Value.IsCancellationRequested)) return 0;
             }
             AddPositionToTranspositionTable(position, depth, alphaOriginal, beta, max, bestMove);
             return max;
@@ -301,9 +309,10 @@ namespace MegaKnight.Core
             _transpositionTable[(int)(entry.HashKey % _transpositionTableCapacity)] = entry;
         }
 
-        int QuiescenceSearch(Position position, int alpha, int beta, int depth)
+        int QuiescenceSearch(Position position, int alpha, int beta, int depth, CancellationToken? cancel = null)
         {
-            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0) return 0;
+            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
+               (cancel.HasValue && cancel.Value.IsCancellationRequested)) return 0;
 
             int standingPat = _evaluator.Evaluate(position);
             if (standingPat >= beta || depth == 0) return standingPat;
@@ -361,6 +370,8 @@ namespace MegaKnight.Core
                 }
                 if(score >= beta) break;
             }
+            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
+               (cancel.HasValue && cancel.Value.IsCancellationRequested)) return 0;
             return max;
         }
         List<Move> CollectPV(Position startPosition)

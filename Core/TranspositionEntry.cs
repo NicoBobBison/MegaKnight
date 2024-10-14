@@ -19,6 +19,5 @@ namespace MegaKnight.Core
         public int Evaluation;
         public NodeType NodeType;
         public Move BestMove;
-        public int Age;
     }
 }

@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 public class Program
 {
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         ConsoleEntry c = new ConsoleEntry();
-        await c.Run();
+        c.Run();
     }
 }
 #endif

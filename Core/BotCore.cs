@@ -4,6 +4,7 @@ using System.Linq;
 using MegaKnight.Debugging;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace MegaKnight.Core
 {
@@ -62,9 +63,9 @@ namespace MegaKnight.Core
                 CurrentPosition.MakeMove(engineMove);
             });
         }
-        public async Task<Move> GetBestMoveAsync()
+        public async Task<Move> GetBestMoveAsync(CancellationToken cancelToken)
         {
-            Move engineMove = await _engine.GetBestMoveAsync(CurrentPosition);
+            Move engineMove = await _engine.GetBestMoveAsync(CurrentPosition, cancelToken);
             return engineMove;
         }
         public ulong GetLegalMoves(ulong startSquare, Piece piece, Position position)

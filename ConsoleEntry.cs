@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MegaKnight.Core;
 using System.CommandLine;
+using System.Threading;
 
 namespace MegaKnight
 {
@@ -14,11 +15,12 @@ namespace MegaKnight
     internal class ConsoleEntry
     {
         BotCore _core;
+        CancellationTokenSource cancelTokenSource;
         public ConsoleEntry()
         {
             _core = new BotCore();
         }
-        public async Task Run()
+        public void Run()
         {
             Console.WriteLine("MegaKnight by NicoBobBison");
 
@@ -29,7 +31,7 @@ namespace MegaKnight
                 if (input.Trim().ToLower() == "quit") return;
 
                 string[] args = input.Split(' ');
-                await rootCommand.InvokeAsync(args);
+                rootCommand.InvokeAsync(args);
             }
         }
         public RootCommand SetupRootCommand()
@@ -75,29 +77,39 @@ namespace MegaKnight
             startPosOption, fenPositionOption);
 
             Command goCommand = new Command("go", "Starts a search.");
-            Option<float> wTimeOption = new Option<float>(name: "wtime", description: "Remaining time for white to move (in ms).", getDefaultValue: () => 1000 * 120);
-            Option<float> bTimeOption = new Option<float>(name: "btime", description: "Remaining time for black to move (in ms).", getDefaultValue: () => 1000 * 120);
-            Option<float> wIncrementOption = new Option<float>("winc", "White time increment per move (in ms).");
-            Option<float> bIncrementOption = new Option<float>("binc", "Black time increment per move (in ms).");
+            Option<float> wTimeOption = new Option<float>(name: "wtime", description: "Remaining time for white to move (in ms).", getDefaultValue: () => 1000 * 60);
+            Option<float> bTimeOption = new Option<float>(name: "btime", description: "Remaining time for black to move (in ms).", getDefaultValue: () => 1000 * 60);
+            Option<float> wIncrementOption = new Option<float>(name: "winc", description: "White time increment per move (in ms).", getDefaultValue: () => 0);
+            Option<float> bIncrementOption = new Option<float>(name: "binc", description: "Black time increment per move (in ms).", getDefaultValue: () => 0);
             goCommand.Add(wTimeOption);
             goCommand.Add(bTimeOption);
             goCommand.Add(wIncrementOption);
             goCommand.Add(bIncrementOption);
-            goCommand.SetHandler(async (wTime, bTime, wInc, bInc) =>
+            goCommand.SetHandler(async (context) =>
             {
+                float wTime = context.ParseResult.GetValueForOption(wTimeOption);
+                float bTime = context.ParseResult.GetValueForOption(bTimeOption);
+                float wInc = context.ParseResult.GetValueForOption(wIncrementOption);
+                float bInc = context.ParseResult.GetValueForOption(bIncrementOption);
+                cancelTokenSource = new CancellationTokenSource();
+
                 _core.SetEngineTimeRules(wTime, bTime, wInc, bInc);
-                Move move = await _core.GetBestMoveAsync();
-                Console.WriteLine("bestmove " + move.ToString());
-            },
-            wTimeOption, bTimeOption, wIncrementOption, bIncrementOption);
+                Move bestMove = await _core.GetBestMoveAsync(cancelTokenSource.Token);
+                Console.WriteLine("bestmove " + bestMove.ToString());
+            });
 
             Command stopCommand = new Command("stop", "Stops the current search.");
+            stopCommand.SetHandler(() =>
+            {
+                cancelTokenSource?.Cancel();
+            });
 
             RootCommand rootCommand = new RootCommand()
             {
                 uciCommand,
                 positionCommand,
-                goCommand
+                goCommand,
+                stopCommand
             };
             return rootCommand;
         }
