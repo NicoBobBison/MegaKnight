@@ -45,6 +45,12 @@ namespace MegaKnight
                 Console.WriteLine("uciok");
             });
 
+            Command uciNewGameCommand = new Command("ucinewgame", "Starts a new game from the next search.");
+            uciNewGameCommand.SetHandler(() =>
+            {
+                _core.StartNewGame();
+            });
+
             Command positionCommand = new Command("position", "Sets a position.");
             Option<bool> startPosOption = new Option<bool>("startpos", "Sets the internal position to the starting position.");
             Option<string[]> fenPositionOption = new Option<string[]>("fen", "Sets the internal position from the FEN string.")
@@ -104,12 +110,26 @@ namespace MegaKnight
                 cancelTokenSource?.Cancel();
             });
 
+            Command isReadyCommand = new Command("isready", "Checks if the engine is ready to process commands.");
+            isReadyCommand.SetHandler(async () =>
+            {
+                await Task.Run(async () =>
+                {
+                    while (!_core.IsReady)
+                    {
+                        await Task.Delay(25);
+                    }
+                });
+                Console.WriteLine("readyok");
+            });
+
             RootCommand rootCommand = new RootCommand()
             {
                 uciCommand,
                 positionCommand,
                 goCommand,
-                stopCommand
+                stopCommand,
+                isReadyCommand
             };
             return rootCommand;
         }

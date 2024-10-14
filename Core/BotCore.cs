@@ -18,6 +18,7 @@ namespace MegaKnight.Core
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
         Engine _engine;
+        public bool IsReady { get; private set; } = false; // true once initialization is complete
 
         public Perft Perft;
         public BotCore()
@@ -34,9 +35,13 @@ namespace MegaKnight.Core
 
             // Perft = new Perft(_moveGenerator, this);
             // Perft.RunPerft(p, 6);
+
+            #if GUI || DEBUG
             if (!PlayerIsPlayingWhite && CurrentPosition.WhiteToMove) MakeEngineMove();
+            #endif
 
             CurrentPosition.InitializeHash();
+            IsReady = true;
         }
         public bool CanMakeMove(Move move, Position position)
         {
@@ -88,6 +93,16 @@ namespace MegaKnight.Core
             _engine.BlackTimeRemaining = blackStartTime;
             _engine.WhiteTimeIncrement = whiteTimeIncrement;
             _engine.BlackTimeIncrement = blackTimeIncrement;
+        }
+        /// <summary>
+        /// This does NOT reset the board, it only resets previous positions and the transposition table.
+        /// </summary>
+        public void StartNewGame()
+        {
+            IsReady = false;
+            _evaluator = new Evaluator(_moveGenerator, this);
+            _engine = new Engine(_moveGenerator, _evaluator);
+            IsReady = true;
         }
         /// <summary>
         /// Reads in a FEN string and creates a position based on it
