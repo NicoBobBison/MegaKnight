@@ -126,7 +126,24 @@ namespace MegaKnight.Core
         {
             int startSquareIndex = Helper.SinglePopBitboardToIndex(StartSquare);
             int endSquareIndex = Helper.SinglePopBitboardToIndex(EndSquare);
-            return Enum.GetName((Square)startSquareIndex) + Enum.GetName((Square)endSquareIndex);
+            string promotionStr = "";
+            if(MoveType == MoveType.KnightPromotion || MoveType == MoveType.KnightPromoCapture)
+            {
+                promotionStr = "n";
+            }
+            else if (MoveType == MoveType.BishopPromotion || MoveType == MoveType.BishopPromoCapture)
+            {
+                promotionStr = "b";
+            }
+            else if (MoveType == MoveType.RookPromotion || MoveType == MoveType.RookPromoCapture)
+            {
+                promotionStr = "r";
+            }
+            else if (MoveType == MoveType.QueenPromotion || MoveType == MoveType.QueenPromoCapture)
+            {
+                promotionStr = "q";
+            }
+            return Enum.GetName((Square)startSquareIndex) + Enum.GetName((Square)endSquareIndex) + promotionStr;
         }
         public string DetailedToString(Position position)
         {
