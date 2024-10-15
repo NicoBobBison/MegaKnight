@@ -18,9 +18,9 @@ namespace MegaKnight.Core
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
         Engine _engine;
-        public bool IsReady { get; private set; } = false; // true once initialization is complete
+        public bool IsReady = false; // true once initialization is complete
 
-        public Perft Perft;
+        // public Perft Perft;
         public BotCore()
         {
             Position.InitializeZobristHashValues();

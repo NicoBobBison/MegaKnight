@@ -49,7 +49,14 @@ namespace MegaKnight.Core
         public readonly Piece Piece;
         public readonly ulong StartSquare;
         public readonly ulong EndSquare;
-        public MoveType MoveType = MoveType.QuietMove; // TODO: store as ushort
+        public MoveType MoveType = MoveType.QuietMove; // TODO: store as ushort?
+        public Move(Square startSquare, Square endSquare, Position position, string promotion = "")
+        {
+            Piece = position.GetPieceTypeAtSquare(1ul << (int)startSquare);
+            StartSquare = SquareToBitboard(startSquare);
+            EndSquare = SquareToBitboard(endSquare);
+            MoveType = position.GetMoveTypeOfPiece(Piece, (int)startSquare, (int)endSquare, promotion);
+        }
         public Move(Piece piece, Square startSquare, Square endSquare, MoveType moveType = MoveType.QuietMove)
         {
             Piece = piece;
@@ -145,13 +152,25 @@ namespace MegaKnight.Core
             }
             return Enum.GetName((Square)startSquareIndex) + Enum.GetName((Square)endSquareIndex) + promotionStr;
         }
+        public static Move ParseStringToMove(string moveStr, Position position)
+        {
+            Enum.TryParse(moveStr.Substring(0, 2), out Square startSquareEnum);
+            Enum.TryParse(moveStr.Substring(2, 2), out Square endSquareEnum);
+            string promotion = "";
+            if (moveStr.Length > 4)
+            {
+                promotion = moveStr.Substring(4, 1);
+            }
+            return new Move(startSquareEnum, endSquareEnum, position, promotion);
+        }
         public string DetailedToString(Position position)
         {
             string baseString = ToString();
             string captureString = IsCapture() ? " " + (int)Piece + "x" + (int)GetPieceCapturing(position) : "";
-            return baseString + captureString;
+            string pieceType = Enum.GetName(Piece);
+            string moveType = Enum.GetName(MoveType);
+            return baseString + captureString + ", Piece type: " + pieceType + ", " + moveType;
         }
-
         public bool Equals(Move other)
         {
             return Piece == other.Piece && StartSquare == other.StartSquare && EndSquare == other.EndSquare && MoveType == other.MoveType;

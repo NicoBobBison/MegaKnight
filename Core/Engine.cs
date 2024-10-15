@@ -32,8 +32,8 @@ namespace MegaKnight.Core
         // Should this be a list?
         Move[] _killerMoves = new Move[100];
 
-        int _debugBranchesPruned;
-        int _debugTranspositionsFound;
+        // int _debugBranchesPruned;
+        // int _debugTranspositionsFound;
 
         public Engine(MoveGenerator moveGenerator, Evaluator evaluator)
         {
@@ -56,7 +56,7 @@ namespace MegaKnight.Core
             if (position.HashValue == 0) position.InitializeHash();
             _moveStopwatch.Restart();
             _killerMoves = new Move[100];
-            _debugBranchesPruned = 0;
+            // _debugBranchesPruned = 0;
 
             //_principalVariation = new PVTable();
             Move bestMoveSoFar = null;
@@ -101,7 +101,7 @@ namespace MegaKnight.Core
             if (position.HashValue == 0) position.InitializeHash();
             _moveStopwatch.Restart();
             _killerMoves = new Move[100];
-            _debugBranchesPruned = 0;
+            // _debugBranchesPruned = 0;
 
             //_principalVariation = new PVTable();
             Move bestMoveSoFar = null;
@@ -143,8 +143,7 @@ namespace MegaKnight.Core
         /// <returns>The best move based on the search.</returns>
         Move Search(Position position, int depth, CancellationToken? cancel = null)
         {
-            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
-                (cancel.HasValue && cancel.Value.IsCancellationRequested)) return null;
+            if (CheckCancel(cancel)) return null;
 
             if (depth == 0) throw new Exception("Cannot start search with 0 depth");
 
@@ -200,16 +199,14 @@ namespace MegaKnight.Core
                     _killerMoves[depth] = bestMove;
                     break;
                 }
-                if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
-                   (cancel.HasValue && cancel.Value.IsCancellationRequested)) return null;
+                if (CheckCancel(cancel)) return null;
             }
             AddPositionToTranspositionTable(position, depth, int.MinValue / 2, beta, max, bestMove);
             return bestMove;
         }
         int AlphaBeta(Position position, int depth, int alpha, int beta, int ply, bool nullMoveSearch, CancellationToken? cancel = null)
         {
-            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
-               (cancel.HasValue && cancel.Value.IsCancellationRequested)) return 0;
+            if (CheckCancel(cancel)) return 0;
 
             int alphaOriginal = alpha;
             int hash = (int)(position.HashValue % _transpositionTableCapacity);
@@ -280,8 +277,7 @@ namespace MegaKnight.Core
                     _killerMoves[depth] = bestMove;
                     break;
                 }
-                if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
-                   (cancel.HasValue && cancel.Value.IsCancellationRequested)) return 0;
+                if (CheckCancel(cancel)) return 0;
             }
             AddPositionToTranspositionTable(position, depth, alphaOriginal, beta, max, bestMove);
             return max;
@@ -311,8 +307,7 @@ namespace MegaKnight.Core
 
         int QuiescenceSearch(Position position, int alpha, int beta, int depth, CancellationToken? cancel = null)
         {
-            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
-               (cancel.HasValue && cancel.Value.IsCancellationRequested)) return 0;
+            if (CheckCancel(cancel)) return 0;
 
             int standingPat = _evaluator.Evaluate(position);
             if (standingPat >= beta || depth == 0) return standingPat;
@@ -342,7 +337,7 @@ namespace MegaKnight.Core
             // Delta pruning, subtract 200 centipawns as a safety net (do we need to also add for pawn promotion?)
             int queenVal = (int)Helper.Lerp(EvalWeights.QueenValueEarly, EvalWeights.QueenValueLate, _evaluator.GetGamePhase(position));
             int bigDelta = queenVal - 200;
-            foreach(Move m in moves)
+            foreach (Move m in moves)
             {
                 if (m.IsPromotion())
                 {
@@ -363,17 +358,23 @@ namespace MegaKnight.Core
                 int score = -QuiescenceSearch(position, -beta, -alpha, depth - 1);
                 _evaluator.RemovePositionFromPreviousPositions(position);
                 position.UnmakeMove(move);
-                if(score > max)
+                if (score > max)
                 {
                     max = score;
                     alpha = Math.Max(alpha, score);
                 }
-                if(score >= beta) break;
+                if (score >= beta) break;
+                if (CheckCancel(cancel)) return 0;
             }
-            if (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
-               (cancel.HasValue && cancel.Value.IsCancellationRequested)) return 0;
             return max;
         }
+
+        private bool CheckCancel(CancellationToken? cancel)
+        {
+            return (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
+               (cancel.HasValue && cancel.Value.IsCancellationRequested));
+        }
+
         List<Move> CollectPV(Position startPosition)
         {
             List<Move> pv = new List<Move>();

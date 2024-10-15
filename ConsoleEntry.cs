@@ -55,11 +55,17 @@ namespace MegaKnight
             Option<bool> startPosOption = new Option<bool>("startpos", "Sets the internal position to the starting position.");
             Option<string[]> fenPositionOption = new Option<string[]>("fen", "Sets the internal position from the FEN string.")
             {
+                AllowMultipleArgumentsPerToken = true,
+                Arity = new ArgumentArity(6, 6)
+            };
+            Option<string[]> movesOption = new Option<string[]>("moves", "Moves made from the specified position.")
+            {
                 AllowMultipleArgumentsPerToken = true
             };
             positionCommand.Add(startPosOption);
             positionCommand.Add(fenPositionOption);
-            positionCommand.SetHandler((startPos, fenString) =>
+            positionCommand.Add(movesOption);
+            positionCommand.SetHandler((startPos, fenString, movesString) =>
             {
                 if (startPos)
                 {
@@ -77,16 +83,28 @@ namespace MegaKnight
                         }
                         _core.SetPositionFromFEN(str);
                     }
-                    catch { } // We don't do anything if an error is thrown
+                    catch
+                    {
+                        Console.WriteLine("Invalid FEN string.");
+                        return;
+                    }
+                }
+                // Console.WriteLine(_core.CurrentPosition.ToString());
+                foreach (string s in movesString)
+                {
+                    Move m = Move.ParseStringToMove(s, _core.CurrentPosition);
+                    _core.MakeMoveOnCurrentPosition(m);
+                    // Console.WriteLine(_core.CurrentPosition.ToString());
+                    // Console.WriteLine(m.DetailedToString(_core.CurrentPosition));
                 }
             },
-            startPosOption, fenPositionOption);
+            startPosOption, fenPositionOption, movesOption);
 
             Command goCommand = new Command("go", "Starts a search.");
             Option<float> wTimeOption = new Option<float>(name: "wtime", description: "Remaining time for white to move (in ms).", getDefaultValue: () => 1000 * 60);
             Option<float> bTimeOption = new Option<float>(name: "btime", description: "Remaining time for black to move (in ms).", getDefaultValue: () => 1000 * 60);
-            Option<float> wIncrementOption = new Option<float>(name: "winc", description: "White time increment per move (in ms).", getDefaultValue: () => 0);
-            Option<float> bIncrementOption = new Option<float>(name: "binc", description: "Black time increment per move (in ms).", getDefaultValue: () => 0);
+            Option<float> wIncrementOption = new Option<float>(name: "winc", description: "White time increment per move (in ms).", getDefaultValue: () => 1000);
+            Option<float> bIncrementOption = new Option<float>(name: "binc", description: "Black time increment per move (in ms).", getDefaultValue: () => 1000);
             goCommand.Add(wTimeOption);
             goCommand.Add(bTimeOption);
             goCommand.Add(wIncrementOption);
@@ -117,7 +135,7 @@ namespace MegaKnight
                 {
                     while (!_core.IsReady)
                     {
-                        await Task.Delay(25);
+                        await Task.Delay(5);
                     }
                 });
                 Console.WriteLine("readyok");
@@ -126,6 +144,7 @@ namespace MegaKnight
             RootCommand rootCommand = new RootCommand()
             {
                 uciCommand,
+                uciNewGameCommand,
                 positionCommand,
                 goCommand,
                 stopCommand,

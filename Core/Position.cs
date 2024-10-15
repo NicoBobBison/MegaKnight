@@ -545,6 +545,7 @@ namespace MegaKnight.Core
             }
             str += "\nEn passant square: " + EnPassantTargetSquare;
             str += "\nHalf move clock: " + HalfMoveClock;
+            str += string.Format("\n{0} to move", WhiteToMove ? "White" : "Black");
             return str + "\n";
 
         }
@@ -557,6 +558,80 @@ namespace MegaKnight.Core
                 str += " ";
             }
             return str;
+        }
+        public Piece GetPieceTypeAtSquare(ulong square)
+        {
+            if (((WhitePawns | BlackPawns) & square) > 0)
+            {
+                return Piece.Pawn;
+            }
+            else if (((WhiteKnights | BlackKnights) & square) > 0)
+            {
+                return Piece.Knight;
+            }
+            else if (((WhiteBishops | BlackBishops) & square) > 0)
+            {
+                return Piece.Bishop;
+            }
+            else if (((WhiteRooks | BlackRooks) & square) > 0)
+            {
+                return Piece.Rook;
+            }
+            else if (((WhiteQueens |  BlackQueens) & square) > 0)
+            {
+                return Piece.Queen;
+            }
+            else if(((WhiteKing | BlackKing) & square) > 0)
+            {
+                return Piece.King;
+            }
+            throw new Exception("No piece at index " + Helper.SinglePopBitboardToIndex(square));
+        }
+        public MoveType GetMoveTypeOfPiece(Piece pieceType, int startIndex, int endIndex, string promotion = "")
+        {
+            bool isCapture = (AllPieces & 1ul << endIndex) > 0;
+            if (pieceType == Piece.Pawn)
+            {
+                if ((WhiteToMove && endIndex > 55) || (!WhiteToMove && endIndex < 8))
+                {
+                    switch (promotion)
+                    {
+                        case "n":
+                            if (isCapture) return MoveType.KnightPromoCapture;
+                            return MoveType.KnightPromotion;
+                        case "b":
+                            if (isCapture) return MoveType.BishopPromoCapture;
+                            return MoveType.BishopPromotion;
+                        case "r":
+                            if (isCapture) return MoveType.RookPromoCapture;
+                            return MoveType.RookPromotion;
+                        case "q":
+                            if (isCapture) return MoveType.QueenPromoCapture;
+                            return MoveType.QueenPromotion;
+                    }
+                }
+                else if (Math.Abs(startIndex - endIndex) == 16)
+                {
+                    return MoveType.DoublePawnPush;
+                }
+                else if (endIndex == EnPassantTargetSquare)
+                {
+                    return MoveType.EnPassant;
+                }
+            }
+            if (pieceType == Piece.King)
+            {
+                if (startIndex - endIndex == 2)
+                {
+                    return MoveType.QueenCastle;
+                }
+                else if (startIndex - endIndex == -2)
+                {
+                    return MoveType.KingCastle;
+                }
+            }
+            if (isCapture) return MoveType.Capture;
+            return MoveType.QuietMove;
         }
         /// <summary>
         /// Should always use make/unmake instead of clone, this is just for debugging purposes
