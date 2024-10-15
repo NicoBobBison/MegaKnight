@@ -32,6 +32,11 @@ namespace MegaKnight.Core
         // Should this be a list?
         Move[] _killerMoves = new Move[100];
 
+        #region Info
+        int _infoScore = int.MinValue;
+        int _infoDepth = 0;
+        #endregion
+
         // int _debugBranchesPruned;
         // int _debugTranspositionsFound;
 
@@ -44,6 +49,8 @@ namespace MegaKnight.Core
         }
         public Move GetBestMove(Position position)
         {
+            _infoScore = int.MinValue;
+            _infoDepth = 0;
             if (position.WhiteToMove)
             {
                 _maxSearchTime = WhiteTimeRemaining / 20 + WhiteTimeIncrement / 2;
@@ -68,6 +75,7 @@ namespace MegaKnight.Core
                 {
                     bestMoveSoFar = move;
                     depth++;
+                    Console.WriteLine(GetInfo());
                 }
             }
             if (position.WhiteToMove)
@@ -89,6 +97,8 @@ namespace MegaKnight.Core
         }
         public async Task<Move> GetBestMoveAsync(Position position, CancellationToken cancelToken)
         {
+            _infoScore = int.MinValue;
+            _infoDepth = 1;
             if (position.WhiteToMove)
             {
                 _maxSearchTime = WhiteTimeRemaining / 20 + WhiteTimeIncrement / 2;
@@ -110,11 +120,14 @@ namespace MegaKnight.Core
             {
                 while (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0 && !cancelToken.IsCancellationRequested)
                 {
+                    _infoScore = int.MinValue;
                     Move move = Search(position, depth, cancelToken);
                     if (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0 && !cancelToken.IsCancellationRequested)
                     {
                         bestMoveSoFar = move;
+                        Console.WriteLine(GetInfo());
                         depth++;
+                        _infoDepth++;
                     }
                 }
             });
@@ -189,6 +202,7 @@ namespace MegaKnight.Core
                     bestMove = move;
                     if (score > alpha)
                     {
+                        _infoScore = Math.Max(_infoScore, score);
                         alpha = score;
                         //_principalVariation.SetPVValue(move, ply + depth, ply);
                         // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
@@ -368,7 +382,13 @@ namespace MegaKnight.Core
             }
             return max;
         }
-
+        public string GetInfo()
+        {
+            string info = "info ";
+            info += $"depth {_infoDepth} ";
+            info += $"score cp {_infoScore}";
+            return info;
+        }
         private bool CheckCancel(CancellationToken? cancel)
         {
             return (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
