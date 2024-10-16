@@ -187,7 +187,7 @@ namespace MegaKnight.Core
             Move bestMove = null;
 
             List<Move> possibleMoves = _moveGenerator.GenerateAllPossibleMoves(position);
-            SortMoves(possibleMoves, position, depth);
+            SortMoves(possibleMoves, position, ply);
 
             foreach (Move move in possibleMoves)
             {
@@ -210,7 +210,7 @@ namespace MegaKnight.Core
                 }
                 if (score >= beta)
                 {
-                    _killerMoves[depth] = bestMove;
+                    _killerMoves[ply] = bestMove;
                     break;
                 }
                 if (CheckCancel(cancel)) return null;
@@ -241,13 +241,13 @@ namespace MegaKnight.Core
             }
 
             // We don't flip signs for quiescence search because we aren't going down depth when we call it
-            if (depth <= 0) return QuiescenceSearch(position, alpha, beta, _quiescenceSearchDepth, cancel);
+            if (depth <= 0) return QuiescenceSearch(position, alpha, beta, _quiescenceSearchDepth, ply, cancel);
 
             int max = int.MinValue;
             Move bestMove = null;
 
             List<Move> possibleMoves = _moveGenerator.GenerateAllPossibleMoves(position);
-            SortMoves(possibleMoves, position, depth);
+            SortMoves(possibleMoves, position, ply);
 
             // If we have no legal moves, it's either stalemate or checkmate
             if (possibleMoves.Count == 0)
@@ -288,7 +288,7 @@ namespace MegaKnight.Core
                 }
                 if (score >= beta)
                 {
-                    _killerMoves[depth] = bestMove;
+                    _killerMoves[ply] = bestMove;
                     break;
                 }
                 if (CheckCancel(cancel)) return 0;
@@ -319,7 +319,7 @@ namespace MegaKnight.Core
             _transpositionTable[(int)(entry.HashKey % _transpositionTableCapacity)] = entry;
         }
 
-        int QuiescenceSearch(Position position, int alpha, int beta, int depth, CancellationToken? cancel = null)
+        int QuiescenceSearch(Position position, int alpha, int beta, int depth, int ply, CancellationToken? cancel = null)
         {
             if (CheckCancel(cancel)) return 0;
 
@@ -346,7 +346,7 @@ namespace MegaKnight.Core
 
             int max = standingPat;
             List<Move> moves = _moveGenerator.GenerateAllPossibleMoves(position);
-            SortMoves(moves, position, depth);
+            SortMoves(moves, position, ply);
 
             // Delta pruning, subtract 200 centipawns as a safety net (do we need to also add for pawn promotion?)
             int queenVal = (int)Helper.Lerp(EvalWeights.QueenValueEarly, EvalWeights.QueenValueLate, _evaluator.GetGamePhase(position));
@@ -369,7 +369,7 @@ namespace MegaKnight.Core
                 if (!move.IsCapture()) continue;
                 position.MakeMove(move);
                 _evaluator.AddPositionToPreviousPositions(position);
-                int score = -QuiescenceSearch(position, -beta, -alpha, depth - 1);
+                int score = -QuiescenceSearch(position, -beta, -alpha, depth - 1, ply + 1);
                 _evaluator.RemovePositionFromPreviousPositions(position);
                 position.UnmakeMove(move);
                 if (score > max)
@@ -414,10 +414,10 @@ namespace MegaKnight.Core
             CollectPVRecursive(pv, position);
             position.UnmakeMove(bestMove);
         }
-        void SortMoves(List<Move> moves, Position position, int depth)
+        void SortMoves(List<Move> moves, Position position, int ply)
         {
             // Sort moves with comparer. See MoveComparer for sorting methods
-            MoveComparer comparer = new MoveComparer(_transpositionTable, _transpositionTableCapacity, position, _killerMoves, depth);
+            MoveComparer comparer = new MoveComparer(_transpositionTable, _transpositionTableCapacity, position, _killerMoves, ply);
             moves.Sort(comparer);
         }
         private static void PutMoveAtIndexInList(List<Move> moves, int indexToRemove, int indexToInsertAt)

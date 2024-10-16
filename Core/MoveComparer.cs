@@ -23,14 +23,14 @@ namespace MegaKnight.Core
         int _transpositionTableCapacity;
         Position _position;
         Move[] _killerMoves;
-        int _depth;
-        public MoveComparer(Dictionary<int, TranspositionEntry> transpositionTable, int ttCapacity, Position position, Move[] killerMoves, int depth)
+        int _ply;
+        public MoveComparer(Dictionary<int, TranspositionEntry> transpositionTable, int ttCapacity, Position position, Move[] killerMoves, int ply)
         {
             _transpositionTable = transpositionTable;
             _transpositionTableCapacity = ttCapacity;
             _position = position;
             _killerMoves = killerMoves;
-            _depth = depth;
+            _ply = ply;
         }
         public int Compare(Move x, Move y)
         {
@@ -69,13 +69,13 @@ namespace MegaKnight.Core
                 if (yVictimMinusAttacker < 0 && yVictimMinusAttacker > xVictimMinusAttacker) return 600 + yVictimMinusAttacker;
             }
             // Killer moves
-            if (_killerMoves[_depth] != null)
+            if (_killerMoves[_ply] != null)
             {
-                if (_killerMoves[_depth].Equals(x))
+                if (_killerMoves[_ply].Equals(x))
                 {
                     return -700;
                 }
-                if (_killerMoves[_depth].Equals(y))
+                if (_killerMoves[_ply].Equals(y))
                 {
                     return 700;
                 }
