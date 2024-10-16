@@ -31,7 +31,6 @@ namespace MegaKnight.Core
         //PVTable _principalVariation = new PVTable();
         // Should this be a list?
         Move[] _killerMoves = new Move[100];
-        int _prevBestEval = int.MinValue;
 
         #region Info
         int _infoScore = int.MinValue;
@@ -40,7 +39,6 @@ namespace MegaKnight.Core
 
         // int _debugBranchesPruned;
         // int _debugTranspositionsFound;
-        int _debugResearches = 0;
 
         public Engine(MoveGenerator moveGenerator, Evaluator evaluator)
         {
@@ -51,10 +49,8 @@ namespace MegaKnight.Core
         }
         public Move GetBestMove(Position position)
         {
-            _debugResearches = 0;
             _infoScore = int.MinValue;
             _infoDepth = 1;
-            _prevBestEval = int.MinValue;
             if (position.WhiteToMove)
             {
                 _maxSearchTime = WhiteTimeRemaining / 20 + WhiteTimeIncrement / 2;
@@ -74,7 +70,7 @@ namespace MegaKnight.Core
             int depth = 1;
             while(_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
             {
-                Move move = Search(position: position, depth: depth, useAspirationWindows: depth >= 2);
+                Move move = Search(position: position, depth: depth);
                 if (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
                 {
                     bestMoveSoFar = move;
@@ -97,16 +93,13 @@ namespace MegaKnight.Core
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
-            Debug.WriteLine("Researches: " + _debugResearches);
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
         public async Task<Move> GetBestMoveAsync(Position position, CancellationToken cancelToken)
         {
-            _debugResearches = 0;
             _infoScore = int.MinValue;
             _infoDepth = 1;
-            _prevBestEval = int.MinValue;
             if (position.WhiteToMove)
             {
                 _maxSearchTime = WhiteTimeRemaining / 20 + WhiteTimeIncrement / 2;
@@ -129,7 +122,7 @@ namespace MegaKnight.Core
                 while (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0 && !cancelToken.IsCancellationRequested)
                 {
                     _infoScore = int.MinValue;
-                    Move move = Search(position, depth, cancelToken, depth >= 2);
+                    Move move = Search(position, depth, cancelToken);
                     if (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0 && !cancelToken.IsCancellationRequested)
                     {
                         bestMoveSoFar = move;
@@ -153,7 +146,6 @@ namespace MegaKnight.Core
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
-            Debug.WriteLine("Researches: " + _debugResearches);
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
@@ -163,7 +155,7 @@ namespace MegaKnight.Core
         /// </summary>
         /// <param name="position">The position to start from.</param>
         /// <returns>The best move based on the search.</returns>
-        Move Search(Position position, int depth, CancellationToken? cancel = null, bool useAspirationWindows = false)
+        Move Search(Position position, int depth, CancellationToken? cancel = null)
         {
             if (CheckCancel(cancel)) return null;
 
@@ -172,21 +164,13 @@ namespace MegaKnight.Core
             int alpha = int.MinValue / 2;
             int beta = int.MaxValue / 2;
 
-            if(useAspirationWindows && depth >= 2 && _prevBestEval != int.MinValue)
-            {
-                Debug.WriteLine("Window center: " + _prevBestEval);
-                alpha = _prevBestEval - 25;
-                beta = _prevBestEval + 25;
-                Debug.WriteLine("Alpha: " + alpha);
-                Debug.WriteLine("Beta: " + beta);
-            }
-
             int ply = 0;
             int hash = (int)(position.HashValue % _transpositionTableCapacity);
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.HashValue && _transpositionTable[hash].Depth >= depth)
             {
                 if (_transpositionTable[hash].NodeType == NodeType.Exact)
                 {
+                    _infoScore = _transpositionTable[hash].Evaluation;
                     return _transpositionTable[hash].BestMove;
                 }
                 else if (_transpositionTable[hash].NodeType == NodeType.LowerBound)
@@ -216,7 +200,6 @@ namespace MegaKnight.Core
                 {
                     max = score;
                     _infoScore = score;
-                    _prevBestEval = score;
                     bestMove = move;
                     if (score > alpha)
                     {
@@ -231,12 +214,6 @@ namespace MegaKnight.Core
                     break;
                 }
                 if (CheckCancel(cancel)) return null;
-            }
-            if(useAspirationWindows && (max > beta || max < alpha))
-            {
-                Debug.WriteLine("Researching for score: " + max);
-                _debugResearches++;
-                return Search(position, depth, cancel, false);
             }
             AddPositionToTranspositionTable(position, depth, int.MinValue / 2, beta, max, bestMove);
             return bestMove;
