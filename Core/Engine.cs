@@ -168,15 +168,17 @@ namespace MegaKnight.Core
             if (CheckCancel(cancel)) return null;
 
             if (depth == 0) throw new Exception("Cannot start search with 0 depth");
-
             // Divide by two to avoid overflow issues
             int alpha = int.MinValue / 2;
             int beta = int.MaxValue / 2;
 
             if(useAspirationWindows && depth >= 2 && _prevBestEval != int.MinValue)
             {
+                Debug.WriteLine("Window center: " + _prevBestEval);
                 alpha = _prevBestEval - 25;
                 beta = _prevBestEval + 25;
+                Debug.WriteLine("Alpha: " + alpha);
+                Debug.WriteLine("Beta: " + beta);
             }
 
             int ply = 0;
@@ -230,8 +232,9 @@ namespace MegaKnight.Core
                 }
                 if (CheckCancel(cancel)) return null;
             }
-            if(useAspirationWindows && (max >= beta || max <= alpha))
+            if(useAspirationWindows && (max > beta || max < alpha))
             {
+                Debug.WriteLine("Researching for score: " + max);
                 _debugResearches++;
                 return Search(position, depth, cancel, false);
             }
