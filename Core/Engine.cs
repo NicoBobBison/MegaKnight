@@ -12,8 +12,8 @@ namespace MegaKnight.Core
     internal class Engine
     {
         // Maximum allowed search time
-        public float WhiteTimeRemaining = 1000 * 60 * 2;
-        public float BlackTimeRemaining = 1000 * 60 * 2;
+        public float WhiteTimeRemaining = 1000 * 60;
+        public float BlackTimeRemaining = 1000 * 60;
         public float WhiteTimeIncrement = 1000;
         public float BlackTimeIncrement = 1000;
         float _maxSearchTime;
