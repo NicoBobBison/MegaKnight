@@ -52,7 +52,7 @@ namespace MegaKnight.Core
                 {
                     // Special case: knight and bishop vs king, need to push enemy king to color shared with bishop
                     bool bishopIsWhiteSquare = Helper.SquareIsWhite(friendlyBishops);
-                    return 50 * (7 - Helper.ManhattanDistanceToCornerWithColor(enemyKing, bishopIsWhiteSquare)) + 30 * (14 - Helper.ManhattanDistance(friendlyKing, enemyKing));
+                    return 300 * (7 - Helper.ManhattanDistanceToCornerWithColor(enemyKing, bishopIsWhiteSquare)) + 20 * (14 - Helper.ManhattanDistance(friendlyKing, enemyKing));
                 }
                 return 50 * Helper.CenterManhattanDistance(enemyKing) + 30 * (14 - Helper.ManhattanDistance(friendlyKing, enemyKing));
             }
