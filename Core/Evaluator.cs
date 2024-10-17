@@ -38,13 +38,22 @@ namespace MegaKnight.Core
             {
                 return 0;
             }
-
             ulong enemyPieces = position.WhiteToMove ? position.BlackPieces : position.WhitePieces;
-            ulong friendlyKing = position.WhiteToMove ? position.WhiteKing : position.BlackKing;
             ulong enemyKing = position.WhiteToMove ? position.BlackKing : position.WhiteKing;
             // Mop-up evaluation when enemy only has a king
             if((enemyPieces ^ enemyKing) == 0)
             {
+                ulong friendlyKnights = position.WhiteToMove ? position.WhiteKnights : position.BlackKnights;
+                ulong friendlyBishops = position.WhiteToMove ? position.WhiteBishops : position.BlackBishops;
+                ulong friendlyKing = position.WhiteToMove ? position.WhiteKing : position.BlackKing;
+                ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
+                if(Helper.GetBitboardPopCount(friendlyKnights) == 1 && Helper.GetBitboardPopCount(friendlyBishops) == 1
+                   && (friendlyPieces ^ friendlyKing ^ friendlyBishops ^ friendlyKnights) == 0)
+                {
+                    // Special case: knight and bishop vs king, need to push enemy king to color shared with bishop
+                    bool bishopIsWhiteSquare = Helper.SquareIsWhite(friendlyBishops);
+                    return 50 * (7 - Helper.ManhattanDistanceToCornerWithColor(enemyKing, bishopIsWhiteSquare)) + 30 * (14 - Helper.ManhattanDistance(friendlyKing, enemyKing));
+                }
                 return 50 * Helper.CenterManhattanDistance(enemyKing) + 30 * (14 - Helper.ManhattanDistance(friendlyKing, enemyKing));
             }
 

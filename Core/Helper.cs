@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -110,6 +111,22 @@ namespace MegaKnight.Core
                     return ManhattanDistance(a, 1ul << 36);
                 }
             }
+        }
+        public static int ManhattanDistanceToCornerWithColor(ulong pos, bool whiteCorner)
+        {
+            if (whiteCorner)
+            {
+                return Math.Min(ManhattanDistance(pos, 1ul << 7), ManhattanDistance(pos, 1ul << 56));
+            }
+            return Math.Min(ManhattanDistance(pos, 1ul), ManhattanDistance(pos, 1ul << 63));
+        }
+        public static bool SquareIsWhite(ulong square)
+        {
+            if (GetBitboardPopCount(square) != 1) throw new Exception("Cannot get square color if population is not 1!");
+            int index = SinglePopBitboardToIndex(square);
+            int row = index / 8;
+            int col = index % 8;
+            return (row + col) % 2 == 1;
         }
     }
 }
