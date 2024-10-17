@@ -71,5 +71,45 @@ namespace MegaKnight.Core
         {
             return a * (1 - t) + b * t;
         }
+        public static int ManhattanDistance(ulong a, ulong b)
+        {
+            if (GetBitboardPopCount(a) != 1 || GetBitboardPopCount(b) != 1) throw new Exception("Both inputs for Manhattan distance must have single population!");
+            int aIndex = SinglePopBitboardToIndex(a);
+            int bIndex = SinglePopBitboardToIndex(b);
+            int rowA = aIndex / 8;
+            int rowB = bIndex / 8;
+            int colA = aIndex % 8;
+            int colB = bIndex % 8;
+            return Math.Abs(rowA - rowB) + Math.Abs(colA - colB);
+        }
+        public static int CenterManhattanDistance(ulong a)
+        {
+            if (GetBitboardPopCount(a) != 1) throw new Exception("Input for center Manhattan distance must have single population!");
+            int index = SinglePopBitboardToIndex(a);
+            int row = index / 8;
+            int col = index % 8;
+            if(row <= 3) // Lower half
+            {
+                if(col <= 3) // Left half
+                {
+                    return ManhattanDistance(a, 1ul << 27);
+                }
+                else // Right half
+                {
+                    return ManhattanDistance(a, 1ul << 28);
+                }
+            }
+            else // Upper half
+            {
+                if (col <= 3) // Left half
+                {
+                    return ManhattanDistance(a, 1ul << 35);
+                }
+                else // Right half
+                {
+                    return ManhattanDistance(a, 1ul << 36);
+                }
+            }
+        }
     }
 }

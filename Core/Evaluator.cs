@@ -39,6 +39,15 @@ namespace MegaKnight.Core
                 return 0;
             }
 
+            ulong enemyPieces = position.WhiteToMove ? position.BlackPieces : position.WhitePieces;
+            ulong friendlyKing = position.WhiteToMove ? position.WhiteKing : position.BlackKing;
+            ulong enemyKing = position.WhiteToMove ? position.BlackKing : position.WhiteKing;
+            // Mop-up evaluation when enemy only has a king
+            if((enemyPieces ^ enemyKing) == 0)
+            {
+                return 50 * Helper.CenterManhattanDistance(enemyKing) + 30 * (14 - Helper.ManhattanDistance(friendlyKing, enemyKing));
+            }
+
             int evaluation = 0;
 
             // Value from 0 to 1 representing how far in the game we are. 0 = early game, 1 = late game.
@@ -124,7 +133,7 @@ namespace MegaKnight.Core
                                            2 * EvalWeights.QueenValueEarly;
 
             float gamePhase = (totalPossibleMaterial - materialOnBoard) / totalPossibleMaterial;
-            return gamePhase;
+            return Math.Clamp(gamePhase, 0, 1);
         }
         public void ClearPreviousPositions()
         {
