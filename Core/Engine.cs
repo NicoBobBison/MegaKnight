@@ -12,8 +12,8 @@ namespace MegaKnight.Core
     internal class Engine
     {
         // Maximum allowed search time
-        public float WhiteTimeRemaining = 1000 * 120;
-        public float BlackTimeRemaining = 1000 * 120;
+        public float WhiteTimeRemaining = 1000 * 60;
+        public float BlackTimeRemaining = 1000 * 60;
         public float WhiteTimeIncrement = 1000;
         public float BlackTimeIncrement = 1000;
         float _maxSearchTime;
@@ -221,6 +221,7 @@ namespace MegaKnight.Core
         int AlphaBeta(Position position, int depth, int alpha, int beta, int ply, bool nullMoveSearch, CancellationToken? cancel = null)
         {
             if (CheckCancel(cancel)) return 0;
+            if (_evaluator.IsDraw(position)) return 0;
 
             int alphaOriginal = alpha;
             int hash = (int)(position.HashValue % _transpositionTableCapacity);

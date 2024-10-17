@@ -99,7 +99,7 @@ namespace MegaKnight.GUI
             {
                 tile.Draw(spriteBatch);
             }
-            foreach (BoardPiece piece in _boardPieces)
+            foreach (BoardPiece piece in _boardPieces.ToArray())
             {
                 piece.Draw(spriteBatch);
             }
