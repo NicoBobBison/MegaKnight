@@ -192,6 +192,56 @@ namespace MegaKnight.Core
             }
             return allMoves;
         }
+        public bool HasAnyLegalMove(Position position)
+        {
+            List<Move> allMoves = new List<Move>();
+
+            ulong pawns = position.WhiteToMove ? position.WhitePawns : position.BlackPawns;
+            ulong knights = position.WhiteToMove ? position.WhiteKnights : position.BlackKnights;
+            ulong bishops = position.WhiteToMove ? position.WhiteBishops : position.BlackBishops;
+            ulong rooks = position.WhiteToMove ? position.WhiteRooks : position.BlackRooks;
+            ulong queens = position.WhiteToMove ? position.WhiteQueens : position.BlackQueens;
+            ulong king = position.WhiteToMove ? position.WhiteKing : position.BlackKing;
+            ulong enemyPieces = position.WhiteToMove ? position.BlackPieces : position.WhitePieces;
+            ulong enemyBishops = position.WhiteToMove ? position.BlackBishops : position.WhiteBishops;
+            ulong enemyRooks = position.WhiteToMove ? position.BlackRooks : position.WhiteRooks;
+            ulong enemyQueens = position.WhiteToMove ? position.BlackQueens : position.WhiteQueens;
+            ulong piecesAttackingKing = GetPiecesAttackingKing(position);
+            ulong bqPinners = XRayBishopAttacks(king, position.WhiteToMove ? position.WhitePieces : position.BlackPieces, position) & (enemyBishops | enemyQueens);
+            ulong rqPinners = XRayRookAttacks(king, position.WhiteToMove ? position.WhitePieces : position.BlackPieces, position) & (enemyRooks | enemyQueens);
+
+            foreach (int i in Helper.BoardToArrayOfIndeces(pawns))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.Pawn, position, piecesAttackingKing, bqPinners, rqPinners);
+                if (moves > 0) return true;
+            }
+            foreach (int i in Helper.BoardToArrayOfIndeces(knights))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.Knight, position, piecesAttackingKing, bqPinners, rqPinners);
+                if (moves > 0) return true;
+            }
+            foreach (int i in Helper.BoardToArrayOfIndeces(bishops))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.Bishop, position, piecesAttackingKing, bqPinners, rqPinners);
+                if (moves > 0) return true;
+            }
+            foreach (int i in Helper.BoardToArrayOfIndeces(rooks))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.Rook, position, piecesAttackingKing, bqPinners, rqPinners);
+                if (moves > 0) return true;
+            }
+            foreach (int i in Helper.BoardToArrayOfIndeces(queens))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.Queen, position, piecesAttackingKing, bqPinners, rqPinners);
+                if (moves > 0) return true;
+            }
+            foreach (int i in Helper.BoardToArrayOfIndeces(king))
+            {
+                ulong moves = GenerateMoves(1ul << i, Piece.King, position, piecesAttackingKing, bqPinners, rqPinners);
+                if (moves > 0) return true;
+            }
+            return false;
+        }
         public ulong GenerateMoves(ulong startSquare, Piece piece, Position position)
         {
             ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;

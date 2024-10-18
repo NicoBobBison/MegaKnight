@@ -221,7 +221,7 @@ namespace MegaKnight.Core
         int AlphaBeta(Position position, int depth, int alpha, int beta, int ply, bool nullMoveSearch, CancellationToken? cancel = null)
         {
             if (CheckCancel(cancel)) return 0;
-            if (_evaluator.IsDraw(position)) return 0;
+            if (_evaluator.IsDrawByRepetition(position)) return 0;
 
             int alphaOriginal = alpha;
             int hash = (int)(position.HashValue % _transpositionTableCapacity);
@@ -253,7 +253,11 @@ namespace MegaKnight.Core
             // If we have no legal moves, it's either stalemate or checkmate
             if (possibleMoves.Count == 0)
             {
-                return _evaluator.Evaluate(position);
+                if(_moveGenerator.GetPiecesAttackingKing(position) > 0)
+                {
+                    return -1000000;
+                }
+                return 0;
             }
             // Null move pruning, R = 2
             if (!nullMoveSearch && depth > 2 && _moveGenerator.GetPiecesAttackingKing(position) == 0 && _evaluator.GetGamePhase(position) < EvalWeights.MiddleGameCutoff)

@@ -34,6 +34,7 @@ namespace MegaKnight.Core
             {
                 return -1000000;
             }
+            // This check is potentially slowing search down too much
             if (IsDraw(position))
             {
                 return 0;
@@ -173,7 +174,7 @@ namespace MegaKnight.Core
         }
         public bool IsStalemate(Position position)
         {
-            return _moveGenerator.GetPiecesAttackingKing(position) == 0 && _moveGenerator.GenerateAllPossibleMoves(position).Count == 0;
+            return _moveGenerator.GetPiecesAttackingKing(position) == 0 && !_moveGenerator.HasAnyLegalMove(position);
         }
         public bool IsDrawByFiftyMoveRule(Position position)
         {
