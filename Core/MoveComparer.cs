@@ -14,8 +14,8 @@ namespace MegaKnight.Core
     /// 2. Winning captures
     /// 3. Equal captures
     /// 4. Killer moves
-    /// 5. Losing captures
-    /// 6. Quiet moves
+    /// 5. Quiet moves (sorted with history heuristic)
+    /// 6. Losing captures
     /// </summary>
     internal class MoveComparer : IComparer<Move>
     {
@@ -59,17 +59,29 @@ namespace MegaKnight.Core
             bool xIsCapture = x.IsCapture();
             bool yIsCapture = y.IsCapture();
 
-            // Winning captures, then equal captures
-            if (xIsCapture && yIsCapture)
+            int[] pieceCapturingValues = new int[] { 1, 3, 3, 5, 9, 20 };
+            // Defaults to very low value
+            int xVictimMinusAttacker = -1000;
+            int yVictimMinusAttacker = -1000;
+
+            // Sets MVV/LVA value for captures
+            if (xIsCapture)
             {
-                int[] pieceCapturingValues = new int[] { 1, 3, 3, 5, 9, 20 };
-                int xVictimMinusAttacker = pieceCapturingValues[(int)x.GetPieceCapturing(_position)] - pieceCapturingValues[(int)x.Piece];
-                int yVictimMinusAttacker = pieceCapturingValues[(int)y.GetPieceCapturing(_position)] - pieceCapturingValues[(int)y.Piece];
-                if (xVictimMinusAttacker >= 0 && xVictimMinusAttacker > yVictimMinusAttacker) return -800 - xVictimMinusAttacker;
-                if (yVictimMinusAttacker >= 0 && yVictimMinusAttacker > xVictimMinusAttacker) return 800 + yVictimMinusAttacker;
-                if (xVictimMinusAttacker < 0 && xVictimMinusAttacker > yVictimMinusAttacker) return -600 - xVictimMinusAttacker;
-                if (yVictimMinusAttacker < 0 && yVictimMinusAttacker > xVictimMinusAttacker) return 600 + yVictimMinusAttacker;
+                xVictimMinusAttacker = pieceCapturingValues[(int)x.GetPieceCapturing(_position)] - pieceCapturingValues[(int)x.Piece];
             }
+            if (yIsCapture)
+            {
+                yVictimMinusAttacker = pieceCapturingValues[(int)y.GetPieceCapturing(_position)] - pieceCapturingValues[(int)y.Piece];
+            }
+
+            // Winning captures
+            if (xVictimMinusAttacker > 0 && xVictimMinusAttacker > yVictimMinusAttacker) return -800 - xVictimMinusAttacker;
+            if (yVictimMinusAttacker > 0 && yVictimMinusAttacker > xVictimMinusAttacker) return 800 + yVictimMinusAttacker;
+
+            // Equal captures
+            if (xVictimMinusAttacker == 0 && xVictimMinusAttacker > yVictimMinusAttacker) return -700 - xVictimMinusAttacker;
+            if (yVictimMinusAttacker == 0 && yVictimMinusAttacker > xVictimMinusAttacker) return 700 + yVictimMinusAttacker;
+
             // Killer moves
             if (_killerMoves[_ply] != null)
             {
@@ -82,21 +94,13 @@ namespace MegaKnight.Core
                     return 700;
                 }
             }
-            // Losing captures
-            if (xIsCapture && !yIsCapture)
-            {
-                return -500;
-            }
-            if (yIsCapture && !xIsCapture)
-            {
-                return 500;
-            }
 
             int xStartIndex = Helper.SinglePopBitboardToIndex(x.StartSquare);
             int yStartIndex = Helper.SinglePopBitboardToIndex(y.StartSquare);
             int xEndIndex = Helper.SinglePopBitboardToIndex(x.EndSquare);
             int yEndIndex = Helper.SinglePopBitboardToIndex(y.EndSquare);
 
+            // Quiet moves (sorted by history heuristic)
             if (_history[_position.WhiteToMove ? 0 : 1, xStartIndex, xEndIndex] > _history[_position.WhiteToMove ? 0 : 1, yStartIndex, yEndIndex])
             {
                 return -400;
@@ -105,6 +109,10 @@ namespace MegaKnight.Core
             {
                 return 400;
             }
+
+            // Losing captures
+            if (xVictimMinusAttacker < 0 && xVictimMinusAttacker > yVictimMinusAttacker) return -200 - xVictimMinusAttacker;
+            if (yVictimMinusAttacker < 0 && yVictimMinusAttacker > xVictimMinusAttacker) return 200 + yVictimMinusAttacker;
 
             return 0;
         }

@@ -38,8 +38,11 @@ namespace MegaKnight.Core
         int _infoDepth = 0;
         #endregion
 
-        // int _debugBranchesPruned;
+        int _debugBranchesResearched;
         // int _debugTranspositionsFound;
+        float _debugAveragePlaceOfAlphaCutoff = 0;
+        int _debugNumberPlacesAdded = 0;
+        int _debugBranchesSuccessfullyReduced = 0;
 
         public Engine(MoveGenerator moveGenerator, Evaluator evaluator)
         {
@@ -53,6 +56,11 @@ namespace MegaKnight.Core
         {
             _infoScore = int.MinValue;
             _infoDepth = 1;
+            _debugBranchesResearched = 0;
+            _debugAveragePlaceOfAlphaCutoff = 0;
+            _debugNumberPlacesAdded = 0;
+            _debugBranchesSuccessfullyReduced = 0;
+
             if (position.WhiteToMove)
             {
                 _maxSearchTime = WhiteTimeRemaining / 20 + WhiteTimeIncrement / 2;
@@ -95,13 +103,21 @@ namespace MegaKnight.Core
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
+            Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
+            Debug.WriteLine("Branches successfully reduced: " + _debugBranchesSuccessfullyReduced);
+            Debug.WriteLine("Average index of alpha cutoff: " + _debugAveragePlaceOfAlphaCutoff);
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
         public async Task<Move> GetBestMoveAsync(Position position, CancellationToken cancelToken)
         {
+            _debugBranchesResearched = 0;
             _infoScore = int.MinValue;
             _infoDepth = 1;
+            _debugAveragePlaceOfAlphaCutoff = 0;
+            _debugNumberPlacesAdded = 0;
+            _debugBranchesSuccessfullyReduced = 0;
+
             if (position.WhiteToMove)
             {
                 _maxSearchTime = WhiteTimeRemaining / 20 + WhiteTimeIncrement / 2;
@@ -148,6 +164,7 @@ namespace MegaKnight.Core
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
+            Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
@@ -191,8 +208,9 @@ namespace MegaKnight.Core
             List<Move> possibleMoves = _moveGenerator.GenerateAllPossibleMoves(position);
             SortMoves(possibleMoves, position, ply);
 
-            foreach (Move move in possibleMoves)
+            for(int i = 0; i < possibleMoves.Count; i++)
             {
+                Move move = possibleMoves[i];
                 position.MakeMove(move);
                 _evaluator.AddPositionToPreviousPositions(position);
                 int score = -AlphaBeta(position, depth - 1, -beta, -alpha, ply + 1, false, cancel);
@@ -233,6 +251,7 @@ namespace MegaKnight.Core
 
             int alphaOriginal = alpha;
             int hash = (int)(position.HashValue % _transpositionTableCapacity);
+            bool isHashMove = false;
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.HashValue && _transpositionTable[hash].Depth >= depth)
             {
                 if (_transpositionTable[hash].NodeType == NodeType.Exact)
@@ -241,10 +260,12 @@ namespace MegaKnight.Core
                 }
                 else if (_transpositionTable[hash].NodeType == NodeType.LowerBound)
                 {
+                    isHashMove = true;
                     alpha = Math.Max(alpha, _transpositionTable[hash].Evaluation);
                 }
                 else
                 {
+                    isHashMove = true;
                     beta = Math.Min(beta, _transpositionTable[hash].Evaluation);
                 }
             }
@@ -267,48 +288,83 @@ namespace MegaKnight.Core
                 }
                 return 0;
             }
+            bool kingAttacked = _moveGenerator.GetPiecesAttackingKing(position) != 0;
             // Null move pruning, R = 2
-            if (!nullMoveSearch && depth > 2 && _moveGenerator.GetPiecesAttackingKing(position) == 0 && _evaluator.GetGamePhase(position) < EvalWeights.MiddleGameCutoff)
+            if (!nullMoveSearch && depth > 2 && !kingAttacked && _evaluator.GetGamePhase(position) < EvalWeights.MiddleGameCutoff)
             {
                 position.MakeNullMove();
-                int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, ply + 1, true);
+                int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -alpha - 1, -alpha, ply + 1, true);
                 position.UnmakeNullMove();
                 // Prune this branch if the position is so strong that skipping a turn would still result in a winning position
-                if (nullMoveScore >= beta)
+                if (nullMoveScore < alpha)
                 {
                     return nullMoveScore;
                 }
             }
-            foreach (Move move in possibleMoves)
+            for (int i = 0; i < possibleMoves.Count; i++)
             {
-                position.MakeMove(move);
-                _evaluator.AddPositionToPreviousPositions(position);
-                //Debug.WriteLine(new string('\t', originalDepth - depth) + "M: " + move.ToString());
-                int score = -AlphaBeta(position, depth - 1, -beta, -alpha, ply + 1, nullMoveSearch);
-                _evaluator.RemovePositionFromPreviousPositions(position);
-                position.UnmakeMove(move);
-                //Debug.WriteLine(new string('\t', originalDepth - depth) + "U: " + move.ToString());
-                if (score > max)
+                bool reducedSearched = false;
+                int score;
+                Move move = possibleMoves[i];
+                bool isKiller = _killerMoves[ply] == move;
+                // Try to reduce the depth of later moves since they are more likely to fail low
+                if (depth >= 3 && i > 3 && !isKiller && !isHashMove && !kingAttacked && move.MoveType == MoveType.QuietMove)
                 {
-                    max = score;
-                    bestMove = move;
-                    if(score > alpha)
+                    reducedSearched = true;
+                    int depthReduction = (int)Math.Floor(Math.Log(depth / 2) + Math.Log(i));
+                    position.MakeMove(move);
+                    _evaluator.AddPositionToPreviousPositions(position);
+                    score = -AlphaBeta(position, depth - 1 - depthReduction, -alpha - 1, -alpha, ply + 1, nullMoveSearch);
+                    _evaluator.RemovePositionFromPreviousPositions(position);
+                    position.UnmakeMove(move);
+                }
+                else
+                {
+                    score = alpha + 1;
+                }
+                if (score > alpha)
+                {
+                    if (reducedSearched)
                     {
-                        alpha = score;
-                        //_principalVariation.SetPVValue(move, ply + depth, ply);
-                        // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
+                        //Debug.WriteLine(i);
+                        _debugBranchesResearched++;
+                    }
+                    position.MakeMove(move);
+                    _evaluator.AddPositionToPreviousPositions(position);
+                    score = -AlphaBeta(position, depth - 1, -beta, -alpha, ply + 1, nullMoveSearch);
+                    _evaluator.RemovePositionFromPreviousPositions(position);
+                    position.UnmakeMove(move);
+                    if (score > max)
+                    {
+                        max = score;
+                        bestMove = move;
+                        if (score > alpha)
+                        {
+                            alpha = score;
+                            _debugNumberPlacesAdded++;
+                            _debugAveragePlaceOfAlphaCutoff += (i - _debugAveragePlaceOfAlphaCutoff) / _debugNumberPlacesAdded;
+                            //_principalVariation.SetPVValue(move, ply + depth, ply);
+                            // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
+                        }
+                    }
+                    if (score >= beta)
+                    {
+                        _killerMoves[ply] = bestMove;
+                        if (!bestMove.IsCapture())
+                        {
+                            // Add to history
+                            _betaCuttoffHistory[position.WhiteToMove ? 0 : 1, Helper.SinglePopBitboardToIndex(bestMove.StartSquare), Helper.SinglePopBitboardToIndex(bestMove.EndSquare)]
+                                                                                                                                                                        += depth * depth;
+                        }
+                        break;
                     }
                 }
-                if (score >= beta)
+                else
                 {
-                    _killerMoves[ply] = bestMove;
-                    if (!bestMove.IsCapture())
+                    if (reducedSearched)
                     {
-                        // Add to history
-                        _betaCuttoffHistory[position.WhiteToMove ? 0 : 1, Helper.SinglePopBitboardToIndex(bestMove.StartSquare), Helper.SinglePopBitboardToIndex(bestMove.EndSquare)]
-                                                                                                                                                                    += depth * depth;
+                        _debugBranchesSuccessfullyReduced++;
                     }
-                    break;
                 }
                 if (CheckCancel(cancel)) return 0;
             }
@@ -438,6 +494,7 @@ namespace MegaKnight.Core
             // Sort moves with comparer. See MoveComparer for sorting methods
             MoveComparer comparer = new MoveComparer(_transpositionTable, _transpositionTableCapacity, position, _killerMoves, ply, _betaCuttoffHistory);
             moves.Sort(comparer);
+            // Debug.WriteLine(string.Join(' ', moves.Select(x => x.DetailedToString(position))) + "\n");
         }
         private static void PutMoveAtIndexInList(List<Move> moves, int indexToRemove, int indexToInsertAt)
         {

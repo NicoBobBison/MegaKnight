@@ -90,7 +90,8 @@ namespace MegaKnight.GUI
             BoardPiece.DeletedBoardThisFrame = false;
             foreach(BoardPiece piece in _boardPieces.ToArray())
             {
-                await piece.Update(gameTime);
+                if(piece != null)
+                    await piece.Update(gameTime);
             }
         }
         public void Draw(SpriteBatch spriteBatch)
