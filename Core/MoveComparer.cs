@@ -24,13 +24,15 @@ namespace MegaKnight.Core
         Position _position;
         Move[] _killerMoves;
         int _ply;
-        public MoveComparer(Dictionary<int, TranspositionEntry> transpositionTable, int ttCapacity, Position position, Move[] killerMoves, int ply)
+        int[,,] _history;
+        public MoveComparer(Dictionary<int, TranspositionEntry> transpositionTable, int ttCapacity, Position position, Move[] killerMoves, int ply, int[,,] history)
         {
             _transpositionTable = transpositionTable;
             _transpositionTableCapacity = ttCapacity;
             _position = position;
             _killerMoves = killerMoves;
             _ply = ply;
+            _history = history;
         }
         public int Compare(Move x, Move y)
         {
@@ -88,6 +90,20 @@ namespace MegaKnight.Core
             if (yIsCapture && !xIsCapture)
             {
                 return 500;
+            }
+
+            int xStartIndex = Helper.SinglePopBitboardToIndex(x.StartSquare);
+            int yStartIndex = Helper.SinglePopBitboardToIndex(y.StartSquare);
+            int xEndIndex = Helper.SinglePopBitboardToIndex(x.EndSquare);
+            int yEndIndex = Helper.SinglePopBitboardToIndex(y.EndSquare);
+
+            if (_history[_position.WhiteToMove ? 0 : 1, xStartIndex, xEndIndex] > _history[_position.WhiteToMove ? 0 : 1, yStartIndex, yEndIndex])
+            {
+                return -400;
+            }
+            else if (_history[_position.WhiteToMove ? 0 : 1, xStartIndex, xEndIndex] < _history[_position.WhiteToMove ? 0 : 1, yStartIndex, yEndIndex])
+            {
+                return 400;
             }
 
             return 0;

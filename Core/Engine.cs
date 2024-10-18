@@ -27,6 +27,7 @@ namespace MegaKnight.Core
 
         const int _transpositionTableCapacity = 10000000;
         Dictionary<int, TranspositionEntry> _transpositionTable;
+        int[,,] _betaCuttoffHistory; // For history heuristic
         Stopwatch _moveStopwatch = Stopwatch.StartNew();
         //PVTable _principalVariation = new PVTable();
         // Should this be a list?
@@ -46,6 +47,7 @@ namespace MegaKnight.Core
             _evaluator = evaluator;
 
             _transpositionTable = new Dictionary<int, TranspositionEntry>(_transpositionTableCapacity);
+            _betaCuttoffHistory = new int[2, 64, 64];
         }
         public Move GetBestMove(Position position)
         {
@@ -211,6 +213,12 @@ namespace MegaKnight.Core
                 if (score >= beta)
                 {
                     _killerMoves[ply] = bestMove;
+                    if (!bestMove.IsCapture())
+                    {
+                        // Add to history
+                        _betaCuttoffHistory[position.WhiteToMove ? 0 : 1, Helper.SinglePopBitboardToIndex(bestMove.StartSquare), Helper.SinglePopBitboardToIndex(bestMove.EndSquare)]
+                                                                                                                                                                    += depth * depth;
+                    }
                     break;
                 }
                 if (CheckCancel(cancel)) return null;
@@ -294,6 +302,12 @@ namespace MegaKnight.Core
                 if (score >= beta)
                 {
                     _killerMoves[ply] = bestMove;
+                    if (!bestMove.IsCapture())
+                    {
+                        // Add to history
+                        _betaCuttoffHistory[position.WhiteToMove ? 0 : 1, Helper.SinglePopBitboardToIndex(bestMove.StartSquare), Helper.SinglePopBitboardToIndex(bestMove.EndSquare)]
+                                                                                                                                                                    += depth * depth;
+                    }
                     break;
                 }
                 if (CheckCancel(cancel)) return 0;
@@ -422,7 +436,7 @@ namespace MegaKnight.Core
         void SortMoves(List<Move> moves, Position position, int ply)
         {
             // Sort moves with comparer. See MoveComparer for sorting methods
-            MoveComparer comparer = new MoveComparer(_transpositionTable, _transpositionTableCapacity, position, _killerMoves, ply);
+            MoveComparer comparer = new MoveComparer(_transpositionTable, _transpositionTableCapacity, position, _killerMoves, ply, _betaCuttoffHistory);
             moves.Sort(comparer);
         }
         private static void PutMoveAtIndexInList(List<Move> moves, int indexToRemove, int indexToInsertAt)
