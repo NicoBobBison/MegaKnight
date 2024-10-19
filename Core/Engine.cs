@@ -208,7 +208,8 @@ namespace MegaKnight.Core
             List<Move> possibleMoves = _moveGenerator.GenerateAllPossibleMoves(position);
             SortMoves(possibleMoves, position, ply);
 
-            for(int i = 0; i < possibleMoves.Count; i++)
+            List<Move> prevQuietMoves = new List<Move>();
+            for (int i = 0; i < possibleMoves.Count; i++)
             {
                 Move move = possibleMoves[i];
                 position.MakeMove(move);
@@ -231,13 +232,21 @@ namespace MegaKnight.Core
                 if (score >= beta)
                 {
                     _killerMoves[ply] = bestMove;
-                    if (!bestMove.IsCapture())
+                    if (bestMove.MoveType == MoveType.QuietMove)
                     {
-                        // Add to history
-                        _betaCuttoffHistory[position.WhiteToMove ? 0 : 1, Helper.SinglePopBitboardToIndex(bestMove.StartSquare), Helper.SinglePopBitboardToIndex(bestMove.EndSquare)]
-                                                                                                                                                                    += depth * depth;
+                        // Add to history (and history malus for moves that haven't caused a beta cutoff)
+                        int colorIndex = position.WhiteToMove ? 0 : 1;
+                        foreach (Move prev in prevQuietMoves)
+                        {
+                            _betaCuttoffHistory[colorIndex, Helper.SinglePopBitboardToIndex(prev.StartSquare), Helper.SinglePopBitboardToIndex(prev.EndSquare)] -= depth * depth;
+                        }
+                        _betaCuttoffHistory[colorIndex, Helper.SinglePopBitboardToIndex(bestMove.StartSquare), Helper.SinglePopBitboardToIndex(bestMove.EndSquare)] += depth * depth;
                     }
                     break;
+                }
+                if (move.MoveType == MoveType.QuietMove)
+                {
+                    prevQuietMoves.Add(move);
                 }
                 if (CheckCancel(cancel)) return null;
             }
@@ -301,6 +310,7 @@ namespace MegaKnight.Core
                     return nullMoveScore;
                 }
             }
+            List<Move> prevQuietMoves = new List<Move>();
             for (int i = 0; i < possibleMoves.Count; i++)
             {
                 bool reducedSearched = false;
@@ -350,11 +360,15 @@ namespace MegaKnight.Core
                     if (score >= beta)
                     {
                         _killerMoves[ply] = bestMove;
-                        if (!bestMove.IsCapture())
+                        if (bestMove.MoveType == MoveType.QuietMove)
                         {
                             // Add to history
-                            _betaCuttoffHistory[position.WhiteToMove ? 0 : 1, Helper.SinglePopBitboardToIndex(bestMove.StartSquare), Helper.SinglePopBitboardToIndex(bestMove.EndSquare)]
-                                                                                                                                                                        += depth * depth;
+                            int colorIndex = position.WhiteToMove ? 0 : 1;
+                            foreach(Move prev in prevQuietMoves)
+                            {
+                                _betaCuttoffHistory[colorIndex, Helper.SinglePopBitboardToIndex(prev.StartSquare), Helper.SinglePopBitboardToIndex(prev.EndSquare)] -= depth * depth;
+                            }
+                            _betaCuttoffHistory[colorIndex, Helper.SinglePopBitboardToIndex(bestMove.StartSquare), Helper.SinglePopBitboardToIndex(bestMove.EndSquare)] += depth * depth;
                         }
                         break;
                     }
@@ -365,6 +379,10 @@ namespace MegaKnight.Core
                     {
                         _debugBranchesSuccessfullyReduced++;
                     }
+                }
+                if (move.MoveType == MoveType.QuietMove)
+                {
+                    prevQuietMoves.Add(move);
                 }
                 if (CheckCancel(cancel)) return 0;
             }
