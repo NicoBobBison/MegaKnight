@@ -103,9 +103,9 @@ namespace MegaKnight.Core
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
-            Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
-            Debug.WriteLine("Branches successfully reduced: " + _debugBranchesSuccessfullyReduced);
-            Debug.WriteLine("Average index of alpha cutoff: " + _debugAveragePlaceOfAlphaCutoff);
+            //Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
+            //Debug.WriteLine("Branches successfully reduced: " + _debugBranchesSuccessfullyReduced);
+            //Debug.WriteLine("Average index of alpha cutoff: " + _debugAveragePlaceOfAlphaCutoff);
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
@@ -164,7 +164,7 @@ namespace MegaKnight.Core
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
-            Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
+            //Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
@@ -232,7 +232,7 @@ namespace MegaKnight.Core
                 if (score >= beta)
                 {
                     _killerMoves[ply] = bestMove;
-                    if (bestMove.MoveType == MoveType.QuietMove)
+                    if (!bestMove.IsCapture() && !bestMove.IsPromotion())
                     {
                         // Add to history (and history malus for moves that haven't caused a beta cutoff)
                         int colorIndex = position.WhiteToMove ? 0 : 1;
@@ -244,7 +244,7 @@ namespace MegaKnight.Core
                     }
                     break;
                 }
-                if (move.MoveType == MoveType.QuietMove)
+                if (!move.IsCapture() && !move.IsPromotion())
                 {
                     prevQuietMoves.Add(move);
                 }
@@ -302,25 +302,23 @@ namespace MegaKnight.Core
             if (!nullMoveSearch && depth > 2 && !kingAttacked && _evaluator.GetGamePhase(position) < EvalWeights.MiddleGameCutoff)
             {
                 position.MakeNullMove();
-                int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -alpha - 1, -alpha, ply + 1, true);
+                int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, ply + 1, true);
                 position.UnmakeNullMove();
                 // Prune this branch if the position is so strong that skipping a turn would still result in a winning position
-                if (nullMoveScore < alpha)
+                if (nullMoveScore >= beta)
                 {
                     return nullMoveScore;
                 }
             }
-            List<Move> prevQuietMoves = new List<Move>();
+            List<Move> prevNonCaptures = new List<Move>();
             for (int i = 0; i < possibleMoves.Count; i++)
             {
-                bool reducedSearched = false;
                 int score;
                 Move move = possibleMoves[i];
                 bool isKiller = _killerMoves[ply] == move;
                 // Try to reduce the depth of later moves since they are more likely to fail low
-                if (depth >= 3 && i > 3 && !isKiller && !isHashMove && !kingAttacked && move.MoveType == MoveType.QuietMove)
+                if (depth >= 3 && i > 3 && !isKiller && !isHashMove && !kingAttacked && !move.IsCapture() && !move.IsPromotion())
                 {
-                    reducedSearched = true;
                     int depthReduction = (int)Math.Floor(Math.Log(depth / 2) + Math.Log(i));
                     position.MakeMove(move);
                     _evaluator.AddPositionToPreviousPositions(position);
@@ -334,11 +332,6 @@ namespace MegaKnight.Core
                 }
                 if (score > alpha)
                 {
-                    if (reducedSearched)
-                    {
-                        //Debug.WriteLine(i);
-                        _debugBranchesResearched++;
-                    }
                     position.MakeMove(move);
                     _evaluator.AddPositionToPreviousPositions(position);
                     score = -AlphaBeta(position, depth - 1, -beta, -alpha, ply + 1, nullMoveSearch);
@@ -351,8 +344,6 @@ namespace MegaKnight.Core
                         if (score > alpha)
                         {
                             alpha = score;
-                            _debugNumberPlacesAdded++;
-                            _debugAveragePlaceOfAlphaCutoff += (i - _debugAveragePlaceOfAlphaCutoff) / _debugNumberPlacesAdded;
                             //_principalVariation.SetPVValue(move, ply + depth, ply);
                             // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
                         }
@@ -360,11 +351,11 @@ namespace MegaKnight.Core
                     if (score >= beta)
                     {
                         _killerMoves[ply] = bestMove;
-                        if (bestMove.MoveType == MoveType.QuietMove)
+                        if (!bestMove.IsCapture() && !bestMove.IsPromotion())
                         {
                             // Add to history
                             int colorIndex = position.WhiteToMove ? 0 : 1;
-                            foreach(Move prev in prevQuietMoves)
+                            foreach(Move prev in prevNonCaptures)
                             {
                                 _betaCuttoffHistory[colorIndex, Helper.SinglePopBitboardToIndex(prev.StartSquare), Helper.SinglePopBitboardToIndex(prev.EndSquare)] -= depth * depth;
                             }
@@ -373,16 +364,9 @@ namespace MegaKnight.Core
                         break;
                     }
                 }
-                else
+                if (!bestMove.IsCapture() && !bestMove.IsPromotion())
                 {
-                    if (reducedSearched)
-                    {
-                        _debugBranchesSuccessfullyReduced++;
-                    }
-                }
-                if (move.MoveType == MoveType.QuietMove)
-                {
-                    prevQuietMoves.Add(move);
+                    prevNonCaptures.Add(move);
                 }
                 if (CheckCancel(cancel)) return 0;
             }

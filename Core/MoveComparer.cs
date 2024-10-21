@@ -101,13 +101,16 @@ namespace MegaKnight.Core
             int yEndIndex = Helper.SinglePopBitboardToIndex(y.EndSquare);
 
             // Quiet moves (sorted by history heuristic)
-            if (_history[_position.WhiteToMove ? 0 : 1, xStartIndex, xEndIndex] > _history[_position.WhiteToMove ? 0 : 1, yStartIndex, yEndIndex])
+            if(xVictimMinusAttacker == yVictimMinusAttacker)
             {
-                return -400;
-            }
-            else if (_history[_position.WhiteToMove ? 0 : 1, xStartIndex, xEndIndex] < _history[_position.WhiteToMove ? 0 : 1, yStartIndex, yEndIndex])
-            {
-                return 400;
+                if (_history[_position.WhiteToMove ? 0 : 1, xStartIndex, xEndIndex] > _history[_position.WhiteToMove ? 0 : 1, yStartIndex, yEndIndex])
+                {
+                    return -400;
+                }
+                else if (_history[_position.WhiteToMove ? 0 : 1, xStartIndex, xEndIndex] < _history[_position.WhiteToMove ? 0 : 1, yStartIndex, yEndIndex])
+                {
+                    return 400;
+                }
             }
 
             // Losing captures
