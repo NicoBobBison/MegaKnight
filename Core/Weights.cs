@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MegaKnight.Core
 {
-    internal static class EvalWeights
+    internal static class Weights
     {
         // CREDIT: Piece weights and piece-square tables taken from PeSTO's evaluation function
         // https://www.chessprogramming.org/PeSTO%27s_Evaluation_Function
@@ -35,6 +35,9 @@ namespace MegaKnight.Core
         // Cutoffs (based on GetGamePhase()) for different phases of the game
         public const float EarlyGameCutoff = 0.3f;
         public const float MiddleGameCutoff = 0.7f;
+
+        public const int DoubledPawnMalusEarly = 30;
+        public const int DoubledPawnMalusLate = 50;
 
         // Early game piece-square tables (from white's perspective, mirror for black's perspective)
         public static readonly int[] PawnPSTEarly = new int[]

@@ -38,11 +38,11 @@ namespace MegaKnight.Core
         int _infoDepth = 0;
         #endregion
 
-        int _debugBranchesResearched;
+        //int _debugBranchesResearched;
         // int _debugTranspositionsFound;
-        float _debugAveragePlaceOfAlphaCutoff = 0;
-        int _debugNumberPlacesAdded = 0;
-        int _debugBranchesSuccessfullyReduced = 0;
+        //float _debugAveragePlaceOfAlphaCutoff = 0;
+        //int _debugNumberPlacesAdded = 0;
+        //int _debugBranchesSuccessfullyReduced = 0;
 
         public Engine(MoveGenerator moveGenerator, Evaluator evaluator)
         {
@@ -56,10 +56,10 @@ namespace MegaKnight.Core
         {
             _infoScore = int.MinValue;
             _infoDepth = 1;
-            _debugBranchesResearched = 0;
-            _debugAveragePlaceOfAlphaCutoff = 0;
-            _debugNumberPlacesAdded = 0;
-            _debugBranchesSuccessfullyReduced = 0;
+            // _debugBranchesResearched = 0;
+            // _debugAveragePlaceOfAlphaCutoff = 0;
+            // _debugNumberPlacesAdded = 0;
+            // _debugBranchesSuccessfullyReduced = 0;
 
             if (position.WhiteToMove)
             {
@@ -111,12 +111,12 @@ namespace MegaKnight.Core
         }
         public async Task<Move> GetBestMoveAsync(Position position, CancellationToken cancelToken)
         {
-            _debugBranchesResearched = 0;
+            // _debugBranchesResearched = 0;
             _infoScore = int.MinValue;
             _infoDepth = 1;
-            _debugAveragePlaceOfAlphaCutoff = 0;
-            _debugNumberPlacesAdded = 0;
-            _debugBranchesSuccessfullyReduced = 0;
+            // _debugAveragePlaceOfAlphaCutoff = 0;
+            // _debugNumberPlacesAdded = 0;
+            // _debugBranchesSuccessfullyReduced = 0;
 
             if (position.WhiteToMove)
             {
@@ -299,7 +299,7 @@ namespace MegaKnight.Core
             }
             bool kingAttacked = _moveGenerator.GetPiecesAttackingKing(position) != 0;
             // Null move pruning, R = 2
-            if (!nullMoveSearch && depth > 2 && !kingAttacked && _evaluator.GetGamePhase(position) < EvalWeights.MiddleGameCutoff)
+            if (!nullMoveSearch && depth > 2 && !kingAttacked && _evaluator.GetGamePhase(position) < Weights.MiddleGameCutoff)
             {
                 position.MakeNullMove();
                 int nullMoveScore = -AlphaBeta(position, depth - 1 - 2, -beta, -beta + 1, ply + 1, true);
@@ -319,10 +319,10 @@ namespace MegaKnight.Core
                 // Try to reduce the depth of later moves since they are more likely to fail low
                 if (depth >= 3 && i > 3 && !isKiller && !isHashMove && !kingAttacked && !move.IsCapture() && !move.IsPromotion())
                 {
-                    int depthReduction = (int)Math.Floor(Math.Log(depth / 2) + Math.Log(i));
+                    int depthReduction = (int)Math.Max(1, Math.Floor(Math.Log(depth) * Math.Log(i) / 2));
                     position.MakeMove(move);
                     _evaluator.AddPositionToPreviousPositions(position);
-                    score = -AlphaBeta(position, depth - 1 - depthReduction, -alpha - 1, -alpha, ply + 1, nullMoveSearch);
+                    score = -AlphaBeta(position, depth - 1 - depthReduction, -beta, -beta + 1, ply + 1, nullMoveSearch);
                     _evaluator.RemovePositionFromPreviousPositions(position);
                     position.UnmakeMove(move);
                 }
@@ -364,7 +364,7 @@ namespace MegaKnight.Core
                         break;
                     }
                 }
-                if (!bestMove.IsCapture() && !bestMove.IsPromotion())
+                if (!move.IsCapture() && !move.IsPromotion())
                 {
                     prevNonCaptures.Add(move);
                 }
@@ -426,7 +426,7 @@ namespace MegaKnight.Core
             SortMoves(moves, position, ply);
 
             // Delta pruning, subtract 200 centipawns as a safety net (do we need to also add for pawn promotion?)
-            int queenVal = (int)Helper.Lerp(EvalWeights.QueenValueEarly, EvalWeights.QueenValueLate, _evaluator.GetGamePhase(position));
+            int queenVal = (int)Helper.Lerp(Weights.QueenValueEarly, Weights.QueenValueLate, _evaluator.GetGamePhase(position));
             int bigDelta = queenVal - 200;
             foreach (Move m in moves)
             {
@@ -436,7 +436,7 @@ namespace MegaKnight.Core
                 }
             }
             // Check if best possible material capture would save position (also check game phase since we don't want this in endgame)
-            if (standingPat + bigDelta < alpha && _evaluator.GetGamePhase(position) < EvalWeights.MiddleGameCutoff)
+            if (standingPat + bigDelta < alpha && _evaluator.GetGamePhase(position) < Weights.MiddleGameCutoff)
             {
                 return standingPat;
             }

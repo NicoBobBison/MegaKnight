@@ -1,10 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Data;
 
 namespace MegaKnight.Core
 {
@@ -86,11 +81,16 @@ namespace MegaKnight.Core
             int rookDiff = whiteRookIndeces.Length - blackRookIndeces.Length;
             int queenDiff = whiteQueenIndeces.Length - blackQueenIndeces.Length;
             
-            evaluation += (int)(Helper.Lerp(EvalWeights.PawnValueEarly, EvalWeights.PawnValueLate, gamePhase) * pawnDiff);
-            evaluation += (int)(Helper.Lerp(EvalWeights.KnightValueEarly, EvalWeights.KnightValueLate, gamePhase) * knightDiff);
-            evaluation += (int)(Helper.Lerp(EvalWeights.BishopValueEarly, EvalWeights.BishopValueLate, gamePhase) * bishopDiff);
-            evaluation += (int)(Helper.Lerp(EvalWeights.RookValueEarly, EvalWeights.RookValueLate, gamePhase) * rookDiff);
-            evaluation += (int)(Helper.Lerp(EvalWeights.QueenValueEarly, EvalWeights.QueenValueLate, gamePhase) * queenDiff);
+            evaluation += (int)(Helper.Lerp(Weights.PawnValueEarly, Weights.PawnValueLate, gamePhase) * pawnDiff);
+            evaluation += (int)(Helper.Lerp(Weights.KnightValueEarly, Weights.KnightValueLate, gamePhase) * knightDiff);
+            evaluation += (int)(Helper.Lerp(Weights.BishopValueEarly, Weights.BishopValueLate, gamePhase) * bishopDiff);
+            evaluation += (int)(Helper.Lerp(Weights.RookValueEarly, Weights.RookValueLate, gamePhase) * rookDiff);
+            evaluation += (int)(Helper.Lerp(Weights.QueenValueEarly, Weights.QueenValueLate, gamePhase) * queenDiff);
+
+            ulong friendlyPawns = position.WhiteToMove ? position.WhitePawns : position.BlackPawns;
+            // Bit shift direction doesn't matter
+            ulong doubledPawns = friendlyPawns & (friendlyPawns << 8);
+            evaluation -= Helper.GetBitboardPopCount(doubledPawns) * (int)Helper.Lerp(Weights.DoubledPawnMalusEarly, Weights.DoubledPawnMalusLate, gamePhase); 
 
             // TODO: See if this check can be faster, or if it's even worth it to calculate (might be good with just PST)
             //evaluation += EvalWeights.PawnMobilityValue * (CalculateMobility(position.WhitePawns, Piece.Pawn, position) - CalculateMobility(position.BlackPawns, Piece.Pawn, position));
@@ -104,7 +104,7 @@ namespace MegaKnight.Core
             {
                 foreach(int square in allIndeces[i])
                 {
-                    evaluation += (int)Helper.Lerp(EvalWeights.PSTEarly[i][square ^ 56], EvalWeights.PSTLate[i][square ^ 56], gamePhase);
+                    evaluation += (int)Helper.Lerp(Weights.PSTEarly[i][square ^ 56], Weights.PSTLate[i][square ^ 56], gamePhase);
                 }
             }
 
@@ -113,7 +113,7 @@ namespace MegaKnight.Core
             {
                 foreach (int square in allIndeces[i + 6])
                 {
-                    evaluation -= (int)Helper.Lerp(EvalWeights.PSTEarly[i][square], EvalWeights.PSTLate[i][square], gamePhase);
+                    evaluation -= (int)Helper.Lerp(Weights.PSTEarly[i][square], Weights.PSTLate[i][square], gamePhase);
                 }
             }
 
@@ -130,17 +130,17 @@ namespace MegaKnight.Core
         }
         public float GetGamePhase(Position position)
         {
-            float materialOnBoard = Helper.GetBitboardPopCount(position.WhitePawns | position.BlackPawns) * EvalWeights.PawnValueEarly +
-                        Helper.GetBitboardPopCount(position.WhiteKnights | position.BlackKnights) * EvalWeights.KnightValueEarly +
-                        Helper.GetBitboardPopCount(position.WhiteBishops | position.BlackBishops) * EvalWeights.BishopValueEarly +
-                        Helper.GetBitboardPopCount(position.WhiteRooks | position.BlackRooks) * EvalWeights.RookValueEarly +
-                        Helper.GetBitboardPopCount(position.WhiteQueens | position.BlackQueens) * EvalWeights.QueenValueEarly;
+            float materialOnBoard = Helper.GetBitboardPopCount(position.WhitePawns | position.BlackPawns) * Weights.PawnValueEarly +
+                        Helper.GetBitboardPopCount(position.WhiteKnights | position.BlackKnights) * Weights.KnightValueEarly +
+                        Helper.GetBitboardPopCount(position.WhiteBishops | position.BlackBishops) * Weights.BishopValueEarly +
+                        Helper.GetBitboardPopCount(position.WhiteRooks | position.BlackRooks) * Weights.RookValueEarly +
+                        Helper.GetBitboardPopCount(position.WhiteQueens | position.BlackQueens) * Weights.QueenValueEarly;
 
-            float totalPossibleMaterial = 16 * EvalWeights.PawnValueEarly +
-                                           4 * EvalWeights.KnightValueEarly +
-                                           4 * EvalWeights.BishopValueEarly +
-                                           4 * EvalWeights.RookValueEarly +
-                                           2 * EvalWeights.QueenValueEarly;
+            float totalPossibleMaterial = 16 * Weights.PawnValueEarly +
+                                           4 * Weights.KnightValueEarly +
+                                           4 * Weights.BishopValueEarly +
+                                           4 * Weights.RookValueEarly +
+                                           2 * Weights.QueenValueEarly;
 
             float gamePhase = (totalPossibleMaterial - materialOnBoard) / totalPossibleMaterial;
             return Math.Clamp(gamePhase, 0, 1);
