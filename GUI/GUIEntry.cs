@@ -1,9 +1,8 @@
-﻿using MegaKnight.GUI;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace MegaKnight
+namespace MegaKnight.GUI
 {
     /// <summary>
     /// Run during GUI configuration.
@@ -29,6 +28,7 @@ namespace MegaKnight
         {
             _graphics.PreferredBackBufferWidth = (int)ScreenSize.X;
             _graphics.PreferredBackBufferHeight = (int)ScreenSize.Y;
+            _graphics.IsFullScreen = false;
             _graphics.ApplyChanges();
 
             base.Initialize();
