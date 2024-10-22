@@ -4,7 +4,7 @@
 
 ## Features
 
-- **User interface**: a simple GUI, with hints for legal moves
+- **User interface**: a simple GUI built in MonoGame, with hints for legal moves
 - **Compatability with other GUIs**: MegaKnight includes a console build compatible with the Universal Chess Interface (UCI), allowing it to be used with other GUIs or benchmarked with programs like [Fastchess](https://github.com/Disservin/fastchess).
 - **Move validation**: ensures all moves made are legal
 - **Engine play**: analyzes the current board state and plays the best possible move
