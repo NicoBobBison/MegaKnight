@@ -25,17 +25,25 @@
    ```sh
    dotnet build MegaKnight.csproj -c GUI -o [OUTPUT DIRECTORY]
    ```
+   
    Alternatively, build the console version:
 
    ```sh
    dotnet build MegaKnight.csproj -c CONSOLE -o [OUTPUT DIRECTORY]
    ```
-4. Run the DLL file.
+   
+4. Run the .exe file.
+   
+   ```sh
+   start MegaKnight.exe
+   ```
+   
+   Alternatively, for the console build, you may also run the DLL file.
 
    ```sh
    dotnet MegaKnight.dll
    ```
-
+   
 ## Roadmap
 MegaKnight is currently in active development. Some upcoming features include:
 - [ ] Adding better pruning techniques to increase engine performance
