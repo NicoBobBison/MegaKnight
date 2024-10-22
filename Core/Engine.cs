@@ -20,7 +20,7 @@ namespace MegaKnight.Core
         float _engineTimeRemaining;
 
         // Need to figure out what to do with this. Base it off current depth or always keep constant?
-        const int _quiescenceSearchDepth = 3;
+        const int _quiescenceSearchDepth = 7;
 
         MoveGenerator _moveGenerator;
         Evaluator _evaluator;
