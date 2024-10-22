@@ -1,15 +1,17 @@
 # MegaKnight
- MegaKnight is a chess engine that plays around the level of an intermediate player. Written in C#, it features both an easy-to-use GUI build and a UCI compatible console build.
+ MegaKnight is a chess engine that plays at the level of an intermediate player. Written in C#, it features both an easy-to-use GUI build and a UCI compatible console build.
 
 ## Features
-- User interface: a simple GUI, with hints for legal moves
-- Compatability with other GUIs: MegaKnight includes a console build compatible with the Universal Chess Interface (UCI), allowing it to be used with other GUIs
-- Move validation: ensures all moves made are legal
-- Engine play: analyzes the current board state and plays the best possible move
+- **User interface**: a simple GUI, with hints for legal moves
+- **Compatability with other GUIs**: MegaKnight includes a console build compatible with the Universal Chess Interface (UCI), allowing it to be used with other GUIs or benchmarked with programs like [Fastchess](https://github.com/Disservin/fastchess).
+- **Move validation**: ensures all moves made are legal
+- **Engine play**: analyzes the current board state and plays the best possible move
 
-## Installation
-1. Download and install dotnet.
-2. Clone the repository and navigate into its directory.
+## Getting Started
+### Prerequisites
+1. Download and install [the .NET framework](https://dotnet.microsoft.com/en-us/download).
+### Installation
+1. Clone the repository and navigate into its directory.
 
    ```sh
    cd MegaKnight
