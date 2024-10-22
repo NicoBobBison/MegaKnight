@@ -31,3 +31,11 @@
    ```sh
    dotnet MegaKnight.dll
    ```
+
+## Acknowledgements
+- [Fastchess (for benchmarking and testing)](https://github.com/Disservin/fastchess)
+- [Opening book](https://github.com/official-stockfish/books/blob/master/8moves_v3.pgn.zip)
+- [The Chess Programming Wiki](https://www.chessprogramming.org/Main_Page)
+- [An article about bitboard intuition](https://lichess.org/@/likeawizard/blog/review-of-different-board-representations-in-computer-chess/S9eQCAWa)
+- [An article on fast move generation](https://peterellisjones.com/posts/generating-legal-chess-moves-efficiently/)
+- [Coding Adventure: Chess](https://www.youtube.com/watch?v=U4ogK0MIzqk)
