@@ -7,7 +7,7 @@ using MegaKnight.Core;
 using System.CommandLine;
 using System.Threading;
 
-namespace MegaKnight
+namespace MegaKnight.GUI
 {
     /// <summary>
     /// This class is run during console entry and creates a terminal window to interact with rather than GUI. UCI compatible.
