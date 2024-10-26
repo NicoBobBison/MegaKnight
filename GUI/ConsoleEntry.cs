@@ -105,19 +105,29 @@ namespace MegaKnight.GUI
             Option<float> bTimeOption = new Option<float>(name: "btime", description: "Remaining time for black to move (in ms).", getDefaultValue: () => 1000 * 60);
             Option<float> wIncrementOption = new Option<float>(name: "winc", description: "White time increment per move (in ms).", getDefaultValue: () => 1000);
             Option<float> bIncrementOption = new Option<float>(name: "binc", description: "Black time increment per move (in ms).", getDefaultValue: () => 1000);
+            Option<bool> infiniteOption = new Option<bool>(name: "infinite", description: "Search until told to stop with the \"stop\" command.");
             goCommand.Add(wTimeOption);
             goCommand.Add(bTimeOption);
             goCommand.Add(wIncrementOption);
             goCommand.Add(bIncrementOption);
+            goCommand.Add(infiniteOption);
             goCommand.SetHandler(async (context) =>
             {
                 float wTime = context.ParseResult.GetValueForOption(wTimeOption);
                 float bTime = context.ParseResult.GetValueForOption(bTimeOption);
                 float wInc = context.ParseResult.GetValueForOption(wIncrementOption);
                 float bInc = context.ParseResult.GetValueForOption(bIncrementOption);
+                bool infinite = context.ParseResult.GetValueForOption(infiniteOption);
                 cancelTokenSource = new CancellationTokenSource();
 
-                _core.SetEngineTimeRules(wTime, bTime, wInc, bInc);
+                if (infinite)
+                {
+                    _core.SetEngineTimeRules(float.MaxValue, float.MaxValue, 0, 0);
+                }
+                else
+                {
+                    _core.SetEngineTimeRules(wTime, bTime, wInc, bInc);
+                }
                 Move bestMove = await _core.GetBestMoveAsync(cancelTokenSource.Token);
                 Console.WriteLine("bestmove " + bestMove.ToString());
             });
