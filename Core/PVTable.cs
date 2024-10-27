@@ -56,6 +56,13 @@ namespace MegaKnight.Core
             Array.Copy(_moves, i, m, 0, depth);
             return m;
         }
+        public void ClearPVRow(int depth)
+        {
+            for(int i = GetStartIndex(depth); i < GetStartIndex(depth + 1); i++)
+            {
+                _moves[i] = null;
+            }
+        }
         public void SetPVValue(Move move, int depth, int offset)
         {
             int i = GetStartIndex(depth) + offset;

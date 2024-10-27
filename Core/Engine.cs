@@ -29,7 +29,7 @@ namespace MegaKnight.Core
         Dictionary<int, TranspositionEntry> _transpositionTable;
         int[,,] _betaCuttoffHistory; // For history heuristic
         Stopwatch _moveStopwatch = Stopwatch.StartNew();
-        //PVTable _principalVariation = new PVTable();
+        PVTable _principalVariation = new PVTable();
         // Should this be a list?
         Move[] _killerMoves = new Move[100];
 
@@ -75,7 +75,7 @@ namespace MegaKnight.Core
             _killerMoves = new Move[60];
             // _debugBranchesPruned = 0;
 
-            //_principalVariation = new PVTable();
+            _principalVariation = new PVTable();
             Move bestMoveSoFar = null;
             int depth = 1;
             while(_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
@@ -106,6 +106,8 @@ namespace MegaKnight.Core
             //Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
             //Debug.WriteLine("Branches successfully reduced: " + _debugBranchesSuccessfullyReduced);
             //Debug.WriteLine("Average index of alpha cutoff: " + _debugAveragePlaceOfAlphaCutoff);
+            Debug.WriteLine("PV Table:");
+            Debug.WriteLine(_principalVariation.ToString());
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
@@ -132,7 +134,7 @@ namespace MegaKnight.Core
             _killerMoves = new Move[60];
             // _debugBranchesPruned = 0;
 
-            //_principalVariation = new PVTable();
+            _principalVariation = new PVTable();
             Move bestMoveSoFar = null;
             int depth = 1;
             await Task.Run(() =>
@@ -165,6 +167,8 @@ namespace MegaKnight.Core
             //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
             Debug.WriteLine("Highest base depth searched: " + depth);
             //Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
+            Debug.WriteLine("PV Table:");
+            Debug.WriteLine(_principalVariation.ToString());
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
@@ -225,8 +229,11 @@ namespace MegaKnight.Core
                     if (score > alpha)
                     {
                         alpha = score;
-                        //_principalVariation.SetPVValue(move, ply + depth, ply);
-                        // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
+                        if (score < beta)
+                        {
+                            _principalVariation.SetPVValue(move, ply + depth, ply);
+                            // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
+                        }
                     }
                 }
                 if (score >= beta)
@@ -298,6 +305,7 @@ namespace MegaKnight.Core
                 return 0;
             }
             bool kingAttacked = _moveGenerator.GetPiecesAttackingKing(position) != 0;
+
             // Null move pruning, R = 2
             if (!nullMoveSearch && depth > 2 && !kingAttacked && _evaluator.GetGamePhase(position) < Weights.MiddleGameCutoff)
             {
@@ -344,8 +352,11 @@ namespace MegaKnight.Core
                         if (score > alpha)
                         {
                             alpha = score;
-                            //_principalVariation.SetPVValue(move, ply + depth, ply);
-                            // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
+                            if(score < beta)
+                            {
+                                _principalVariation.SetPVValue(move, ply + depth, ply);
+                                // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
+                            }
                         }
                     }
                     if (score >= beta)
