@@ -29,7 +29,8 @@ namespace MegaKnight.Core
         Dictionary<int, TranspositionEntry> _transpositionTable;
         int[,,] _betaCuttoffHistory; // For history heuristic
         Stopwatch _moveStopwatch = Stopwatch.StartNew();
-        PVTable _principalVariation = new PVTable();
+        PVTable _pvTable = new PVTable();
+        Move[] _previousPV = null;
         // Should this be a list?
         Move[] _killerMoves = new Move[100];
 
@@ -75,7 +76,7 @@ namespace MegaKnight.Core
             _killerMoves = new Move[60];
             // _debugBranchesPruned = 0;
 
-            _principalVariation = new PVTable();
+            _pvTable = new PVTable();
             Move bestMoveSoFar = null;
             int depth = 1;
             while(_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
@@ -84,6 +85,7 @@ namespace MegaKnight.Core
                 if (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
                 {
                     bestMoveSoFar = move;
+                    _previousPV = _pvTable.GetPrincipalVariation();
                     Console.WriteLine(GetInfo());
                     depth++;
                     _infoDepth++;
@@ -107,7 +109,7 @@ namespace MegaKnight.Core
             //Debug.WriteLine("Branches successfully reduced: " + _debugBranchesSuccessfullyReduced);
             //Debug.WriteLine("Average index of alpha cutoff: " + _debugAveragePlaceOfAlphaCutoff);
             Debug.WriteLine("PV Table:");
-            Debug.WriteLine(_principalVariation.ToString());
+            Debug.WriteLine(_pvTable.ToString());
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
@@ -134,7 +136,7 @@ namespace MegaKnight.Core
             _killerMoves = new Move[60];
             // _debugBranchesPruned = 0;
 
-            _principalVariation = new PVTable();
+            _pvTable = new PVTable();
             Move bestMoveSoFar = null;
             int depth = 1;
             await Task.Run(() =>
@@ -146,6 +148,7 @@ namespace MegaKnight.Core
                     if (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0 && !cancelToken.IsCancellationRequested)
                     {
                         bestMoveSoFar = move;
+                        _previousPV = _pvTable.GetPrincipalVariation();
                         Console.WriteLine(GetInfo());
                         depth++;
                         _infoDepth++;
@@ -168,7 +171,7 @@ namespace MegaKnight.Core
             Debug.WriteLine("Highest base depth searched: " + depth);
             //Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
             Debug.WriteLine("PV Table:");
-            Debug.WriteLine(_principalVariation.ToString());
+            Debug.WriteLine(_pvTable.ToString());
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
@@ -231,7 +234,7 @@ namespace MegaKnight.Core
                         alpha = score;
                         if (score < beta)
                         {
-                            _principalVariation.SetPVValue(move, ply + depth, ply);
+                            _pvTable.SetPVValue(move, depth);
                             // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
                         }
                     }
@@ -354,7 +357,7 @@ namespace MegaKnight.Core
                             alpha = score;
                             if(score < beta)
                             {
-                                _principalVariation.SetPVValue(move, ply + depth, ply);
+                                _pvTable.SetPVValue(move, depth);
                                 // Debug.WriteLine("Update PV value: move = " + (move != null ? move.ToString() : " - ") + ", Depth: " + originalDepth + ", Offset: " + (originalDepth - depth));
                             }
                         }
@@ -482,30 +485,10 @@ namespace MegaKnight.Core
             return (_moveStopwatch.ElapsedMilliseconds >= _maxSearchTime || _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds <= 0 ||
                (cancel.HasValue && cancel.Value.IsCancellationRequested));
         }
-
-        List<Move> CollectPV(Position startPosition)
-        {
-            List<Move> pv = new List<Move>();
-            CollectPVRecursive(pv, startPosition);
-            return pv;
-        }
-        void CollectPVRecursive(List<Move> pv, Position position)
-        {
-            int hash = (int)(position.HashValue % _transpositionTableCapacity);
-            if (!_transpositionTable.ContainsKey(hash)) return;
-
-            Move bestMove = _transpositionTable[hash].BestMove;
-            if (bestMove == null) return;
-
-            pv.Add(bestMove);
-            position.MakeMove(bestMove);
-            CollectPVRecursive(pv, position);
-            position.UnmakeMove(bestMove);
-        }
         void SortMoves(List<Move> moves, Position position, int ply)
         {
             // Sort moves with comparer. See MoveComparer for sorting methods
-            MoveComparer comparer = new MoveComparer(_transpositionTable, _transpositionTableCapacity, position, _killerMoves, ply, _betaCuttoffHistory);
+            MoveComparer comparer = new MoveComparer(_transpositionTable, _transpositionTableCapacity, position, _previousPV, _killerMoves, ply, _betaCuttoffHistory);
             moves.Sort(comparer);
             // Debug.WriteLine(string.Join(' ', moves.Select(x => x.DetailedToString(position))) + "\n");
         }
