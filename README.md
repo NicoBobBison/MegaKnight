@@ -54,6 +54,7 @@ MegaKnight is currently in active development. Some upcoming features include:
 - [Fastchess (for benchmarking and testing)](https://github.com/Disservin/fastchess)
 - [Opening book](https://github.com/official-stockfish/books/blob/master/8moves_v3.pgn.zip)
 - [The Chess Programming Wiki](https://www.chessprogramming.org/Main_Page)
+   - Notably, [PeSTO's evaluation function](https://www.chessprogramming.org/PeSTO%27s_Evaluation_Function) for piece-square tables and material values
 - [An article about bitboard intuition](https://lichess.org/@/likeawizard/blog/review-of-different-board-representations-in-computer-chess/S9eQCAWa)
 - [An article on fast move generation](https://peterellisjones.com/posts/generating-legal-chess-moves-efficiently/)
 - [Coding Adventure: Chess](https://www.youtube.com/watch?v=U4ogK0MIzqk)
