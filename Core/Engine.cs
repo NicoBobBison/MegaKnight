@@ -121,6 +121,11 @@ namespace MegaKnight.Core
             //Debug.WriteLine("Average index of alpha cutoff: " + _debugAveragePlaceOfAlphaCutoff);
             Debug.WriteLine("PV Table:");
             Debug.WriteLine(_pvTable.ToString());
+            Debug.Write("PV: ");
+            foreach (Move m in _previousPV)
+            {
+                Debug.Write(" " + m.ToString());
+            }
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
@@ -183,6 +188,11 @@ namespace MegaKnight.Core
             //Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
             Debug.WriteLine("PV Table:");
             Debug.WriteLine(_pvTable.ToString());
+            Debug.WriteLine("PV: ");
+            foreach (Move m in _previousPV)
+            {
+                Debug.Write(" " + m.ToString());
+            }
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
