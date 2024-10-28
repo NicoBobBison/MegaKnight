@@ -56,15 +56,11 @@ namespace MegaKnight.Core
             Array.Copy(_moves, i, m, 0, depth);
             return m;
         }
-        void PropogatePVValueDown(Move move, int depth)
+        void PropogatePVValueDown(int depth)
         {
-            int offset = 1;
-            depth++;
-            while(depth <= _maxDepth)
+            for(int i = 0; i < depth; i++)
             {
-                _moves[GetStartIndex(depth) + offset] = move;
-                depth++;
-                offset++;
+                _moves[GetStartIndex(depth + 1) + 1 + i] = _moves[GetStartIndex(depth) + i];
             }
         }
         public void SetPVValue(Move move, int depth)
@@ -72,7 +68,10 @@ namespace MegaKnight.Core
             int i = GetStartIndex(depth);
             EnsureDepth(depth + 1);
             _moves[i] = move;
-            PropogatePVValueDown(move, depth);
+            if(depth > 0)
+            {
+                PropogatePVValueDown(depth - 1);
+            }
         }
         public override string ToString()
         {

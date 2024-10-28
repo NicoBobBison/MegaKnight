@@ -52,6 +52,17 @@ namespace MegaKnight.Core
 
             _transpositionTable = new Dictionary<int, TranspositionEntry>(_transpositionTableCapacity);
             _betaCuttoffHistory = new int[2, 64, 64];
+
+            // Some tests for PV table, will remove once I'm sure PV works correctly
+            //PVTable testTable = new PVTable();
+            //testTable.SetPVValue(new Move(Piece.Pawn, Square.a1, Square.a2, MoveType.QuietMove), 1);
+            //Debug.WriteLine(testTable.ToString());
+            //testTable.SetPVValue(new Move(Piece.Pawn, Square.b1, Square.b2, MoveType.QuietMove), 2);
+            //Debug.WriteLine(testTable.ToString());
+            //testTable.SetPVValue(new Move(Piece.Pawn, Square.c1, Square.c2, MoveType.QuietMove), 3);
+            //Debug.WriteLine(testTable.ToString());
+            //testTable.SetPVValue(new Move(Piece.Pawn, Square.d1, Square.d2, MoveType.QuietMove), 1);
+            //Debug.WriteLine(testTable.ToString());
         }
         public Move GetBestMove(Position position)
         {
@@ -86,7 +97,7 @@ namespace MegaKnight.Core
                 {
                     bestMoveSoFar = move;
                     _previousPV = _pvTable.GetPrincipalVariation();
-                    Console.WriteLine(GetInfo());
+                    Console.WriteLine(GetInfo(_previousPV));
                     depth++;
                     _infoDepth++;
                 }
@@ -149,7 +160,7 @@ namespace MegaKnight.Core
                     {
                         bestMoveSoFar = move;
                         _previousPV = _pvTable.GetPrincipalVariation();
-                        Console.WriteLine(GetInfo());
+                        Console.WriteLine(GetInfo(_previousPV));
                         depth++;
                         _infoDepth++;
                     }
@@ -194,12 +205,8 @@ namespace MegaKnight.Core
             int hash = (int)(position.HashValue % _transpositionTableCapacity);
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.HashValue && _transpositionTable[hash].Depth >= depth)
             {
-                if (_transpositionTable[hash].NodeType == NodeType.Exact)
-                {
-                    _infoScore = _transpositionTable[hash].Evaluation;
-                    return _transpositionTable[hash].BestMove;
-                }
-                else if (_transpositionTable[hash].NodeType == NodeType.LowerBound)
+                // No cutoff for exact score to preserve PV
+                if (_transpositionTable[hash].NodeType == NodeType.LowerBound)
                 {
                     alpha = Math.Max(alpha, _transpositionTable[hash].Evaluation);
                 }
@@ -273,11 +280,8 @@ namespace MegaKnight.Core
             bool isHashMove = false;
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.HashValue && _transpositionTable[hash].Depth >= depth)
             {
-                if (_transpositionTable[hash].NodeType == NodeType.Exact)
-                {
-                    return _transpositionTable[hash].Evaluation;
-                }
-                else if (_transpositionTable[hash].NodeType == NodeType.LowerBound)
+                // No cutoff for exact score to preserve PV
+                if (_transpositionTable[hash].NodeType == NodeType.LowerBound)
                 {
                     isHashMove = true;
                     alpha = Math.Max(alpha, _transpositionTable[hash].Evaluation);
@@ -473,11 +477,16 @@ namespace MegaKnight.Core
             }
             return max;
         }
-        public string GetInfo()
+        public string GetInfo(Move[] pv)
         {
             string info = "info ";
             info += $"depth {_infoDepth} ";
-            info += $"score cp {_infoScore}";
+            info += $"score cp {_infoScore} ";
+            //info += "pv";
+            //foreach(Move m in pv)
+            //{
+            //    info += " " + m.ToString();
+            //}
             return info;
         }
         private bool CheckCancel(CancellationToken? cancel)

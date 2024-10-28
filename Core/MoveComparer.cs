@@ -46,11 +46,11 @@ namespace MegaKnight.Core
             // PV from previous iterative deepening search
             if (_prevPV != null && _prevPV.Length > _ply)
             {
-                if (_prevPV[_ply].Equals(x))
+                if (_prevPV[_ply] != null && _prevPV[_ply].Equals(x))
                 {
                     return -2000;
                 }
-                else if (_prevPV[_ply].Equals(y))
+                else if (_prevPV[_ply] != null && _prevPV[_ply].Equals(y))
                 {
                     return 2000;
                 }
