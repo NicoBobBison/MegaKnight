@@ -36,10 +36,6 @@ namespace MegaKnight.Core
             // Perft = new Perft(_moveGenerator, this);
             // Perft.RunPerft(p, 6);
 
-            #if GUI || DEBUG
-            if (!PlayerIsPlayingWhite && CurrentPosition.WhiteToMove) MakeEngineMove();
-            #endif
-
             CurrentPosition.InitializeHash();
             IsReady = true;
         }
@@ -53,20 +49,11 @@ namespace MegaKnight.Core
             _evaluator.AddPositionToPreviousPositions(CurrentPosition);
             CurrentPosition.MakeMove(move);
         }
-        public void MakeEngineMove()
-        {
-            Move engineMove = _engine.GetBestMove(CurrentPosition);
-            _evaluator.AddPositionToPreviousPositions(CurrentPosition);
-            CurrentPosition.MakeMove(engineMove);
-        }
         public async Task MakeEngineMoveAsync()
         {
-            await Task.Run(() =>
-            {
-                Move engineMove = _engine.GetBestMove(CurrentPosition);
-                _evaluator.AddPositionToPreviousPositions(CurrentPosition);
-                CurrentPosition.MakeMove(engineMove);
-            });
+            Move engineMove = await _engine.GetBestMoveAsync(CurrentPosition, CancellationToken.None);
+            _evaluator.AddPositionToPreviousPositions(CurrentPosition);
+            CurrentPosition.MakeMove(engineMove);
         }
         public async Task<Move> GetBestMoveAsync(CancellationToken cancelToken)
         {

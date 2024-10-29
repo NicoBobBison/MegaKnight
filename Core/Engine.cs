@@ -52,82 +52,6 @@ namespace MegaKnight.Core
 
             _transpositionTable = new Dictionary<int, TranspositionEntry>(_transpositionTableCapacity);
             _betaCuttoffHistory = new int[2, 64, 64];
-
-            // Some tests for PV table, will remove once I'm sure PV works correctly
-            //PVTable testTable = new PVTable();
-            //testTable.SetPVValue(new Move(Piece.Pawn, Square.a1, Square.a2, MoveType.QuietMove), 1);
-            //Debug.WriteLine(testTable.ToString());
-            //testTable.SetPVValue(new Move(Piece.Pawn, Square.b1, Square.b2, MoveType.QuietMove), 2);
-            //Debug.WriteLine(testTable.ToString());
-            //testTable.SetPVValue(new Move(Piece.Pawn, Square.c1, Square.c2, MoveType.QuietMove), 3);
-            //Debug.WriteLine(testTable.ToString());
-            //testTable.SetPVValue(new Move(Piece.Pawn, Square.d1, Square.d2, MoveType.QuietMove), 1);
-            //Debug.WriteLine(testTable.ToString());
-        }
-        public Move GetBestMove(Position position)
-        {
-            _infoScore = int.MinValue;
-            _infoDepth = 1;
-            // _debugBranchesResearched = 0;
-            // _debugAveragePlaceOfAlphaCutoff = 0;
-            // _debugNumberPlacesAdded = 0;
-            // _debugBranchesSuccessfullyReduced = 0;
-
-            if (position.WhiteToMove)
-            {
-                _maxSearchTime = WhiteTimeRemaining / 20 + WhiteTimeIncrement / 2;
-            }
-            else
-            {
-                _maxSearchTime = BlackTimeRemaining / 20 + BlackTimeIncrement / 2;
-            }
-            _engineTimeRemaining = position.WhiteToMove ? WhiteTimeRemaining : BlackTimeRemaining;
-            if (position.HashValue == 0) position.InitializeHash();
-            _moveStopwatch.Restart();
-            _killerMoves = new Move[60];
-            // _debugBranchesPruned = 0;
-
-            _pvTable = new PVTable();
-            Move bestMoveSoFar = null;
-            int depth = 1;
-            while(_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
-            {
-                Move move = Search(position: position, depth: depth);
-                if (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0)
-                {
-                    bestMoveSoFar = move;
-                    _previousPV = _pvTable.GetPrincipalVariation();
-                    Console.WriteLine(GetInfo(_previousPV));
-                    depth++;
-                    _infoDepth++;
-                }
-            }
-            if (position.WhiteToMove)
-            {
-                WhiteTimeRemaining -= _maxSearchTime;
-                WhiteTimeRemaining += WhiteTimeIncrement;
-            }
-            else
-            {
-                BlackTimeRemaining -= _maxSearchTime;
-                BlackTimeRemaining += BlackTimeIncrement;
-            }
-            if (bestMoveSoFar == null) throw new Exception("Could not find a move");
-            Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
-            //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
-            Debug.WriteLine("Highest base depth searched: " + depth);
-            //Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
-            //Debug.WriteLine("Branches successfully reduced: " + _debugBranchesSuccessfullyReduced);
-            //Debug.WriteLine("Average index of alpha cutoff: " + _debugAveragePlaceOfAlphaCutoff);
-            Debug.WriteLine("PV Table:");
-            Debug.WriteLine(_pvTable.ToString());
-            Debug.Write("PV: ");
-            foreach (Move m in _previousPV)
-            {
-                Debug.Write(" " + m.ToString());
-            }
-            Debug.WriteLine("");
-            return bestMoveSoFar;
         }
         public async Task<Move> GetBestMoveAsync(Position position, CancellationToken cancelToken)
         {
@@ -149,22 +73,25 @@ namespace MegaKnight.Core
             _engineTimeRemaining = position.WhiteToMove ? WhiteTimeRemaining : BlackTimeRemaining;
             if (position.HashValue == 0) position.InitializeHash();
             _moveStopwatch.Restart();
-            _killerMoves = new Move[60];
+            _killerMoves = new Move[100];
             // _debugBranchesPruned = 0;
 
-            _pvTable = new PVTable();
             Move bestMoveSoFar = null;
             int depth = 1;
             await Task.Run(() =>
             {
                 while (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0 && !cancelToken.IsCancellationRequested)
                 {
+                    _pvTable = new PVTable();
                     _infoScore = int.MinValue;
                     Move move = Search(position, depth, cancelToken);
                     if (_moveStopwatch.ElapsedMilliseconds < _maxSearchTime && _engineTimeRemaining - _moveStopwatch.ElapsedMilliseconds > 0 && !cancelToken.IsCancellationRequested)
                     {
                         bestMoveSoFar = move;
                         _previousPV = _pvTable.GetPrincipalVariation();
+                        Debug.WriteLine("PV Table:");
+                        Debug.WriteLine(_pvTable.ToString());
+
                         Console.WriteLine(GetInfo(_previousPV));
                         depth++;
                         _infoDepth++;
@@ -184,15 +111,15 @@ namespace MegaKnight.Core
             if (bestMoveSoFar == null) throw new Exception("Could not find a move");
             Debug.WriteLine("Engine move: " + bestMoveSoFar.ToString());
             //Debug.WriteLine("Branches pruned: " + _debugBranchesPruned);
-            Debug.WriteLine("Highest base depth searched: " + depth);
+            //Debug.WriteLine("Highest base depth searched: " + depth);
             //Debug.WriteLine("Branches researched: " + _debugBranchesResearched);
-            Debug.WriteLine("PV Table:");
-            Debug.WriteLine(_pvTable.ToString());
-            Debug.WriteLine("PV: ");
-            foreach (Move m in _previousPV)
-            {
-                Debug.Write(" " + m.ToString());
-            }
+            //Debug.WriteLine("PV Table:");
+            //Debug.WriteLine(_pvTable.ToString());
+            //Debug.WriteLine("PV: ");
+            //foreach (Move m in _previousPV)
+            //{
+            //    Debug.Write(" " + m.ToString());
+            //}
             Debug.WriteLine("");
             return bestMoveSoFar;
         }
@@ -215,7 +142,6 @@ namespace MegaKnight.Core
             int hash = (int)(position.HashValue % _transpositionTableCapacity);
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.HashValue && _transpositionTable[hash].Depth >= depth)
             {
-                // No cutoff for exact score to preserve PV
                 if (_transpositionTable[hash].NodeType == NodeType.LowerBound)
                 {
                     alpha = Math.Max(alpha, _transpositionTable[hash].Evaluation);
@@ -290,7 +216,6 @@ namespace MegaKnight.Core
             bool isHashMove = false;
             if (_transpositionTable.ContainsKey(hash) && _transpositionTable[hash].HashKey == position.HashValue && _transpositionTable[hash].Depth >= depth)
             {
-                // No cutoff for exact score to preserve PV
                 if (_transpositionTable[hash].NodeType == NodeType.LowerBound)
                 {
                     isHashMove = true;
@@ -492,11 +417,16 @@ namespace MegaKnight.Core
             string info = "info ";
             info += $"depth {_infoDepth} ";
             info += $"score cp {_infoScore} ";
-            //info += "pv";
-            //foreach(Move m in pv)
-            //{
-            //    info += " " + m.ToString();
-            //}
+            // Reimplement this once PV always displays correctly
+            if (pv.Length > 0)
+            {
+                info += "pv";
+                foreach (Move m in pv)
+                {
+                    if (m == null) break;
+                    info += " " + m.ToString();
+                }
+            }
             return info;
         }
         private bool CheckCancel(CancellationToken? cancel)

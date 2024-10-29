@@ -60,11 +60,13 @@ namespace MegaKnight.Core
         {
             for(int i = 0; i < depth; i++)
             {
+                if (_moves[GetStartIndex(depth) + i] == null) return;
                 _moves[GetStartIndex(depth + 1) + 1 + i] = _moves[GetStartIndex(depth) + i];
             }
         }
         public void SetPVValue(Move move, int depth)
         {
+            // Debug.WriteLine("Set PV: move = " + move.ToString() + ", depth = " + depth);
             int i = GetStartIndex(depth);
             EnsureDepth(depth + 1);
             _moves[i] = move;
