@@ -97,7 +97,7 @@ namespace MegaKnight.Core
                         _infoDepth++;
                     }
                 }
-            });
+            }, cancelToken);
             if (position.WhiteToMove)
             {
                 WhiteTimeRemaining -= _maxSearchTime;
