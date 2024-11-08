@@ -208,7 +208,7 @@ namespace MegaKnight.Core
         }
         int AlphaBeta(Position position, int depth, int alpha, int beta, int ply, bool nullMoveSearch, CancellationToken? cancel = null)
         {
-            if (CheckCancel(cancel)) return 0;
+            if (CheckCancel(cancel)) return -1000000;
             if (_evaluator.IsDrawByRepetition(position)) return 0;
 
             int alphaOriginal = alpha;
@@ -321,7 +321,7 @@ namespace MegaKnight.Core
                 {
                     prevNonCaptures.Add(move);
                 }
-                if (CheckCancel(cancel)) return 0;
+                if (CheckCancel(cancel)) return -1000000;
             }
             AddPositionToTranspositionTable(position, depth, alphaOriginal, beta, max, bestMove);
             return max;
@@ -351,7 +351,7 @@ namespace MegaKnight.Core
 
         int QuiescenceSearch(Position position, int alpha, int beta, int depth, int ply, CancellationToken? cancel = null)
         {
-            if (CheckCancel(cancel)) return 0;
+            if (CheckCancel(cancel)) return -1000000;
 
             int standingPat = _evaluator.Evaluate(position);
             if (standingPat >= beta || depth == 0) return standingPat;
@@ -408,7 +408,7 @@ namespace MegaKnight.Core
                     alpha = Math.Max(alpha, score);
                 }
                 if (score >= beta) break;
-                if (CheckCancel(cancel)) return 0;
+                if (CheckCancel(cancel)) return -1000000;
             }
             return max;
         }

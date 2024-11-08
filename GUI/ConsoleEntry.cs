@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MegaKnight.Core;
 using System.CommandLine;
 using System.Threading;
+using MegaKnight.Debugging;
 
 namespace MegaKnight.GUI
 {
@@ -106,11 +107,13 @@ namespace MegaKnight.GUI
             Option<float> wIncrementOption = new Option<float>(name: "winc", description: "White time increment per move (in ms).", getDefaultValue: () => 1000);
             Option<float> bIncrementOption = new Option<float>(name: "binc", description: "Black time increment per move (in ms).", getDefaultValue: () => 1000);
             Option<bool> infiniteOption = new Option<bool>(name: "infinite", description: "Search until told to stop with the \"stop\" command.");
+            Option<int> perftOption = new Option<int>(name: "perft", description: "Runs perft test on a given depth.", getDefaultValue: () => 0);
             goCommand.Add(wTimeOption);
             goCommand.Add(bTimeOption);
             goCommand.Add(wIncrementOption);
             goCommand.Add(bIncrementOption);
             goCommand.Add(infiniteOption);
+            goCommand.Add(perftOption);
             goCommand.SetHandler(async (context) =>
             {
                 float wTime = context.ParseResult.GetValueForOption(wTimeOption);
@@ -118,18 +121,26 @@ namespace MegaKnight.GUI
                 float wInc = context.ParseResult.GetValueForOption(wIncrementOption);
                 float bInc = context.ParseResult.GetValueForOption(bIncrementOption);
                 bool infinite = context.ParseResult.GetValueForOption(infiniteOption);
+                int perftDepth = context.ParseResult.GetValueForOption(perftOption);
                 cancelTokenSource = new CancellationTokenSource();
 
-                if (infinite)
+                if(perftDepth != 0)
                 {
-                    _core.SetEngineTimeRules(float.MaxValue, float.MaxValue, 0, 0);
+                    _core.RunPerft(perftDepth);
                 }
                 else
                 {
-                    _core.SetEngineTimeRules(wTime, bTime, wInc, bInc);
+                    if (infinite)
+                    {
+                        _core.SetEngineTimeRules(float.MaxValue, float.MaxValue, 0, 0);
+                    }
+                    else
+                    {
+                        _core.SetEngineTimeRules(wTime, bTime, wInc, bInc);
+                    }
+                    Move bestMove = await _core.GetBestMoveAsync(cancelTokenSource.Token);
+                    Console.WriteLine("bestmove " + bestMove.ToString());
                 }
-                Move bestMove = await _core.GetBestMoveAsync(cancelTokenSource.Token);
-                Console.WriteLine("bestmove " + bestMove.ToString());
             });
 
             Command stopCommand = new Command("stop", "Stops the current search.");

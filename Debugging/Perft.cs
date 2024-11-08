@@ -20,7 +20,27 @@ namespace MegaKnight.Debugging
             _moveGenerator = moveGenerator;
             _core = core;
         }
-        public void RunPerft(Position startPosition, int maxDepth)
+        public void RunPerftConsole(Position startPosition, int maxDepth)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            List<Move> moves = _moveGenerator.GenerateAllPossibleMoves(startPosition);
+            ulong totalNodes = 0ul;
+            foreach (Move move in moves)
+            {
+                Console.Write(move.ToString() + ": ");
+                startPosition.MakeMove(move);
+                ulong subnodes = PerftRecursive(startPosition, maxDepth - 1);
+                startPosition.UnmakeMove(move);
+                Console.WriteLine(subnodes);
+                totalNodes += subnodes;
+            }
+            Console.WriteLine("Number of nodes: " + totalNodes);
+            stopwatch.Stop();
+            Console.WriteLine("Total seconds: " + stopwatch.ElapsedMilliseconds / 1000f);
+            Console.WriteLine("Nodes per second: " + totalNodes / (stopwatch.ElapsedMilliseconds / 1000f));
+        }
+
+        public void RunPerftDebug(Position startPosition, int maxDepth)
         {
             Debug.WriteLine("Running Perft on depth " + maxDepth);
             Stopwatch stopwatch = Stopwatch.StartNew();
