@@ -14,8 +14,8 @@ namespace MegaKnight.Core
         // Maximum allowed search time
         public float WhiteTimeRemaining = 1000 * 60;
         public float BlackTimeRemaining = 1000 * 60;
-        public float WhiteTimeIncrement = 1000;
-        public float BlackTimeIncrement = 1000;
+        public float WhiteTimeIncrement = 1000 * 1;
+        public float BlackTimeIncrement = 1000 * 1;
         float _maxSearchTime;
         float _engineTimeRemaining;
 
