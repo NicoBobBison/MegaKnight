@@ -20,7 +20,7 @@ namespace MegaKnight.Core
         Engine _engine;
         public bool IsReady = false; // true once initialization is complete
 
-        // public Perft Perft;
+        public Perft Perft;
         public BotCore()
         {
             Position.InitializeZobristHashValues();
@@ -33,12 +33,7 @@ namespace MegaKnight.Core
             CurrentPosition = p;
             _evaluator.AddPositionToPreviousPositions(p);
 
-            // Perft = new Perft(_moveGenerator, this);
-            // Perft.RunPerft(p, 6);
-
-            #if GUI || DEBUG
-            if (!PlayerIsPlayingWhite && CurrentPosition.WhiteToMove) MakeEngineMove();
-            #endif
+            Perft = new Perft(_moveGenerator, this);
 
             CurrentPosition.InitializeHash();
             IsReady = true;
@@ -53,20 +48,11 @@ namespace MegaKnight.Core
             _evaluator.AddPositionToPreviousPositions(CurrentPosition);
             CurrentPosition.MakeMove(move);
         }
-        public void MakeEngineMove()
-        {
-            Move engineMove = _engine.GetBestMove(CurrentPosition);
-            _evaluator.AddPositionToPreviousPositions(CurrentPosition);
-            CurrentPosition.MakeMove(engineMove);
-        }
         public async Task MakeEngineMoveAsync()
         {
-            await Task.Run(() =>
-            {
-                Move engineMove = _engine.GetBestMove(CurrentPosition);
-                _evaluator.AddPositionToPreviousPositions(CurrentPosition);
-                CurrentPosition.MakeMove(engineMove);
-            });
+            Move engineMove = await _engine.GetBestMoveAsync(CurrentPosition, CancellationToken.None);
+            _evaluator.AddPositionToPreviousPositions(CurrentPosition);
+            CurrentPosition.MakeMove(engineMove);
         }
         public async Task<Move> GetBestMoveAsync(CancellationToken cancelToken)
         {
@@ -103,6 +89,10 @@ namespace MegaKnight.Core
             _evaluator = new Evaluator(_moveGenerator, this);
             _engine = new Engine(_moveGenerator, _evaluator);
             IsReady = true;
+        }
+        public void RunPerft(int depth)
+        {
+            Perft.RunPerftConsole(CurrentPosition, depth);
         }
         /// <summary>
         /// Reads in a FEN string and creates a position based on it

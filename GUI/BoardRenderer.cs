@@ -63,6 +63,14 @@ namespace MegaKnight.GUI
             Core = new BotCore();
             RenderPosition(Core.CurrentPosition);
         }
+        public async Task TryMakeWhiteFirstMove()
+        {
+            if (!Core.PlayerIsPlayingWhite && Core.CurrentPosition.WhiteToMove)
+            {
+                await Core.MakeEngineMoveAsync();
+                RenderPosition(Core.CurrentPosition);
+            }
+        }
         public async Task Update(GameTime gameTime)
         {
             if (InputManager.GetKeyDown(Keys.Q))

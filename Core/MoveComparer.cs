@@ -10,25 +10,28 @@ namespace MegaKnight.Core
     // Should quiet moves be searched before losing captures?
     /// <summary>
     /// Sorts moves. Move ordering is as follows.
-    /// 1. Hash move
-    /// 2. Winning captures
-    /// 3. Equal captures
-    /// 4. Killer moves
-    /// 5. Quiet moves (sorted with history heuristic)
-    /// 6. Losing captures
+    /// 1. PV move
+    /// 2. Hash move
+    /// 3. Winning captures
+    /// 4. Equal captures
+    /// 5. Killer moves
+    /// 6. Quiet moves (sorted with history heuristic)
+    /// 7. Losing captures
     /// </summary>
     internal class MoveComparer : IComparer<Move>
     {
         Dictionary<int, TranspositionEntry> _transpositionTable;
         int _transpositionTableCapacity;
+        Move[] _prevPV;
         Position _position;
         Move[] _killerMoves;
         int _ply;
         int[,,] _history;
-        public MoveComparer(Dictionary<int, TranspositionEntry> transpositionTable, int ttCapacity, Position position, Move[] killerMoves, int ply, int[,,] history)
+        public MoveComparer(Dictionary<int, TranspositionEntry> transpositionTable, int ttCapacity, Position position, Move[] prevPV, Move[] killerMoves, int ply, int[,,] history)
         {
             _transpositionTable = transpositionTable;
             _transpositionTableCapacity = ttCapacity;
+            _prevPV = prevPV;
             _position = position;
             _killerMoves = killerMoves;
             _ply = ply;
@@ -39,6 +42,19 @@ namespace MegaKnight.Core
             if (x.Equals(y)) return 0;
 
             int hash = (int)(_position.HashValue % (uint)_transpositionTableCapacity);
+
+            // PV from previous iterative deepening search
+            if (_prevPV != null && _prevPV.Length > _ply)
+            {
+                if (_prevPV[_ply] != null && _prevPV[_ply].Equals(x))
+                {
+                    return -2000;
+                }
+                else if (_prevPV[_ply] != null && _prevPV[_ply].Equals(y))
+                {
+                    return 2000;
+                }
+            }
 
             // Hash move
             if(_transpositionTable.ContainsKey(hash) && (int)(_transpositionTable[hash].HashKey % (uint)_transpositionTableCapacity) == hash)

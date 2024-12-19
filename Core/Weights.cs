@@ -26,18 +26,19 @@ namespace MegaKnight.Core
         public const int QueenValueLate = 936;
 
         // Weight for mobility of pieces
-        public const int PawnMobilityValue = 1;
-        public const int KnightMobilityValue = 1;
-        public const int BishopMobilityValue = 1;
-        public const int RookMobilityValue = 1;
-        public const int QueenMobilityValue = 1;
+        //public const int PawnMobilityValue = 1;
+        //public const int KnightMobilityValue = 1;
+        //public const int BishopMobilityValue = 1;
+        //public const int RookMobilityValue = 1;
+        //public const int QueenMobilityValue = 1;
 
         // Cutoffs (based on GetGamePhase()) for different phases of the game
-        public const float EarlyGameCutoff = 0.3f;
+        public const float EarlyGameCutoff = 0.2f;
         public const float MiddleGameCutoff = 0.7f;
 
-        public const int DoubledPawnMalusEarly = 30;
-        public const int DoubledPawnMalusLate = 50;
+        public const int DoubledPawnMalusEarly = 40;
+        public const int DoubledPawnMalusLate = 30;
+        public const int BlockedCenterPawnsMalus = 15;
 
         // Early game piece-square tables (from white's perspective, mirror for black's perspective)
         public static readonly int[] PawnPSTEarly = new int[]

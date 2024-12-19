@@ -34,10 +34,11 @@ namespace MegaKnight.GUI
             base.Initialize();
         }
 
-        protected override void LoadContent()
+        protected override async void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _boardRenderer = new BoardRenderer(Content, ScreenSize);
+            await _boardRenderer.TryMakeWhiteFirstMove();
         }
 
         protected override async void Update(GameTime gameTime)

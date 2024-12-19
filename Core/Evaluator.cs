@@ -34,15 +34,18 @@ namespace MegaKnight.Core
             {
                 return 0;
             }
+            ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
             ulong enemyPieces = position.WhiteToMove ? position.BlackPieces : position.WhitePieces;
             ulong enemyKing = position.WhiteToMove ? position.BlackKing : position.WhiteKing;
+            ulong friendlyPawns = position.WhiteToMove ? position.WhitePawns : position.BlackPawns;
+            ulong enemyPawns = position.WhiteToMove ? position.BlackPawns : position.WhitePawns;
+
             // Mop-up evaluation when enemy only has a king
-            if((enemyPieces ^ enemyKing) == 0)
+            if ((enemyPieces ^ enemyKing) == 0)
             {
                 ulong friendlyKnights = position.WhiteToMove ? position.WhiteKnights : position.BlackKnights;
                 ulong friendlyBishops = position.WhiteToMove ? position.WhiteBishops : position.BlackBishops;
                 ulong friendlyKing = position.WhiteToMove ? position.WhiteKing : position.BlackKing;
-                ulong friendlyPieces = position.WhiteToMove ? position.WhitePieces : position.BlackPieces;
                 if(Helper.GetBitboardPopCount(friendlyKnights) == 1 && Helper.GetBitboardPopCount(friendlyBishops) == 1
                    && (friendlyPieces ^ friendlyKing ^ friendlyBishops ^ friendlyKnights) == 0)
                 {
@@ -87,10 +90,35 @@ namespace MegaKnight.Core
             evaluation += (int)(Helper.Lerp(Weights.RookValueEarly, Weights.RookValueLate, gamePhase) * rookDiff);
             evaluation += (int)(Helper.Lerp(Weights.QueenValueEarly, Weights.QueenValueLate, gamePhase) * queenDiff);
 
-            ulong friendlyPawns = position.WhiteToMove ? position.WhitePawns : position.BlackPawns;
             // Bit shift direction doesn't matter
-            ulong doubledPawns = friendlyPawns & (friendlyPawns << 8);
-            evaluation -= Helper.GetBitboardPopCount(doubledPawns) * (int)Helper.Lerp(Weights.DoubledPawnMalusEarly, Weights.DoubledPawnMalusLate, gamePhase); 
+            ulong friendlyDoubledPawns = friendlyPawns & (friendlyPawns << 8);
+            ulong enemyDoubledPawns = enemyPawns & (enemyPawns << 8);
+            evaluation -= Helper.GetBitboardPopCount(friendlyDoubledPawns) * (int)Helper.Lerp(Weights.DoubledPawnMalusEarly, Weights.DoubledPawnMalusLate, gamePhase);
+            evaluation += Helper.GetBitboardPopCount(enemyDoubledPawns) * (int)Helper.Lerp(Weights.DoubledPawnMalusEarly, Weights.DoubledPawnMalusLate, gamePhase);
+
+            if(gamePhase < Weights.EarlyGameCutoff)
+            {
+                ulong whiteCenterUndevelopedPawns = 3ul << 11 & position.WhitePawns;
+                ulong whiteBlockingCenterPieces = 3ul << 19 & position.WhitePieces;
+                ulong whiteBlockedCenterPawns = whiteCenterUndevelopedPawns << 8 & whiteBlockingCenterPieces;
+                int wcount = Helper.GetBitboardPopCount(whiteBlockedCenterPawns);
+
+                ulong blackCenterUndevelopedPawns = 3ul << 51 & position.BlackPawns;
+                ulong blackBlockingCenterPieces = 3ul << 43 & position.BlackPieces;
+                ulong blackBlockedCenterPawns = blackCenterUndevelopedPawns >> 8 & blackBlockingCenterPieces;
+                int bcount = Helper.GetBitboardPopCount(blackBlockedCenterPawns);
+
+                if (position.WhiteToMove)
+                {
+                    evaluation -= wcount * Weights.BlockedCenterPawnsMalus;
+                    evaluation += bcount * Weights.BlockedCenterPawnsMalus;
+                }
+                else
+                {
+                    evaluation -= bcount * Weights.BlockedCenterPawnsMalus;
+                    evaluation += wcount * Weights.BlockedCenterPawnsMalus;
+                }
+            }
 
             // TODO: See if this check can be faster, or if it's even worth it to calculate (might be good with just PST)
             //evaluation += EvalWeights.PawnMobilityValue * (CalculateMobility(position.WhitePawns, Piece.Pawn, position) - CalculateMobility(position.BlackPawns, Piece.Pawn, position));
@@ -100,7 +128,7 @@ namespace MegaKnight.Core
             //evaluation += EvalWeights.QueenMobilityValue * (CalculateMobility(position.WhiteQueens, Piece.Queen, position) - CalculateMobility(position.BlackQueens, Piece.Queen, position));
 
             // PST for white pieces
-            for(int i = 0; i < 6; i++)
+            for (int i = 0; i < 6; i++)
             {
                 foreach(int square in allIndeces[i])
                 {

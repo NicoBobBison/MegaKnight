@@ -56,11 +56,24 @@ namespace MegaKnight.Core
             Array.Copy(_moves, i, m, 0, depth);
             return m;
         }
-        public void SetPVValue(Move move, int depth, int offset)
+        void PropogatePVValueDown(int depth)
         {
-            int i = GetStartIndex(depth) + offset;
+            for(int i = 0; i < depth; i++)
+            {
+                if (_moves[GetStartIndex(depth) + i] == null) return;
+                _moves[GetStartIndex(depth + 1) + 1 + i] = _moves[GetStartIndex(depth) + i];
+            }
+        }
+        public void SetPVValue(Move move, int depth)
+        {
+            // Debug.WriteLine("Set PV: move = " + move.ToString() + ", depth = " + depth);
+            int i = GetStartIndex(depth);
             EnsureDepth(depth + 1);
             _moves[i] = move;
+            if(depth > 0)
+            {
+                PropogatePVValueDown(depth - 1);
+            }
         }
         public override string ToString()
         {
