@@ -49,10 +49,11 @@ MegaKnight is currently in active development. Some upcoming features include:
 - [ ] Adding better pruning techniques to increase engine performance
 - [ ] Rewriting move generation to be faster
 - [ ] Updating the GUI to include more functionality, like undoing moves, restarting the game, and switching sides
+- [ ] Implement an opening book
 
 ## Acknowledgements
 - [Fastchess (for benchmarking and testing)](https://github.com/Disservin/fastchess)
-- [Opening book](https://github.com/official-stockfish/books/blob/master/8moves_v3.pgn.zip)
+- [Opening book](https://github.com/official-stockfish/books/blob/master/8moves_v3.pgn.zip) (Note: this isn't actually implemented in play yet, this is just the book used for benchmarking on Fastchess)
 - [The Chess Programming Wiki](https://www.chessprogramming.org/Main_Page)
    - Notably, [PeSTO's evaluation function](https://www.chessprogramming.org/PeSTO%27s_Evaluation_Function) for piece-square tables and material values
 - [An article about bitboard intuition](https://lichess.org/@/likeawizard/blog/review-of-different-board-representations-in-computer-chess/S9eQCAWa)
